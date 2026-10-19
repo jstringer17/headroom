@@ -1,0 +1,102 @@
+<title>Master Product List</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column, wide tables scroll inside their own wrapper */
+:root{--bg:#f6f7f5;--fg:#1c2421;--muted:#5d6a64;--line:#d9dfdb;--panel:#ffffff;--accent:#0b6b57;--warn-bg:#fdf3d8;--warn-fg:#6b4d00;--ok:#0b6b57;--no:#9a3b2e;
+--sans:"IBM Plex Sans",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121816;--fg:#e4eae6;--muted:#9aa8a1;--line:#2c3733;--panel:#1a2220;--accent:#4fc3a6;--warn-bg:#3a3012;--warn-fg:#f0d98a;--ok:#4fc3a6;--no:#e08a7c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121816;--fg:#e4eae6;--muted:#9aa8a1;--line:#2c3733;--panel:#1a2220;--accent:#4fc3a6;--warn-bg:#3a3012;--warn-fg:#f0d98a;--ok:#4fc3a6;--no:#e08a7c;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.55;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font-size:28px;line-height:1.15;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-size:17px;margin:0 0 10px;text-wrap:balance}
+.sub{color:var(--muted);margin:6px 0 0;font-family:var(--mono);font-size:12.5px}
+.note{background:var(--warn-bg);color:var(--warn-fg);padding:10px 14px;border-radius:4px;font-size:14px}
+.wrap{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+a{color:var(--accent);text-underline-offset:2px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.test{color:var(--ok);font-weight:600}.need{color:var(--muted)}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+p{margin:0}
+.rej{max-width:70ch}
+</style>
+<main>
+<header>
+<h1>Master product list</h1>
+<p class="sub">2026-10-18 · evergreen refill products · ad data from Meta Ad Library</p>
+</header>
+
+<p class="note">Ad Library shows run time only. ROAS, CTR, spend and revenue are not public. "Days" is the age of the oldest ad seen, not the brand's age. Product and supplier links were not re-checked live, so open each one before relying on it.</p>
+
+<section>
+<h2>A. Scanned products with ad data</h2>
+<div class="wrap"><table>
+<thead><tr><th>#</th><th>Product</th><th>Score</th><th>Verdict</th><th>Ad run data</th><th>Supply / price links</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td class="n">1</td><td>Sink / face-wash filter + cartridges</td><td class="n">83</td><td class="test">Test</td><td>Helios Filter: 27 active ads, oldest 109d</td><td><a href="https://shop.app/products/9029559583014/replacement-filters" target="_blank" rel="noopener">Helios refills</a></td><td>Skin claims need care</td></tr>
+<tr><td class="n">2</td><td>Premium shower filter, niche twist</td><td class="n">79</td><td class="test">Test</td><td>Muravai: oldest 376d. Jolie: 5 ads, 30d. Canopy: 2 ads, 37d</td><td><a href="https://muravai.com" target="_blank" rel="noopener">Muravai</a>, <a href="https://www.ulta.com/p/jolie-replacement-filter-pimprod2048865" target="_blank" rel="noopener">Jolie filter (Ulta)</a>, <a href="https://www.aliexpress.us/item/3256807605324288.html" target="_blank" rel="noopener">AliExpress ALTHY kit</a></td><td>Twist undefined</td></tr>
+<tr><td class="n">3</td><td>Shower-filter cartridges (private label)</td><td class="n">70</td><td class="test">Test</td><td>About 190 ads, median 52d</td><td><a href="https://www.alibaba.com/product-detail/OEM-Available-PP-Cotton-Melt-Blown_1601141568847.html" target="_blank" rel="noopener">Alibaba PP cotton</a>, <a href="https://www.alibaba.com/product-detail/NSF-Sintered-Solid-Coconut-Shell-Activated_1600989878219.html" target="_blank" rel="noopener">Alibaba NSF carbon</a>, <a href="https://www.alibaba.com/product-detail/OEM-ODM-Custom-Logo-Transparent-Water_1601789050076.html" target="_blank" rel="noopener">Alibaba custom logo</a></td><td>Certification and claims</td></tr>
+<tr><td class="n">4</td><td>Spin-scrubber + replacement heads</td><td class="n">66</td><td class="need">Needs data</td><td>About 11 ads, all 1 to 36d</td><td><a href="https://www.aliexpress.com/wholesale?SearchText=spin+scrubber+replacement+heads" target="_blank" rel="noopener">AliExpress head kits</a></td><td>Battery powered</td></tr>
+<tr><td class="n">5</td><td>Pet bath / shower filter</td><td class="n">66</td><td class="need">Needs data</td><td>None verified</td><td>none</td><td>Unproven</td></tr>
+<tr><td class="n">6</td><td>Cat-scratcher inserts</td><td class="n">64</td><td class="need">Needs data</td><td>About 4 small ads</td><td><a href="https://www.aliexpress.us/item/3256808185148977.html" target="_blank" rel="noopener">AliExpress 2-panel</a>, <a href="https://www.aliexpress.us/item/3256805749032244.html" target="_blank" rel="noopener">AliExpress round pad</a></td><td>Bulky shipping</td></tr>
+<tr><td class="n">7</td><td>Travel / RV shower filter</td><td class="n">63</td><td class="need">Needs data</td><td>Weak</td><td>none</td><td>Mostly cheap complete units</td></tr>
+<tr><td class="n">8</td><td>Cat litter box liners</td><td class="n">60</td><td class="need">Needs data</td><td>About 58 ads, median 24d</td><td>none</td><td>Big brands own fitment</td></tr>
+<tr><td class="n">9</td><td>Washable belly-band kit</td><td class="n">57</td><td class="need">Needs data</td><td>None verified</td><td><a href="https://www.aliexpress.us/item/3256805895931412.html" target="_blank" rel="noopener">AliExpress</a></td><td>Low price</td></tr>
+<tr><td class="n">10</td><td>Dish-brush replacement heads</td><td class="n">54</td><td class="need">Needs data</td><td>About 3 ads</td><td>none</td><td>Weak demand</td></tr>
+<tr><td class="n">11</td><td>Lint roller refill sheets</td><td class="n">53</td><td class="need">Needs data</td><td>About 13 ads, median 5d</td><td>none</td><td>Low AOV</td></tr>
+<tr><td class="n">12</td><td>Aquarium filter cartridges</td><td class="n">52</td><td class="need">Needs data</td><td>About 5 ads</td><td>none</td><td>Fitment returns</td></tr>
+<tr><td class="n">13</td><td>Shoe insoles (replacement)</td><td class="n">52</td><td class="need">Needs data</td><td>About 53 ads, median 35d</td><td>none</td><td>Claims, sizing returns</td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>E. Direct Ad Library links</h2>
+<p class="sub" style="margin:0 0 10px">Pulled 2026-10-18, active US ads, days counted to Oct 18, 2026. Each link opens one exact ad; the start date belongs to that ad.</p>
+<div class="wrap"><table>
+<thead><tr><th>Advertiser</th><th>Active ads</th><th>Oldest active ad</th><th>Days</th><th>Ad link</th></tr></thead>
+<tbody>
+<tr><td>Muravai (showerheads, BOGO offer)</td><td class="n">113+</td><td class="n">Oct 7, 2025</td><td class="n">376</td><td><a href="https://www.facebook.com/ads/library/?id=1297780985428020" target="_blank" rel="noopener">View ad</a></td></tr>
+<tr><td>Helios Filter (sink filter)</td><td class="n">27</td><td class="n">Jul 1, 2026</td><td class="n">109</td><td><a href="https://www.facebook.com/ads/library/?id=4407212286202681" target="_blank" rel="noopener">View ad</a></td></tr>
+<tr><td>Jolie</td><td class="n">5</td><td class="n">Sep 18, 2026</td><td class="n">30</td><td><a href="https://www.facebook.com/ads/library/?id=1563158025037638" target="_blank" rel="noopener">View ad</a></td></tr>
+<tr><td>The Beauty Select</td><td class="n">1</td><td class="n">Sep 14, 2026</td><td class="n">34</td><td><a href="https://www.facebook.com/ads/library/?id=1402862487927285" target="_blank" rel="noopener">View ad</a></td></tr>
+</tbody></table></div>
+<ul style="margin-top:12px">
+<li>Helios Filter was first recorded as "7 ads, all under 2 weeks". The live Library shows 27 active ads, oldest 109 days.</li>
+<li>Muravai's earlier "597 days" did not reproduce. The oldest loaded is 376 days.</li>
+<li>A "Dr.Emma Chen, MD" ad appeared in the Helios search. The persona is unverified; do not copy it.</li>
+</ul>
+</section>
+
+<section>
+<h2>C. Refill-ecosystem benchmarks</h2>
+<div class="wrap"><table>
+<thead><tr><th>Brand</th><th>Niche</th><th>Pricing</th><th>Cycle</th><th>Product</th><th>Ad Library</th></tr></thead>
+<tbody>
+<tr><td>Supply single-edge razor</td><td>Shaving</td><td>Razor $59, blades about $8 per pack</td><td class="n">90d</td><td><a href="https://supply.co/pages/free-year-of-blades" target="_blank" rel="noopener">Offer</a></td><td><a href="https://www.facebook.com/ads/library/?active_status=active&amp;ad_type=all&amp;country=US&amp;q=supply%20razor&amp;search_type=keyword_unordered" target="_blank" rel="noopener">Search</a></td></tr>
+<tr><td>Philips OneBlade</td><td>Shaving</td><td>Blades $19.99 per 2-pack</td><td class="n">2–8 mo</td><td><a href="https://www.usa.philips.com/c-e/pe/myoneblade-handle-blade.amp.html" target="_blank" rel="noopener">Page</a></td><td>n/a</td></tr>
+<tr><td>Blueland</td><td>Cleaning</td><td>Kits $16 to $58</td><td class="n">1–4 mo</td><td><a href="https://blueland.com/products/bathroom-starter-set" target="_blank" rel="noopener">Starter set</a></td><td><a href="https://www.facebook.com/ads/library/?active_status=active&amp;ad_type=all&amp;country=US&amp;q=blueland&amp;search_type=keyword_unordered" target="_blank" rel="noopener">Search</a></td></tr>
+<tr><td>Boveda</td><td>Humidity</td><td>4-pack about $20</td><td class="n">3 mo</td><td><a href="https://store.bovedainc.com/products/refills-for-all-wooden-instruments" target="_blank" rel="noopener">Refills</a></td><td>n/a</td></tr>
+<tr><td>Filtered Beauty</td><td>Shower</td><td>Refill subscription</td><td class="n">90–180d</td><td><a href="https://shop.app/products/6853157617804/shower-purifier-filter-refill" target="_blank" rel="noopener">Refill</a></td><td><a href="https://www.facebook.com/ads/library/?active_status=active&amp;ad_type=all&amp;country=US&amp;q=filtered%20beauty&amp;search_type=keyword_unordered" target="_blank" rel="noopener">Search</a></td></tr>
+<tr><td>InFlow</td><td>Shower</td><td>Subscribe-and-save</td><td class="n">90d</td><td><a href="https://shop.app/products/9784611045667/shower-filter-refills" target="_blank" rel="noopener">Refill</a></td><td><a href="https://www.facebook.com/ads/library/?active_status=active&amp;ad_type=all&amp;country=US&amp;q=inflow%20shower%20filter&amp;search_type=keyword_unordered" target="_blank" rel="noopener">Search</a></td></tr>
+</tbody></table></div>
+</section>
+
+<section>
+<h2>B and D. Rejected, and the relaxed price test</h2>
+<ul class="rej">
+<li><strong>Failed a gate:</strong> air fryer liners, dog toe grips, GLP-1 portion products (regulated), senior-dog lift harness, washable pee pads, reusable dryer balls (durable), pet fountain filter, dog poop bag refills, dog nail grinder (battery), posture corrector, dog car bundle.</li>
+<li><strong>Price test relaxed below $35:</strong> only one product changed status. Pet fountain + proprietary filter (56) was re-admitted, because generic filters sell for $1 to $6 and only a private-label cartridge makes a moat. The refill brands in section C now count as models.</li>
+</ul>
+</section>
+
+<section>
+<h2>Gaps</h2>
+<p class="rej">Landed cost, shipping, returns, ROAS, CTR and spend are unknown for everything. Alibaba pages beyond the three linked were blocked by CAPTCHA. No direct ad links yet for Canopy, Filtered Beauty, InFlow, Supply, Blueland, spin-scrubber heads or cat-scratcher inserts.</p>
+</section>
+</main>
