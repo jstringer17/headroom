@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead Finder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%224%22 fill=%22%231f5eff%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f6f7f9; --panel: #fff; --ink: #14171f; --muted: #667085; --line: #e4e7ec;
+  --brand: #1f5eff; --brand-soft: #e8efff;
+  --hot: #d92d20; --hot-soft: #fef3f2; --warm: #b54708; --warm-soft: #fffaeb; --cool: #067647; --cool-soft: #ecfdf3;
+  --gray-soft: #f2f4f7; --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0d1117; --panel: #161b22; --ink: #e6edf3; --muted: #8b949e; --line: #2a313c;
+    --brand: #5b8cff; --brand-soft: #1a2540; --hot: #ff7b72; --hot-soft: #3a1b1b; --warm: #e3a008; --warm-soft: #33270b;
+    --cool: #3fb950; --cool-soft: #12301c; --gray-soft: #21262d; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.45 Inter, system-ui, sans-serif; }
+header { display: flex; align-items: center; gap: 16px; padding: 14px 24px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+header h1 { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+header .grow { flex: 1; }
+main { padding: 20px 24px 60px; max-width: 1500px; margin: 0 auto; }
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 8px 12px; font: inherit; font-weight: 500; cursor: pointer; }
+.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.stat b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -.02em; }
+.stat span { color: var(--muted); font-size: 12.5px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin-bottom: 12px; }
+.filters input, .filters select, .search-box input { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 7px 10px; font: inherit; }
+.filters input[type=search] { min-width: 220px; flex: 1; }
+.filters label { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 6px; }
+.table-wrap { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; cursor: pointer; user-select: none; background: var(--panel); position: sticky; top: 0; }
+th.sorted::after { content: " ↓"; } th.sorted.asc::after { content: " ↑"; }
+td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:hover td { background: var(--gray-soft); }
+.score { display: inline-grid; place-items: center; width: 40px; height: 28px; border-radius: 7px; font-weight: 700; }
+.s-hot { background: var(--hot-soft); color: var(--hot); } .s-warm { background: var(--warm-soft); color: var(--warm); } .s-cool { background: var(--gray-soft); color: var(--muted); }
+.name { font-weight: 600; } .sub { color: var(--muted); font-size: 12.5px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.w-none, .w-broken, .w-social { background: var(--hot-soft); color: var(--hot); }
+.w-weak { background: var(--warm-soft); color: var(--warm); }
+.w-ok { background: var(--cool-soft); color: var(--cool); }
+.w-unknown, .w-unchecked { background: var(--gray-soft); color: var(--muted); }
+.reasons { display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px; }
+.reasons span { background: var(--gray-soft); border-radius: 6px; padding: 1px 6px; font-size: 12px; }
+a { color: var(--brand); text-decoration: none; } a:hover { text-decoration: underline; }
+td select, td textarea { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 7px; padding: 5px 7px; font: inherit; font-size: 13px; }
+td textarea { width: 180px; height: 34px; resize: vertical; }
+.links { display: flex; flex-direction: column; gap: 2px; white-space: nowrap; }
+.empty { padding: 40px; text-align: center; color: var(--muted); }
+dialog { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); width: min(560px, 92vw); padding: 20px; }
+dialog::backdrop { background: rgb(0 0 0 / .35); }
+.search-box { display: grid; gap: 10px; }
+.search-box input { width: 100%; }
+pre.log { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; height: 220px; overflow: auto; font-size: 12px; white-space: pre-wrap; margin: 0; }
+@media (max-width: 700px) { main { padding: 12px 16px 40px; } header { padding: 12px 16px; } .filters input[type=search] { min-width: 100%; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Lead Finder</h1>
+  <span class="sub" id="count"></span>
+  <div class="grow"></div>
+  <button class="btn" id="exportBtn">Export CSV</button>
+  <button class="btn primary" id="findBtn">Find leads</button>
+</header>
+<main>
+  <section class="stats" id="stats"></section>
+  <section class="filters">
+    <input type="search" id="q" placeholder="Search name, town, phone, notes...">
+    <select id="fNiche"><option value="">All niches</option></select>
+    <select id="fState"><option value="">All states</option></select>
+    <select id="fTown"><option value="">All towns</option></select>
+    <select id="fWeb">
+      <option value="">Any website</option>
+      <option value="none">No website</option>
+      <option value="bad">No site, broken or social-only</option>
+      <option value="weak">Weak website</option>
+      <option value="ok">Good website</option>
+    </select>
+    <select id="fStatus"><option value="">Any status</option></select>
+    <label>Min score <input type="number" id="fMin" value="0" min="0" max="100" step="5" style="width:70px"></label>
+  </section>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th data-k="score" class="sorted">Score</th>
+        <th data-k="name">Business</th>
+        <th data-k="town">Location</th>
+        <th data-k="rating">Rating</th>
+        <th data-k="websiteState">Website</th>
+        <th>Why call</th>
+        <th data-k="phone">Phone</th>
+        <th data-k="status">Status</th>
+        <th>Notes</th>
+        <th>Links</th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" class="search-box" id="searchForm">
+    <h2 style="margin:0;font-size:17px">Find new leads</h2>
+    <span class="sub">Searches Google Maps, checks every website, and scores the results. About 2–3 minutes per search.</span>
+    <input id="sNiche" placeholder="Niche, e.g. roofer" list="nicheList" required>
+    <datalist id="nicheList"><option>roofer</option><option>HVAC contractor</option><option>plumber</option><option>electrician</option></datalist>
+    <input id="sCity" placeholder="City, e.g. Tucson, AZ" required>
+    <pre class="log" id="log">Ready.</pre>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" value="close">Close</button>
+      <button class="btn primary" id="goBtn" type="button">Search</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const WEB_LABEL = { none: 'No website', social: 'Social page only', broken: 'Broken', weak: 'Weak', ok: 'Good', unknown: 'Check by hand', unchecked: 'Not checked' };
+let leads = [], statuses = [], sortKey = 'score', asc = false;
+
+async function load() {
+  const r = await fetch('/api/leads').then((r) => r.json());
+  leads = r.leads; statuses = r.statuses;
+  fillSelect('#fNiche', leads.map((l) => l.niche));
+  fillSelect('#fState', leads.map((l) => l.state));
+  fillSelect('#fTown', leads.map((l) => l.town));
+  fillSelect('#fStatus', statuses, false);
+  render();
+}
+function fillSelect(sel, values, sort = true) {
+  const el = $(sel), keep = el.value, first = el.options[0].outerHTML;
+  let vals = [...new Set(values.filter(Boolean))]; if (sort) vals.sort();
+  el.innerHTML = first + vals.map((v) => `<option>${esc(v)}</option>`).join(''); el.value = keep;
+}
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtPhone = (p) => { const d = (p || '').replace(/\D/g, '').replace(/^1/, ''); return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : p || ''; };
+
+function filtered() {
+  const q = $('#q').value.toLowerCase(), n = $('#fNiche').value, st = $('#fState').value, t = $('#fTown').value,
+    w = $('#fWeb').value, s = $('#fStatus').value, min = +$('#fMin').value || 0;
+  return leads.filter((l) =>
+    (!q || [l.name, l.town, l.phone, l.notes, l.category].join(' ').toLowerCase().includes(q)) &&
+    (!n || l.niche === n) && (!st || l.state === st) && (!t || l.town === t) && (!s || l.status === s) &&
+    (!w || (w === 'bad' ? ['none', 'broken', 'social'].includes(l.websiteState) : l.websiteState === w)) &&
+    l.score >= min
+  ).sort((a, b) => { const x = a[sortKey] ?? '', y = b[sortKey] ?? ''; return (x > y ? 1 : x < y ? -1 : 0) * (asc ? 1 : -1); });
+}
+
+function render() {
+  const list = filtered();
+  $('#count').textContent = `${list.length} of ${leads.length} leads`;
+  const noSite = leads.filter((l) => ['none', 'broken', 'social'].includes(l.websiteState)).length;
+  const hot = leads.filter((l) => l.score >= 70).length;
+  const worked = leads.filter((l) => l.status && l.status !== 'New').length;
+  const won = leads.filter((l) => l.status === 'Won').length;
+  $('#stats').innerHTML = [[leads.length, 'Leads found'], [noSite, 'No working website'], [hot, 'Hot leads (70+)'], [worked, 'Contacted'], [won, 'Won']]
+    .map(([v, k]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join('');
+  if (!list.length) { $('#rows').innerHTML = `<tr><td colspan="10" class="empty">No leads match. Try fewer filters, or click “Find leads”.</td></tr>`; return; }
+  $('#rows').innerHTML = list.slice(0, 1000).map((l) => `
+    <tr data-id="${esc(l.id)}">
+      <td><span class="score ${l.score >= 70 ? 's-hot' : l.score >= 45 ? 's-warm' : 's-cool'}">${l.score}</span></td>
+      <td><div class="name">${esc(l.name)}</div><div class="sub">${esc(l.category || l.niche)}</div></td>
+      <td>${esc(l.town || l.searchCity)}${l.state ? ', ' + esc(l.state) : ''}</td>
+      <td>${l.rating ? l.rating + '★' : '<span class="sub">none</span>'}${Number.isFinite(l.reviewCount) ? `<div class="sub">${l.reviewCount} reviews</div>` : ''}</td>
+      <td><span class="badge w-${l.websiteState}">${WEB_LABEL[l.websiteState] || l.websiteState}</span></td>
+      <td><div class="reasons">${l.reasons.map((r) => `<span>${esc(r)}</span>`).join('')}</div></td>
+      <td style="white-space:nowrap">${l.phone ? `<a href="tel:${esc(l.phone)}">${fmtPhone(l.phone)}</a>` : '<span class="sub">none</span>'}</td>
+      <td><select data-f="status">${statuses.map((s) => `<option${s === (l.status || 'New') ? ' selected' : ''}>${s}</option>`).join('')}</select></td>
+      <td><textarea data-f="notes" placeholder="Notes">${esc(l.notes)}</textarea></td>
+      <td><div class="links"><a href="${esc(l.mapsUrl)}" target="_blank" rel="noopener">Maps</a>${l.website ? `<a href="${esc(l.website)}" target="_blank" rel="noopener">Website</a>` : ''}</div></td>
+    </tr>`).join('');
+}
+
+$('#rows').addEventListener('change', async (e) => {
+  const f = e.target.dataset.f; if (!f) return;
+  const id = e.target.closest('tr').dataset.id;
+  const lead = leads.find((l) => l.id === id); lead[f] = e.target.value;
+  await fetch(`/api/leads/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ [f]: e.target.value }) });
+  if (f === 'status') render();
+});
+document.querySelectorAll('.filters input, .filters select').forEach((el) => el.addEventListener('input', render));
+document.querySelectorAll('th[data-k]').forEach((th) => th.addEventListener('click', () => {
+  const k = th.dataset.k; asc = sortKey === k ? !asc : k === 'name' || k === 'town'; sortKey = k;
+  document.querySelectorAll('th').forEach((h) => h.classList.remove('sorted', 'asc'));
+  th.classList.add('sorted'); if (asc) th.classList.add('asc'); render();
+}));
+
+$('#exportBtn').addEventListener('click', () => {
+  const cols = ['score', 'name', 'category', 'phone', 'town', 'state', 'rating', 'reviewCount', 'websiteState', 'website', 'status', 'notes', 'mapsUrl'];
+  const csv = [cols.join(','), ...filtered().map((l) => cols.map((c) => `"${String(c === 'reasons' ? l.reasons.join('; ') : l[c] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = 'leads.csv'; a.click();
+});
+
+$('#findBtn').addEventListener('click', () => $('#dlg').showModal());
+$('#goBtn').addEventListener('click', async () => {
+  const niche = $('#sNiche').value.trim(), city = $('#sCity').value.trim();
+  if (!niche || !city) return;
+  const r = await fetch('/api/search', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ niche, city }) });
+  if (r.status === 409) { $('#log').textContent = 'A search is already running.'; }
+  poll();
+});
+async function poll() {
+  $('#goBtn').disabled = true;
+  const r = await fetch('/api/search').then((r) => r.json());
+  $('#log').textContent = r.log.join('\n') || 'Starting...'; $('#log').scrollTop = 1e9;
+  if (r.running) setTimeout(poll, 1500); else { $('#goBtn').disabled = false; load(); }
+}
+load();
+</script>
+</body>
+</html>
