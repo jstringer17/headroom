@@ -11,7 +11,7 @@ const read = (p) => readFileSync(join(here, p), "utf8");
 // Turn the ES modules into plain script: drop import lines and `export`.
 const plain = (src) => src.replace(/^import .*$/gm, "").replace(/^export /gm, "");
 
-const generator = ["src/trades.js", "src/themes.js", "src/cine-kit.js", "src/cine-look.js", "src/cinematic.js", "src/generate.js"].map((p) => plain(read(p))).join("\n");
+const generator = ["src/trades.js", "src/themes.js", "src/cine-kit.js", "src/cine-look.js", "src/cinematic.js", "src/editorial.js", "src/generate.js"].map((p) => plain(read(p))).join("\n");
 // Keep "</script" sequences from closing the inline script early.
 const safe = (s) => s.replace(/<\/script/gi, "<\\/script");
 const out = read("src/maker-ui.html")

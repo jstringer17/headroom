@@ -11,11 +11,13 @@
 //   towing, junk removal and HVAC),
 //   insured (default false), theme (default: trade default), year,
 //   heroImage (optional),
-//   cinematic (default false: the scroll-story site, see cinematic.js), cine
+//   cinematic (default false: the scroll-story site, see cinematic.js), cine,
+//   look ("cinematic" default or "editorial", see editorial.js) and editorial
 // }
 import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic } from "./cinematic.js";
+import { generateEditorial } from "./editorial.js";
 import { CINE_KIT } from "./cine-kit.js";
 import { cineLook, placeholderArt } from "./cine-look.js";
 
@@ -113,7 +115,7 @@ function h1Sizes(text, layout) {
 
 export function generateSite(form) {
   const d = normalize(form);
-  if (form && form.cinematic && CINE && CINE.CINE_KIT[d.tradeKey]) return generateCinematic(form, d, CINE);
+  if (form && form.cinematic && CINE && CINE.CINE_KIT[d.tradeKey]) return (form.look === "editorial" ? generateEditorial : generateCinematic)(form, d, CINE);
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";

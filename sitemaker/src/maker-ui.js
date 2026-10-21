@@ -12,6 +12,7 @@
   const hasCine = typeof CINE_KIT !== "undefined";
   const cineImages = {}; // trade -> slotId -> picture
   const cineUnits = {}; // trade -> chosen unit
+  const edProjects = [{}, {}, {}]; // typed words for the editorial project cards
   const cineRpct = {}; // trade -> typed percent
   const cinePrices = {}; // trade -> size -> option -> { low, high }
 
@@ -49,6 +50,12 @@
     buildCine();
   }
 
+  if (hasCine) {
+    const fields = [["name", "Project name"], ["where", "Where"], ["job", "Job"], ["type", "Type"], ["time", "Time"]];
+    $("ed-projects").innerHTML = [0, 1, 2].map((i) => '<div class="price-row"><b>Project ' + (i + 1) + "</b>" + fields.map(([k, lab]) =>
+      '<label class="field"><span>' + lab + '</span><input type="text" data-pi="' + i + '" data-pk="' + k + '" maxlength="40" aria-label="Project ' + (i + 1) + ", " + lab + '"></label>').join("") + "</div>").join("");
+  }
+
   // Cinematic: one picture slot per kit slot, and a price table of typed ranges.
   function buildCine() {
     if (!hasCine) return;
@@ -64,6 +71,7 @@
       '<p class="status" aria-live="polite"></p></div>').join("");
     const pr = cinePrices[key] = cinePrices[key] || {};
     const est = kit.estimator || { sizes: [], options: [] };
+    $("ed-fields").hidden = $("look").value !== "editorial";
     $("cine-rpct-wrap").hidden = key !== "hvac"; $("cine-rpct").value = cineRpct[key] || "";
     const unit = cineUnit(key, cineUnits[key]);
     $("cine-prices").innerHTML = '<label class="field" for="cine-unit"><span>Price is</span><select id="cine-unit">' +
@@ -91,6 +99,8 @@
       theme,
       heroImage: heroData || $("hero-url").value.trim(),
       cinematic: hasCine && $("cinematic").checked,
+      look: hasCine ? $("look").value : undefined,
+      editorial: hasCine ? { projects: edProjects } : undefined,
       cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
     };
   }
@@ -125,6 +135,8 @@
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "cinematic") buildCine();
+    if (e.target.id === "look") buildCine();
+    if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;
     if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;
     if (e.target.id === "cine-unit") cineUnits[tradeSel.value] = e.target.value;
     const dp = e.target.dataset || {};

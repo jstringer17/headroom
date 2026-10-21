@@ -76,6 +76,37 @@ for (const [pct, verdict] of [["", false], ["50", true]]) {
   ok(verdict ? /new one/.test(out) : out.trim() === "", `hvac calc (${pct || "blank"}): verdict wrong: "${out}"`);
   await page.close();
 }
+// Editorial look: every trade builds, nothing overflows sideways, the fixed note is there,
+// the trust strip shows only ticked or typed facts, and service rows open on click and arrow keys.
+for (const trade of TRADE_ORDER) {
+  const base = { company: "Test Co", trade, year: 2026, phone: "9185550100", cinematic: true, look: "editorial" };
+  const plain = generateSite(base);
+  ok(/class="ed-no-js"|class="ed"/.test(plain) && plain.includes('<body class="ed">'), `${trade}: editorial page not built`);
+  ok(plain.includes("Sample projects: names and homes are fictional.") && (plain.match(/class="ed-card"/g) || []).length === 3, `${trade}: editorial work cards or note wrong`);
+  ok(!plain.includes('id="price"') && !/Insured|Open 24\/7/.test(plain.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "")), `${trade}: editorial shows an unticked fact or a price without typed ranges`);
+  ok(!/<script[^>]+src=/i.test(plain), `${trade}: editorial loads an outside script`);
+  const full = generateSite({ ...base, insured: true, emergency: true, years: "9", city: "Tulsa, OK" });
+  ok((full.match(/<li class="ed-rv"><svg/g) || []).length === 4, `${trade}: editorial trust strip should show 4 facts when 4+ are ticked`);
+  for (const width of [375, 1280]) {
+    const page = await browser.newPage({ viewport: { width, height: 800 } });
+    const errs = []; page.on("pageerror", (e) => errs.push(e.message));
+    await page.route("**/*", (q) => (/^(data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+    await page.setContent(full, { waitUntil: "load" });
+    const sw = await page.evaluate(() => [document.documentElement.scrollWidth, innerWidth]);
+    ok(sw[0] <= sw[1], `${trade}@${width}: editorial scrolls sideways (${sw[0]} > ${sw[1]})`);
+    ok(errs.length === 0, `${trade}@${width}: editorial page error ${errs[0]}`);
+    if (width === 1280 && trade === TRADE_ORDER[0]) {
+      const rows = await page.$$(".ed-row");
+      await rows[1].click();
+      const st = await page.evaluate(() => [...document.querySelectorAll(".ed-row")].map((r) => r.getAttribute("aria-expanded")).join() + "|" + [...document.querySelectorAll(".ed-pic img")].map((i) => i.className).join());
+      ok(st.startsWith("false,true") && /^[^|]*\|(?:,)?on/.test(st) === false && st.split("|")[1].split(",")[1] === "on", `editorial rows: click did not open row 2 / swap picture (${st})`);
+      await rows[1].focus(); await page.keyboard.press("ArrowDown");
+      ok(await page.evaluate(() => document.activeElement.classList.contains("ed-row") && document.querySelectorAll(".ed-row")[2] === document.activeElement), "editorial rows: ArrowDown does not move to the next row");
+    }
+    await page.close();
+  }
+}
+
 await browser.close();
 if (fails.length) { console.log("FAIL"); fails.forEach((f) => console.log(" - " + f)); process.exit(1); }
 console.log(`PASS: engine layout checks (${TRADE_ORDER.length} trades x 2 widths)`);

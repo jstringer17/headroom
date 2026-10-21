@@ -161,6 +161,15 @@ details.lead[open]{display:grid;gap:10px}
 
     <div class="group" id="cine-fields" hidden>
       <fieldset class="group">
+        <legend>Look</legend>
+        <label class="field" for="look"><span>How the cinematic site looks</span>
+          <select id="look"><option value="cinematic">Cinematic (scroll story, dark and bold)</option><option value="editorial">Editorial (cream, big serif, rounded photo cards)</option></select></label>
+        <div id="ed-fields" class="prices" hidden>
+          <p class="hint">Editorial shows 3 sample project cards. Names and homes are fictional. Type your own words or leave blank.</p>
+          <div id="ed-projects"></div>
+        </div>
+      </fieldset>
+      <fieldset class="group">
         <legend>Cinematic pictures</legend>
         <p class="hint">One picture per spot. Empty spots show a labeled sample picture. Never use fake work photos.</p>
         <div id="cine-slots" class="slots"></div>

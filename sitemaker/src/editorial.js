@@ -1,0 +1,456 @@
+// Sample Site Maker: Editorial look.
+// generateEditorial(form, d, deps) builds one self-contained HTML page in a
+// calm magazine style: cream paper, a huge serif, rounded photo cards, a hero
+// picture cut to a simple silhouette, sample project cards, large numbered
+// service rows that swap a picture, and a trust strip with only the facts the
+// owner ticked or typed. Same rules as cinematic.js: no invented prices,
+// reviews, claims or work photos; empty picture slots show labeled placeholder
+// art; the "Sample site" label stays.
+//
+// form.look = "editorial" (with form.cinematic on) picks this page.
+// form.editorial = { projects: [{ name, where, job, type, time } x 3] }, all optional.
+// form.cine.images / form.cine.prices / form.cine.unit work as in cinematic mode.
+// deps = { CINE_KIT, cineLook, placeholderArt, editorialLook? (optional), editorialShape? (optional) }
+import { esc, safeImage } from "./generate.js";
+import { THEMES } from "./themes.js";
+import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
+
+// Simple silhouettes for the hero picture, as CSS polygon() points in percent.
+const ED_SHAPES = {
+  house: "polygon(0% 100%, 0% 42%, 50% 2%, 100% 42%, 100% 100%)",
+  picket: (() => {
+    const n = 7, pts = ["0% 100%"];
+    for (let i = 0; i < n; i++) { const a = (i / n) * 100, b = ((i + 1) / n) * 100, m = (a + b) / 2; pts.push(`${(a + 0.8).toFixed(1)}% 22%`, `${m.toFixed(1)}% 2%`, `${(b - 0.8).toFixed(1)}% 22%`); }
+    pts.push("100% 100%");
+    return `polygon(${pts.join(", ")})`;
+  })(),
+  drop: "polygon(50% 0%, 62% 16%, 76% 34%, 88% 54%, 94% 70%, 90% 86%, 78% 97%, 62% 100%, 38% 100%, 22% 97%, 10% 86%, 6% 70%, 12% 54%, 24% 34%, 38% 16%)",
+  arch: "inset(0 round 46% 46% 0 0)",
+  tree: "polygon(50% 0%, 66% 22%, 58% 22%, 76% 46%, 64% 46%, 86% 74%, 56% 74%, 56% 100%, 44% 100%, 44% 74%, 14% 74%, 36% 46%, 24% 46%, 42% 22%, 34% 22%)",
+};
+const ED_SHAPE_FOR = {
+  fencing: "picket", pressure: "drop", plumbing: "drop", cleaning: "drop", restoration: "drop",
+  hvac: "arch", garage: "arch", tree: "tree", landscaping: "tree",
+};
+
+const ED_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
+const ED_ICONS = {
+  insured: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+  estimate: '<path d="M4 7h16v10H4z"/><path d="M4 11h16M8 15h3"/>',
+  hours: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
+  years: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>',
+  rating: '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/>',
+  area: '<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+};
+const edIcon = (inner, size = 22) =>
+  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+
+const ED_NAMES = ["Maple Lane", "Cedar Court", "Ridge Road"];
+const edPad = (n) => String(n).padStart(2, "0");
+
+const ED_CSS = `
+:root{--ed-serif:"Bodoni Moda","Playfair Display","Didot",Georgia,serif;--ed-sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ed-cream:#ece5dc;--ed-cream2:#e2d9cd;--ed-paper:#f5f0e8;--ed-ink:#161412;--ed-muted:#5d564d;--ed-line:rgba(22,20,18,.2);--ed-card:24px;--ed-dark:#14110f;--ed-ease:cubic-bezier(.16,1,.3,1);--ed-max:1240px;--ed-nav:64px;color-scheme:light}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:84px}
+section[id]{scroll-margin-top:84px}
+body{margin:0;background:var(--ed-cream);color:var(--ed-ink);font:400 17px/1.6 var(--ed-sans);overflow-x:clip;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3,h4,p,dl,dd,dt,figure,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:inherit;text-underline-offset:4px}
+img,svg{max-width:100%}
+.ed-wrap{max-width:var(--ed-max);margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
+.ed h1,.ed h2,.ed .ed-big{font-family:var(--ed-serif);font-weight:500;letter-spacing:-.02em;line-height:.98;text-wrap:balance}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+span,.ed-row:focus-visible{outline:3px solid var(--ed-accent);outline-offset:3px;border-radius:6px}
+.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-ink);color:var(--ed-cream);transition:transform .35s var(--ed-ease),opacity .35s}
+.ed-btn:hover{transform:translateY(-2px)}
+.ed-btn.light{background:var(--ed-cream);color:var(--ed-ink)}
+.ed-btn.ghost{background:transparent;color:var(--ed-ink);box-shadow:inset 0 0 0 1.5px var(--ed-ink)}
+.ed-btn.sm{min-height:42px;padding:0 18px;font-size:14px}
+.ed-link{font-weight:600;font-size:15px}
+.ed-eyebrow{display:flex;align-items:center;gap:14px;font:600 12px/1.3 var(--ed-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--ed-accent)}
+.ed-eyebrow::before{content:"";flex:none;width:36px;height:1.5px;background:currentColor}
+/* nav */
+.ed-nav{position:sticky;top:0;z-index:40;height:var(--ed-nav);background:rgba(236,229,220,.78);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border-bottom:1px solid var(--ed-line)}
+.ed-nav .ed-wrap{display:flex;align-items:center;gap:14px;height:100%}
+.ed-logo{font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;overflow-wrap:anywhere;margin-right:auto}
+.ed-pill{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--ed-line);font:600 11px/1 var(--ed-sans);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.ed-links{display:none;gap:26px;font-size:15px;font-weight:500}
+.ed-links a{text-decoration:none;color:var(--ed-muted)}
+.ed-links a:hover{color:var(--ed-ink)}
+.ed-nav .ed-tel,.ed-nav .ed-btn{display:none}
+.ed-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ed-ink);color:var(--ed-cream);flex:none}
+/* hero */
+.ed-hero{padding-block:36px 56px}
+.ed-hero-grid{display:grid;gap:36px}
+.ed-hero h1{margin-top:22px;font-size:clamp(46px,13vw,132px);text-transform:uppercase;line-height:.92}
+.ed-sub{margin-top:24px;max-width:38ch;color:var(--ed-muted);font-size:18px}
+.ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:28px}
+.ed-sil{position:relative;aspect-ratio:1/1;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
+.ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
+.ed-sil.ph img{inset:auto 0 0 0;height:82%}
+/* trust strip */
+.ed-trust{padding-block:0 56px}
+.ed-trust ul{display:grid;grid-template-columns:1fr;border:1.5px solid var(--ed-line);border-radius:var(--ed-card);overflow:hidden;background:var(--ed-paper)}
+.ed-trust li{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;padding:20px 22px;border-top:1px solid var(--ed-line)}
+.ed-trust li:first-child{border-top:0}
+.ed-trust svg{grid-row:1/3;margin-top:3px;color:var(--ed-accent)}
+.ed-trust b{font-weight:700;font-size:17px}
+.ed-trust p{color:var(--ed-muted);font-size:15px;line-height:1.45}
+/* second beat */
+.ed-beat{position:relative;min-height:78vh;min-height:78svh;display:flex;align-items:flex-end;overflow:hidden;background:var(--ed-dark);color:#fff;isolation:isolate}
+.ed-beat::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,.18) 60%,rgba(0,0,0,.3))}
+.ed-beat .ed-wrap{width:100%;display:grid;gap:22px;padding-block:56px}
+.ed-beat .ed-big{font-size:clamp(40px,11vw,128px);max-width:11ch;text-shadow:0 2px 26px rgba(0,0,0,.35)}
+.ed-beat p{max-width:36ch;color:rgba(255,255,255,.9);font-size:17px}
+.ed-beat .ed-big em,.ed-hero h1 em{font-style:italic}
+/* work */
+.ed-sec{padding-block:72px}
+.ed-sec h2{font-size:clamp(40px,8vw,88px);text-transform:uppercase}
+.ed-head{display:grid;gap:14px;margin-bottom:36px}
+.ed-note{color:var(--ed-muted);font-size:15px;max-width:52ch}
+.ed-cards{display:grid;gap:28px}
+.ed-card{position:relative;border-radius:var(--ed-card);overflow:hidden;background:var(--ed-dark);color:#fff;aspect-ratio:4/5;isolation:isolate}
+.ed-card::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(0deg,rgba(0,0,0,.6),rgba(0,0,0,0) 55%)}
+.ed-card .ed-pill{position:absolute;top:16px;right:16px;z-index:2;color:#fff;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4)}
+.ed-card h3{position:absolute;left:20px;right:20px;bottom:18px;z-index:2;font:500 clamp(40px,10vw,84px)/.95 var(--ed-serif);letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:anywhere}
+.ed-meta{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin-top:14px}
+.ed-meta div{padding:12px 0;border-top:1px solid var(--ed-line)}
+.ed-meta dt{font:600 11px/1.2 var(--ed-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ed-muted)}
+.ed-meta dd{margin-top:5px;font-weight:600;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.ed-work-note{margin-top:30px;font-size:14px;color:var(--ed-muted)}
+/* services */
+.ed-dark{background:var(--ed-dark);color:var(--ed-cream)}
+.ed-dark .ed-eyebrow{color:var(--ed-hi,var(--ed-accent))}
+.ed-svc{display:grid;gap:32px}
+.ed-rows{border-top:1px solid rgba(236,229,220,.25)}
+.ed-row{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid rgba(236,229,220,.25);padding:18px 0;color:inherit;font:inherit;cursor:pointer}
+.ed-row-top{display:flex;align-items:baseline;gap:16px}
+.ed-row-n{font:600 13px/1 var(--ed-sans);letter-spacing:.12em;color:rgba(236,229,220,.6);font-variant-numeric:tabular-nums}
+.ed-row-name{font:500 clamp(30px,7vw,52px)/1.02 var(--ed-serif);letter-spacing:-.015em;opacity:.55;transition:opacity .35s}
+.ed-row[aria-expanded=true] .ed-row-name,.ed-row:hover .ed-row-name{opacity:1}
+.ed-row-body{display:none;margin:12px 0 4px 40px;max-width:44ch;color:rgba(236,229,220,.82)}
+.ed-row[aria-expanded=true] .ed-row-body{display:block}
+.ed-no-js .ed-row-body{display:block}
+.ed-pic{position:relative;border-radius:var(--ed-card);overflow:hidden;aspect-ratio:4/3;background:#000}
+.ed-pic img{opacity:0;transition:opacity .6s var(--ed-ease)}
+.ed-pic img.on{opacity:1}
+.ed-no-js .ed-pic img:first-child{opacity:1}
+/* process, estimate, contact */
+.ed-steps{display:grid;gap:30px;margin-top:8px}
+.ed-steps li{padding-top:14px;border-top:1.5px solid var(--ed-ink)}
+.ed-steps b{display:block;font:500 40px/1 var(--ed-serif);margin-bottom:10px;color:var(--ed-accent)}
+.ed-steps h3{font:700 20px/1.25 var(--ed-sans)}
+.ed-steps p{margin-top:6px;color:var(--ed-muted);max-width:32ch}
+.ed-est{display:grid;gap:26px}
+.ed-est fieldset{border:0;margin:0;padding:0;min-width:0}
+.ed-est legend{padding:0;margin-bottom:10px;font:600 12px/1 var(--ed-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ed-muted)}
+.ed-opts{display:flex;flex-wrap:wrap;gap:8px}
+.ed-opt{position:relative}
+.ed-opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
+.ed-opt span{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--ed-ink);font:600 15px/1.2 var(--ed-sans)}
+.ed-opt input:checked+span{background:var(--ed-ink);color:var(--ed-cream)}
+.ed-opt input:disabled+span{opacity:.35}
+.ed-out{background:var(--ed-dark);color:var(--ed-cream);border-radius:var(--ed-card);padding:28px 24px;display:grid;gap:8px;align-content:center}
+.ed-num{font:500 clamp(36px,9vw,64px)/1.05 var(--ed-serif);letter-spacing:-.02em;overflow-wrap:anywhere}
+.ed-unit,.ed-out .ed-note{color:rgba(236,229,220,.78)}
+.ed-out .ed-btn{justify-self:start;margin-top:8px}
+.ed-list{display:grid;gap:8px}
+.ed-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--ed-line)}
+.js .ed-list{display:none}
+.ed-est-ui{display:none}
+.js .ed-est-ui{display:grid;gap:26px}
+.ed-rev{display:grid;gap:8px}
+.ed-rev b{font:500 clamp(64px,16vw,110px)/.85 var(--ed-serif);font-variant-numeric:tabular-nums}
+.ed-final{background:var(--ed-ink);color:var(--ed-cream)}
+.ed-final .ed-grid{display:grid;gap:34px}
+.ed-final h2{font-size:clamp(44px,9vw,104px)}
+.ed-phone{display:inline-block;margin-top:22px;font:500 clamp(36px,8vw,64px)/1 var(--ed-serif);color:var(--ed-hi,var(--ed-cream));text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ed-final .ed-note{color:rgba(236,229,220,.75);margin-top:14px}
+.ed-form{display:grid;gap:16px;align-content:start;background:var(--ed-cream);color:var(--ed-ink);border-radius:var(--ed-card);padding:24px}
+.ed-form label{display:grid;gap:6px;font-size:14px;font-weight:700}
+.ed-form input,.ed-form select,.ed-form textarea{width:100%;font:400 17px/1.4 var(--ed-sans);color:var(--ed-ink);background:#fff;border:1.5px solid #a79f8c;border-radius:12px;padding:13px 14px}
+.ed-form textarea{min-height:100px;resize:vertical}
+.ed-form input:focus,.ed-form select:focus,.ed-form textarea:focus{outline:none;border-color:var(--ed-ink);box-shadow:0 0 0 3px var(--ed-accent)}
+.ed-form-note{font-size:14px;color:var(--ed-muted)}
+.ed-foot{background:var(--ed-dark);color:rgba(236,229,220,.75);font-size:14px}
+.ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px}
+.ed-foot b{font:500 22px/1.2 var(--ed-serif);color:var(--ed-cream)}
+.ed-sticky{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;transition:transform .45s var(--ed-ease)}
+.ed-sticky .ed-btn{box-shadow:0 6px 22px rgba(0,0,0,.3)}
+.ed-sticky{transform:translateY(130%);visibility:hidden}
+.past .ed-sticky{transform:none;visibility:visible}
+.nocall .ed-sticky{transform:translateY(130%);visibility:hidden}
+@media (prefers-reduced-motion:no-preference){
+  .ed-rise .ed-rv{transition:opacity .9s var(--ed-ease),transform .9s var(--ed-ease)}
+  .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(22px)}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name,.ed-sticky{transition:none}}
+@media (min-width:760px){
+  .ed-sec{padding-block:112px}
+  .ed-trust ul{grid-template-columns:repeat(var(--cols,4),1fr)}
+  .ed-trust li{border-top:0;border-left:1px solid var(--ed-line);padding:24px}
+  .ed-trust li:first-child{border-left:0}
+  .ed-cards{grid-template-columns:repeat(3,1fr);gap:22px}
+  .ed-card{aspect-ratio:3/4}
+  .ed-steps{grid-template-columns:repeat(3,1fr);gap:32px}
+  .ed-est{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
+  .ed-beat .ed-wrap{grid-template-columns:1.2fr 1fr;align-items:end}
+  .ed-beat p{justify-self:end;text-align:left}
+  .ed-final .ed-grid{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
+}
+@media (min-width:1024px){
+  body{padding-bottom:0}
+  .ed-sticky,.ed-call{display:none}
+  .ed-links{display:flex}
+  .ed-nav .ed-tel{display:inline;font-weight:600;font-size:15px;text-decoration:none}
+  .ed-nav .ed-btn{display:inline-flex}
+  .ed-hero{padding-block:64px 88px}
+  .ed-hero-grid{grid-template-columns:1.25fr 1fr;align-items:center;gap:48px}
+  .ed-svc{grid-template-columns:1.1fr 1fr;gap:64px;align-items:start}
+  .ed-pic{position:sticky;top:104px;aspect-ratio:4/5}
+}
+`;
+
+const ED_JS = `(function(){
+var root=document.documentElement;root.classList.add("js");root.classList.remove("ed-no-js");
+var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+/* service rows: hover, focus or tap opens a row and swaps the picture */
+var rows=[].slice.call(document.querySelectorAll(".ed-row")),pics=[].slice.call(document.querySelectorAll(".ed-pic img"));
+function open(i){rows.forEach(function(r,j){r.setAttribute("aria-expanded",j===i?"true":"false")});pics.forEach(function(p,j){p.className=j===i?"on":""})}
+if(rows.length){
+  open(0);
+  rows.forEach(function(r,i){
+    r.addEventListener("click",function(){open(i)});
+    r.addEventListener("mouseenter",function(){if(matchMedia("(hover:hover)").matches)open(i)});
+    r.addEventListener("focus",function(){open(i)});
+    r.addEventListener("keydown",function(e){
+      var k=e.key,to=-1;
+      if(k==="ArrowDown")to=Math.min(i+1,rows.length-1);else if(k==="ArrowUp")to=Math.max(i-1,0);else if(k==="Home")to=0;else if(k==="End")to=rows.length-1;
+      if(to>=0){e.preventDefault();rows[to].focus()}
+    });
+  });
+}
+/* price estimator: only the ranges the owner typed */
+var dataEl=document.getElementById("est-data");
+if(dataEl){
+  var cells=JSON.parse(dataEl.textContent);
+  var sizeIn=[].slice.call(document.querySelectorAll("input[name=est-size]"));
+  var optIn=[].slice.call(document.querySelectorAll("input[name=est-opt]"));
+  var out=document.getElementById("est-num");
+  var show=function(){
+    var sz=sizeIn.filter(function(i){return i.checked})[0],row=cells[sz.value]||{},first=null;
+    optIn.forEach(function(o){o.disabled=!row[o.value];if(!o.disabled&&!first)first=o});
+    var cur=optIn.filter(function(o){return o.checked&&!o.disabled})[0];
+    if(!cur&&first){first.checked=true;cur=first}
+    out.textContent=cur?row[cur.value]:"";
+  };
+  sizeIn.concat(optIn).forEach(function(i){i.addEventListener("change",show)});show();
+}
+/* the floating call button shows after the hero buttons scroll away */
+var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
+/* and hides while the form or the estimator is on screen */
+if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
+if(!("IntersectionObserver" in window)||reduce)return;
+var els=[].slice.call(document.querySelectorAll(".ed-rv"));
+els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
+root.classList.add("ed-rise");
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
+els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
+})();`;
+
+// Letters-only text typed by the owner, trimmed and capped.
+const edText = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+
+export function generateEditorial(form, d, deps) {
+  const { CINE_KIT, placeholderArt } = deps;
+  const kit = CINE_KIT[d.tradeKey];
+  const th = THEMES[d.themeKey];
+  const t = d.trade;
+  const cine = (form && form.cine) || {};
+  const images = cine.images || {};
+  const typed = (form && form.editorial && Array.isArray(form.editorial.projects)) ? form.editorial.projects : [];
+  const tradeName = t.label.replace(/ \(.*\)$/, "");
+  const name = esc(d.company);
+  const area = d.city ? esc(d.city) : "";
+  const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
+  const phoneShow = d.phone ? esc(d.phone.show) : "";
+  const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
+  const callText = d.phone ? `Call ${phoneShow}` : "Call us";
+  const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
+  const prices = offeredPrices(kit, cine.prices);
+
+  const slots = cineSlots(kit);
+  const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
+  const src = (id) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id));
+  const pic = (id, attrs = "") => `<img src="${esc(src(id))}" alt="" ${attrs}>`;
+
+  const story = kit.story || [], styles = kit.styles || [];
+  const exists = (id) => slots.some((s) => s.id === id);
+  const pool = [...styles.map((s) => s.id), ...story.map((s) => s.id)];
+  const e = kit.editorial || {};
+  const pick = (id, fb) => (id && exists(id) ? id : fb);
+  const heroId = pick(e.hero, story.length ? story[story.length - 1].id : pool[0]);
+  const beatId = pick(e.beat, styles.length ? styles[0].id : pool[0]);
+  const workIds = [0, 1, 2].map((i) => pick(e.work && e.work[i], pool[i % pool.length]));
+  const rows = d.services.slice(0, 6);
+  const svcPool = e.services && e.services.length ? e.services.filter(exists) : [...story.map((s) => s.id), ...styles.map((s) => s.id)];
+  const svcIds = rows.map((_, i) => svcPool[i % svcPool.length]);
+
+  const fam = (deps.editorialShape && deps.editorialShape(d.tradeKey)) || ED_SHAPES[ED_SHAPE_FOR[d.tradeKey] || "house"];
+  const lookExtra = deps.editorialLook ? deps.editorialLook(d.themeKey, d.tradeKey) || {} : {};
+  const fontsHref = lookExtra.fontsHref || "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Manrope:wght@400;500;600;700&display=swap";
+
+  const heroWords = story.length ? story[story.length - 1] : { headline: t.headline, accent: "" };
+  const eyebrow = `${esc(tradeName)}${area ? ` &middot; ${area}` : ""}`;
+
+  // Hero
+  const hero = `<section class="ed-hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
+  <div><p class="ed-eyebrow">${eyebrow}</p><h1>${esc(t.headline)}</h1>
+    <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
+    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${callHref}">${edIcon(ED_PHONE, 18)}<span>${callText}</span></a><a class="ed-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div></div>
+  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"')}</div>
+</div></section>`;
+
+  // Trust strip: only facts the owner ticked or typed
+  const facts = [];
+  if (d.insured) facts.push(["insured", "Insured", "Licensed and insured."]);
+  if (d.freeEstimates) facts.push(["estimate", "Free estimates", "We look at the job and tell you the price first."]);
+  if (d.emergency) facts.push(["hours", "Open 24/7", "Call any hour for emergencies."]);
+  if (d.years) facts.push(["years", `${d.years} year${d.years === 1 ? "" : "s"}`, "In business."]);
+  if (d.rating) facts.push(["rating", `${d.rating.toFixed(1)} on Google`, d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}.` : "Google rating."]);
+  if (area) facts.push(["area", "Service area", `${area} and nearby towns.`]);
+  const cells = facts.slice(0, 4);
+  const trust = cells.length ? `<section class="ed-trust" aria-label="At a glance"><div class="ed-wrap"><ul style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
+
+  // Second beat
+  const beat = `<section class="ed-beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
+  <p class="ed-big">${esc(story.length > 1 ? story[0].headline : t.headline)}</p>
+  <p>${esc(t.sub)}</p>
+</div></section>`;
+
+  // Work: three sample project cards
+  const cards = workIds.map((id, i) => {
+    const p = typed[i] || {};
+    const st = styles[i % Math.max(styles.length, 1)];
+    const nm = edText(p.name, 28) || ED_NAMES[i];
+    const meta = [
+      ["Where", edText(p.where, 40) || d.city || "Your town"],
+      ["Job", edText(p.job, 40) || (st ? st.name : d.services[i % d.services.length][0])],
+      ["Type", edText(p.type, 40) || d.services[i % d.services.length][0]],
+      ["Time", edText(p.time, 40) || "&mdash;"],
+    ];
+    return `<li class="ed-rv"><article><div class="ed-card">${pic(id)}<span class="ed-pill">${edPad(i + 1)} / 03</span><h3>${esc(nm)}</h3></div>
+    <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${v === "&mdash;" ? v : esc(v)}</dd></div>`).join("")}</dl></article></li>`;
+  }).join("");
+  const work = `<section class="ed-sec" id="work"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Our work</p><h2>Recent jobs</h2></div>
+  <ul class="ed-cards">${cards}</ul>
+  <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
+</div></section>`;
+
+  // Services: large numbered rows, the open row swaps the picture
+  const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we do</h2></div>
+  <div class="ed-svc"><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div>
+  <div class="ed-pic" aria-hidden="true">${svcIds.map((id, i) => pic(id, i === 0 ? 'class="on"' : "")).join("")}</div></div>
+</div></section>`;
+
+  // Estimate: typed ranges only, hidden when there are none
+  let est = "";
+  if (prices) {
+    const e2 = kit.estimator;
+    const first = prices.sizes[0];
+    const firstOpt = prices.options.find((o) => prices.cells[first][o]);
+    const radio = (g, label, on) => `<label class="ed-opt"><input type="radio" name="${g}" value="${esc(label)}"${on ? " checked" : ""}><span>${esc(label)}</span></label>`;
+    const list = prices.sizes.map((s) => prices.options.filter((o) => prices.cells[s][o]).map((o) => `<li><span>${esc(s)}, ${esc(o)}</span><strong>${esc(prices.cells[s][o])}</strong></li>`).join("")).join("");
+    est = `<section class="ed-sec" id="price"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Estimate</p><h2>Price it in seconds</h2><p class="ed-note">Pick the size and the kind of job. These ranges come from ${name}.</p></div>
+  <div class="ed-est ed-rv">
+    <div class="ed-est-ui">
+      <fieldset><legend>${esc(e2.sizeLabel || "Size")}</legend><div class="ed-opts">${prices.sizes.map((s) => radio("est-size", s, s === first)).join("")}</div></fieldset>
+      <fieldset><legend>${esc(e2.optionLabel || "Option")}</legend><div class="ed-opts">${prices.options.map((o) => radio("est-opt", o, o === firstOpt)).join("")}</div></fieldset>
+    </div>
+    <div><div class="ed-out" aria-live="polite"><p class="ed-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p><p class="ed-unit">${esc(cineUnit(d.tradeKey, cine.unit))}</p><p class="ed-note">An estimate, not a final price. The exact price comes after we look at the job.</p><a class="ed-btn light" href="#contact">${askLabel}</a></div>
+    <ul class="ed-list">${list}</ul></div>
+  </div>
+  <script type="application/json" id="est-data">${JSON.stringify(prices.cells).replace(/</g, "\\u003c")}</script>
+</div></section>`;
+  }
+
+  // Process, reviews note, contact
+  const steps = [
+    ["Call or send a request", d.phone ? `Call ${phoneShow}, or fill out the form on this page.` : "Call us, or fill out the form on this page."],
+    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
+    ["The work gets done", "We do the job you agreed to."],
+  ];
+  const process = `<section class="ed-sec" id="how"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">How it goes</p><h2>Three steps</h2></div>
+  <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${i + 1}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
+</div></section>`;
+  const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
+  <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>
+  <p class="ed-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
+</div></section>` : "";
+  const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
+  const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
+  <div class="ed-rv"><p class="ed-eyebrow" style="color:var(--ed-hi,var(--ed-cream))">Contact</p><h2 style="margin-top:18px">${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
+    <p class="ed-note">Call now, or send the form and we will call you back.</p>
+    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-phone">Phone number here</p>`}</div>
+  <form id="ask" class="ed-form ed-rv" novalidate>
+    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
+    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>
+    <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
+    <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
+    <button class="ed-btn" type="submit">Send request</button>
+    <p class="ed-form-note" id="f-note" aria-live="polite">We will call you back.</p>
+  </form>
+</div></section>`;
+
+  const links = [["#work", "Work"], ["#services", "Services"], prices && ["#price", "Price"], ["#contact", "Contact"]].filter(Boolean)
+    .map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
+
+  return `<!doctype html>
+<html lang="en" class="ed-no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
+<meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
+<meta name="theme-color" content="#ece5dc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="${esc(fontsHref)}">
+<style>
+:root{--ed-accent:color-mix(in srgb,${th.accent} 62%,#2a1204);--ed-hi:${th.hi}}
+${ED_CSS}
+${lookExtra.css || ""}
+</style>
+</head>
+<body class="ed">
+<header class="ed-nav"><div class="ed-wrap">
+  <a class="ed-logo" href="#top">${name}</a><span class="ed-pill">Sample site</span>
+  <nav class="ed-links" aria-label="Sections">${links}</nav>
+  <a class="ed-tel" href="${callHref}">${d.phone ? phoneShow : "Call us"}</a><a class="ed-btn sm" href="#contact">${askLabel}</a>
+  <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(ED_PHONE, 20)}</a>
+</div></header>
+<main id="top">
+${hero}
+${trust}
+${beat}
+${work}
+${svc}
+${est}
+${process}
+${reviews}
+${contact}
+</main>
+<footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div><p>&copy; ${esc(d.year)} ${name} &middot; Sample site</p></div></footer>
+<div class="ed-sticky"><a class="ed-btn" href="${callHref}">${edIcon(ED_PHONE, 18)}<span>${callText}</span></a></div>
+<script>
+${ED_JS}
+</script>
+</body>
+</html>
+`;
+}
