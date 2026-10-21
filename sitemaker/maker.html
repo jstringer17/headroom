@@ -1401,12 +1401,14 @@ const PAPER = { paper: "#f6f1e7", paper2: "#ede5d6", ink: "#1d1b18", muted: "#5b
 // Signature palettes per trade (from the reel study, see direction.md).
 // display: serif (italic accent word) or grotesk (heavy sans, accent by color).
 const CINE_PALETTES = {
-  carbonYellow: { label: "Carbon and yellow", display: "grotesk",
-    paper: "#111214", paper2: "#18191c", ink: "#f3f0e9", muted: "#aaa69d", line: "#2c2d31", night: "#08090a",
-    accent: "#ffd23f", accentInk: "#15130c", accentText: "#ffd23f", accentHi: "#ffd23f" },
-  carbonOrange: { label: "Carbon and orange", display: "grotesk",
-    paper: "#121110", paper2: "#1a1816", ink: "#f4efe8", muted: "#aca59b", line: "#2e2a26", night: "#0a0908",
-    accent: "#ff7a1a", accentInk: "#160c04", accentText: "#ff9147", accentHi: "#ff9147" },
+  // Dark story and tools (night), light content sections (paper), like the reels.
+  // On paper the accent word is ink on a highlighter stripe in the true accent.
+  carbonYellow: { label: "Carbon and yellow", display: "grotesk", marker: true,
+    paper: "#f4f2ed", paper2: "#e9e6df", ink: "#121212", muted: "#55524b", line: "#d9d5cc", night: "#0c0d0f",
+    accent: "#ffd23f", accentInk: "#15130c", accentText: "#121212", accentHi: "#ffd23f" },
+  carbonOrange: { label: "Carbon and orange", display: "grotesk", marker: true,
+    paper: "#f5f1ec", paper2: "#ebe5dd", ink: "#141110", muted: "#58514a", line: "#dbd3c9", night: "#0e0c0b",
+    accent: "#ff7a1a", accentInk: "#160c04", accentText: "#141110", accentHi: "#ff8f45" },
   woodBlueprint: { label: "Wood and blueprint", display: "serif",
     paper: "#f3ebdf", paper2: "#e8dccb", ink: "#22190f", muted: "#5d5040", line: "#d6c6ae", night: "#13284a",
     accent: "#f2c230", accentInk: "#1d1606", accentText: "#1d4f9c", accentHi: "#f2c230" },
@@ -1435,7 +1437,7 @@ const GRAIN = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
 function cineLook(themeKey, tradeKey, opts = {}) {
   const v = cineVars(themeKey, tradeKey, opts);
   const grotesk = v.display === "grotesk";
-  const dark = grotesk; // the grotesk palettes are the dark ones
+  const marker = !!v.marker;
   const css = `
 :root{--c-paper:${v.paper};--c-paper-2:${v.paper2};--c-ink:${v.ink};--c-muted:${v.muted};--c-line:${v.line};
 --c-night:${v.night};--c-accent:${v.accent};--c-accent-ink:${v.accentInk};--c-accent-text:${v.accentText};--c-accent-hi:${v.accentHi};
@@ -1544,17 +1546,15 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 }
 /* Bridge: the engine's markup (cinematic.js) reads these, so the look applies there too */
 :root{--serif:var(--f-display);--sans:var(--f-body);--cream:var(--c-paper);--cream2:var(--c-paper-2);--ink:var(--c-ink);--muted:var(--c-muted);
---dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);color-scheme:${dark ? "dark" : "light"}}
+--dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);--accent-text:var(--c-accent-text);color-scheme:light}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 h1,h2{font-weight:${grotesk ? "800" : "400"};letter-spacing:${grotesk ? "-.035em" : "-.012em"}}
 ${grotesk ? "h1 em,h2 em,.line em{font-style:normal}" : ""}
-h1 em,h2 em,.line em{color:var(--c-accent-text)}
-.story h1 em,.story h2 em,.story .line em,.dark-sec em,.final em,.panel em,.est-out em,.top em{color:var(--c-accent-hi)}
+h1 em,h2 em,.line em,.sec h2 em{color:var(--c-accent-text)${marker ? ";background:linear-gradient(transparent 58%,var(--c-accent) 58%,var(--c-accent) 90%,transparent 90%);padding:0 .06em" : ""}}
+html body :is(.story,.dark-sec,.final,.panel,.est-out,.top) em{color:var(--c-accent-hi);background:none;padding:0}
 .est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
 box-shadow:0 30px 60px -30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
 .est-num{font-family:var(--f-display);font-weight:${grotesk ? "800" : "400"};font-size:clamp(2.6rem,7vw,4.5rem);line-height:1;letter-spacing:-.02em}
-${dark ? `input,select,textarea{color:#1d1b18;background:#fbf8f2}
-form{color:var(--c-ink)}` : ""}
 `;
   return { css, fontsHref: CINE_FONTS_HREF, vars: v };
 }
@@ -1624,8 +1624,8 @@ ${path(`M${wx} 480 L${wx - 120} 650 L${wx + 420} 650 L${wx + 330} 480 Z`, lightO
 
 // A gable house front. roof: old | deck | wrap | new | metal | slate | frame
 // wall: paint color, or "frame" (studs) | "wrap"
-function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white, base = G } = {}) {
-  const x0 = x - w / 2, x1 = x + w / 2, top = base - wallH, peak = top - 190;
+function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white, base = G, roofH = 190 } = {}) {
+  const x0 = x - w / 2, x1 = x + w / 2, top = base - wallH, peak = top - roofH;
   const eL = x0 - 46, eR = x1 + 46, eY = top + 6;
   const tri = `M${eL} ${eY} L${x} ${peak} L${eR} ${eY} Z`;
   let out = "";
@@ -1686,11 +1686,11 @@ function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, wo
 // and stays clear of headlines and buttons, which sit at the bottom.
 function label(text, dark) {
   const t1 = "Sample picture: make in Higgsfield";
-  const t2 = text.length > 38 ? text.slice(0, 37) + "\u2026" : text;
+  const t2 = text.length > 40 ? text.slice(0, 39) + "\u2026" : text;
   return `<g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
-<rect x="580" y="100" width="440" height="92" rx="14" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
-<text x="800" y="138" font-size="22" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
-<text x="800" y="170" font-size="19" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
+<rect x="600" y="96" width="400" height="74" rx="12" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
+<text x="800" y="128" font-size="20" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
+<text x="800" y="155" font-size="17" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
 }
 
 // Viewfinder corner marks and a small "16:9 sketch" tag: reads as a shot to be made.
@@ -1698,7 +1698,7 @@ function frameMarks(dark) {
   const c = dark ? "#e6dccb" : C.ink, L = 46, m = 36;
   const corners = [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]]
     .map(([x, y, sx, sy]) => path(`M${x} ${y + sy * L} V${y} H${x + sx * L}`, "none", c, 3)).join("");
-  return `${corners}<text x="${W - 60}" y="78" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="3" fill="${c}" opacity=".75">16:9 SKETCH</text>`;
+  return corners;
 }
 
 function svgEsc(s) {
@@ -1752,8 +1752,8 @@ const SCENES = {
   },
   pressure(st, last, v) {
     const story = v < 0;
-    const B = 430;
-    let a = house({ base: B, x: 800, w: 520, wallH: 190, roof: "new", wall: v === 1 ? "#ebe8e1" : C.white, worn: story && st === 0,
+    const B = 450;
+    let a = house({ base: B, x: 800, w: 520, wallH: 160, roofH: 110, roof: "new", wall: v === 1 ? "#ebe8e1" : C.white, worn: story && st === 0,
       garage: rect(650, B - 130, 230, 130, C.white) + range(3).map((i) => line(650, B - 130 + 32 * (i + 1), 880, B - 130 + 32 * (i + 1), 2)).join("") });
     a += drive(C.stone, 230, 1700, B, 765);
     if (v === 2) a += rect(0, 770, W, 130, C.wood) + range(6).map((i) => line(0, 770 + i * 22, W, 770 + i * 22, 2, C.woodD)).join("");
