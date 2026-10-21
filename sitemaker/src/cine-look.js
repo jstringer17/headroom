@@ -1,0 +1,630 @@
+// Cinematic mode look: type, color and visual system (shared contract in
+// org/plan.md; the why is in org/art/direction.md).
+// cineLook(themeKey) -> { css, fontsHref, vars }: one serif display face with a
+// true italic for the accent word, one sans for everything else, cream paper
+// sections between full-bleed picture sections, accent used sparingly.
+// placeholderArt(trade, slotId, label) -> SVG data URI: an ink-on-paper
+// drawing of the picture that belongs in that slot. Never photo-like, and the
+// "Sample picture: make in Higgsfield" label is drawn on the art itself.
+
+import { THEMES } from "./themes.js";
+import { CINE_KIT } from "./cine-kit.js";
+
+export const CINE_FONTS_HREF =
+  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap";
+
+// Each classic theme mapped onto the cream look. `accent` fills the small
+// button (text on it is `accentInk`), `accentText` is the italic word and
+// links on cream (AA 4.5:1 on paper), `accentHi` is the italic word on dark
+// picture sections, `night` backs dark sections and picture scrims.
+export const CINE_THEMES = {
+  navy:   { night: "#13253a", accent: "#f27a1f", accentInk: "#1a1206", accentText: "#a94a0b", accentHi: "#ff9a4d" },
+  forest: { night: "#1d3a2a", accent: "#e9b949", accentInk: "#1d1a0a", accentText: "#7a5710", accentHi: "#f3cd6e" },
+  steel:  { night: "#1f2329", accent: "#cf2f27", accentInk: "#ffffff", accentText: "#b0261f", accentHi: "#ff8a7e" },
+  sky:    { night: "#0c3c66", accent: "#ffc23d", accentInk: "#1b1503", accentText: "#855a00", accentHi: "#ffd36b" },
+};
+
+const PAPER = { paper: "#f6f1e7", paper2: "#ede5d6", ink: "#1d1b18", muted: "#5b5449", line: "#d9cfbd" };
+
+export function cineVars(themeKey) {
+  const t = CINE_THEMES[themeKey] || CINE_THEMES.navy;
+  return { ...PAPER, ...t };
+}
+
+// Film grain, drawn once as a tiny SVG noise tile.
+const GRAIN = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0"/></filter><rect width="160" height="160" filter="url(#n)"/></svg>');
+
+export function cineLook(themeKey) {
+  const v = cineVars(themeKey);
+  const css = `
+:root{--c-paper:${v.paper};--c-paper-2:${v.paper2};--c-ink:${v.ink};--c-muted:${v.muted};--c-line:${v.line};
+--c-night:${v.night};--c-accent:${v.accent};--c-accent-ink:${v.accentInk};--c-accent-text:${v.accentText};--c-accent-hi:${v.accentHi};
+--f-display:"Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif;
+--f-body:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
+--ease:cubic-bezier(.2,.7,.1,1);--ease-out:cubic-bezier(.16,1,.3,1);--t-fade:900ms;--t-ui:260ms;
+--gap:clamp(20px,4vw,40px);--pad-y:clamp(80px,13vw,168px);--wrap:1180px;--radius:18px}
+.cine{background:var(--c-paper);color:var(--c-ink);font-family:var(--f-body);font-size:17px;line-height:1.6;
+-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.cine *,.cine *::before,.cine *::after{box-sizing:border-box}
+.cine img{display:block;max-width:100%}
+.cine-wrap{width:min(var(--wrap),100% - 2*var(--gap));margin-inline:auto}
+
+/* Type: big quiet serif, one italic accent word, small tracked eyebrow */
+.cine-display,.cine h1,.cine h2,.cine h3{font-family:var(--f-display);font-weight:400;letter-spacing:-.012em;line-height:1.02;margin:0;text-wrap:balance}
+.cine-xl{font-size:clamp(2.75rem,8.2vw,7rem)}
+.cine-l{font-size:clamp(2.25rem,5.6vw,4.75rem)}
+.cine-m{font-size:clamp(1.75rem,3.4vw,2.75rem);line-height:1.08}
+.cine-accent{font-style:italic;color:var(--c-accent-text);padding-right:.04em}
+.cine-dark .cine-accent,.cine-photo .cine-accent{color:var(--c-accent-hi)}
+.cine-eyebrow{font:600 .75rem/1.2 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--c-muted);margin:0 0 18px;display:flex;align-items:center;gap:12px}
+.cine-eyebrow::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
+.cine-lede{font-size:clamp(1.05rem,1.5vw,1.2rem);color:var(--c-muted);max-width:34em;margin:20px 0 0}
+.cine-dark .cine-eyebrow,.cine-photo .cine-eyebrow,.cine-dark .cine-lede,.cine-photo .cine-lede{color:rgba(250,246,238,.82)}
+
+/* Rhythm: cream paper sections between full-bleed picture sections */
+.cine-section{padding-block:var(--pad-y);background:var(--c-paper)}
+.cine-section.alt{background:var(--c-paper-2)}
+.cine-section+.cine-section{border-top:1px solid var(--c-line)}
+.cine-dark{background:var(--c-night);color:#faf6ee}
+.cine-head{display:grid;gap:8px;margin-bottom:clamp(36px,6vw,64px);max-width:760px}
+
+/* Full-bleed picture section with a soft scrim for legible type */
+.cine-photo{position:relative;min-height:100svh;overflow:hidden;color:#faf6ee;background:var(--c-night);isolation:isolate}
+.cine-photo>img,.cine-frame>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cine-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;
+background:linear-gradient(180deg,rgba(10,10,12,.34) 0%,rgba(10,10,12,0) 32%,rgba(10,10,12,0) 52%,rgba(10,10,12,.58) 100%),
+linear-gradient(90deg,rgba(10,10,12,.32) 0%,rgba(10,10,12,0) 55%)}
+.cine-grain::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:url("${GRAIN}");opacity:.07;mix-blend-mode:multiply}
+
+/* Scroll story: frames stack; the engine sets .is-on and --zoom (1 to 1.06) */
+.cine-frame{position:absolute;inset:0;opacity:0;transition:opacity var(--t-fade) var(--ease)}
+.cine-frame.is-on{opacity:1}
+.cine-frame>img{transform:scale(var(--zoom,1));transform-origin:50% 60%;will-change:transform}
+.cine-caption{position:absolute;z-index:3;left:var(--gap);right:var(--gap);bottom:clamp(40px,9vh,96px);max-width:900px;
+opacity:0;transform:translateY(18px);transition:opacity 700ms var(--ease-out),transform 700ms var(--ease-out)}
+.cine-caption.is-on{opacity:1;transform:none}
+.cine-caption h2{font-size:clamp(2.6rem,8vw,6.5rem);text-shadow:0 1px 30px rgba(0,0,0,.25)}
+.cine-step{font:600 .75rem/1 var(--f-body);letter-spacing:.18em;text-transform:uppercase;opacity:.85;margin-bottom:16px}
+.cine-progress{position:absolute;z-index:3;right:var(--gap);top:50%;transform:translateY(-50%);display:grid;gap:10px}
+.cine-progress i{display:block;width:2px;height:28px;background:rgba(250,246,238,.35);transition:background var(--t-ui)}
+.cine-progress i.is-on{background:var(--c-accent-hi)}
+
+/* Glass card over a picture */
+.cine-glass{position:relative;z-index:3;background:rgba(250,246,238,.68);color:var(--c-ink);border:1px solid rgba(255,255,255,.55);
+border-radius:var(--radius);padding:22px 24px;box-shadow:0 20px 50px -20px rgba(15,12,8,.45);
+-webkit-backdrop-filter:blur(18px) saturate(1.25);backdrop-filter:blur(18px) saturate(1.25);max-width:360px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.cine-glass{background:rgba(250,246,238,.94)}}
+.cine-glass h3{font-size:1.75rem;line-height:1.1}
+.cine-glass p{margin:8px 0 16px;color:var(--c-muted);font-size:.95rem}
+
+/* Small accent button: the only loud thing on the page */
+.cine-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:11px 20px;border-radius:999px;border:0;cursor:pointer;
+background:var(--c-accent);color:var(--c-accent-ink);font:600 .95rem/1 var(--f-body);text-decoration:none;
+transition:transform var(--t-ui) var(--ease),box-shadow var(--t-ui) var(--ease)}
+.cine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}
+.cine-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cine-btn.ghost{background:transparent;color:inherit;box-shadow:inset 0 0 0 1px currentColor}
+.cine-link{color:var(--c-accent-text);text-underline-offset:3px}
+
+/* Style tabs */
+.cine-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:5px;border-radius:999px;background:rgba(250,246,238,.66);
+-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);width:max-content;max-width:100%}
+.cine-tab{min-height:40px;padding:8px 16px;border-radius:999px;border:0;background:transparent;color:var(--c-ink);
+font:600 .875rem/1 var(--f-body);cursor:pointer;transition:background var(--t-ui),color var(--t-ui)}
+.cine-tab[aria-selected="true"]{background:var(--c-ink);color:var(--c-paper)}
+
+/* Before/after slider */
+.cine-ba{position:relative;aspect-ratio:16/9;border-radius:var(--radius);overflow:hidden;background:var(--c-night);touch-action:pan-y;user-select:none}
+.cine-ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cine-ba-line{position:absolute;top:0;bottom:0;width:2px;background:#faf6ee;transform:translateX(-1px);box-shadow:0 0 18px rgba(0,0,0,.35)}
+.cine-ba-handle{position:absolute;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;
+background:rgba(250,246,238,.8);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);display:grid;place-items:center;
+box-shadow:0 8px 24px -8px rgba(0,0,0,.5);color:var(--c-ink);cursor:ew-resize}
+.cine-ba-tag{position:absolute;top:16px;z-index:2;font:600 .7rem/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;
+padding:8px 12px;border-radius:999px;background:rgba(20,18,16,.6);color:#faf6ee}
+
+/* Estimator */
+.cine-est{display:grid;gap:28px;background:#fffdf8;border:1px solid var(--c-line);border-radius:calc(var(--radius) + 6px);padding:clamp(22px,4vw,40px)}
+.cine-chips{display:flex;flex-wrap:wrap;gap:8px}
+.cine-chip{min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--c-line);background:var(--c-paper);color:var(--c-ink);
+font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t-ui),background var(--t-ui)}
+.cine-chip[aria-pressed="true"]{border-color:var(--c-ink);background:var(--c-ink);color:var(--c-paper)}
+.cine-range{font-family:var(--f-display);font-size:clamp(2.5rem,6vw,4.25rem);line-height:1;letter-spacing:-.01em}
+.cine-note{font-size:.85rem;color:var(--c-muted)}
+
+/* Focus, motion */
+.cine :focus-visible{outline:2px solid var(--c-accent-text);outline-offset:3px;border-radius:8px}
+.cine-photo :focus-visible,.cine-dark :focus-visible{outline-color:var(--c-accent-hi)}
+.cine-reveal{opacity:0;transform:translateY(24px);transition:opacity 800ms var(--ease-out),transform 800ms var(--ease-out)}
+.cine-reveal.is-on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){
+.cine *,.cine *::before,.cine *::after{transition:none!important;animation:none!important}
+.cine-frame>img{transform:none!important}
+.cine-reveal,.cine-caption{opacity:1;transform:none}
+}`;
+  return { css, fontsHref: CINE_FONTS_HREF, vars: v };
+}
+
+/* ---------- Placeholder art ---------- */
+
+const W = 1600, H = 900, G = 720; // canvas and ground line
+const C = {
+  ink: "#2b2722", paper: "#f4ede1", paper2: "#e9dfcd", sky1: "#ece5d7", sky2: "#f7f1e6",
+  sage: "#a7b394", sageD: "#6f7f62", clay: "#c46a3c", wood: "#cf9f69", woodD: "#a3733f",
+  stone: "#bdb6a9", stoneD: "#8f887c", grime: "#6f6553", night: "#2f3b4c", night2: "#53607a",
+  gold: "#efbe62", white: "#fbf8f2", slate: "#6c727a", char: "#3c3a37", blue: "#56708c", rust: "#9a5a33",
+};
+
+const f = (n) => Math.round(n * 10) / 10;
+const line = (x1, y1, x2, y2, w = 3, c = C.ink, extra = "") =>
+  `<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="${c}" stroke-width="${w}" stroke-linecap="round"${extra}/>`;
+const rect = (x, y, w, h, fill = "none", stroke = C.ink, sw = 3, rx = 0, extra = "") =>
+  `<rect x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" rx="${rx}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${extra}/>`;
+const path = (d, fill = "none", stroke = C.ink, sw = 3, extra = "") =>
+  `<path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round" stroke-linecap="round"${extra}/>`;
+const circle = (cx, cy, r, fill = "none", stroke = C.ink, sw = 3, extra = "") =>
+  `<circle cx="${f(cx)}" cy="${f(cy)}" r="${f(r)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"${extra}/>`;
+const range = (n) => Array.from({ length: n }, (_, i) => i);
+// Repeatable pseudo-random numbers so a slot always draws the same.
+function rng(seed) {
+  let s = 0;
+  for (const ch of seed) s = (s * 31 + ch.charCodeAt(0)) >>> 0;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
+
+// Sky, sun, far trees and ground. mood: day | gold | dusk
+function backdrop(mood = "day", ground = C.sage) {
+  const sky = mood === "dusk" ? [C.night, C.night2] : mood === "gold" ? ["#ead9bd", "#f7ecdb"] : [C.sky1, C.sky2];
+  const sunY = mood === "gold" ? 420 : mood === "dusk" ? 520 : 250;
+  const sun = mood === "dusk" ? "#e9a86a" : mood === "gold" ? C.gold : "#f1d9a6";
+  const dots = range(15).map((i) => range(8).map((j) =>
+    `<circle cx="${60 + i * 106}" cy="${50 + j * 84}" r="1.6" fill="${mood === "dusk" ? "#8d97ab" : "#cfc4b0"}"/>`).join("")).join("");
+  const hills = `M0 ${G - 90} C 180 ${G - 150} 330 ${G - 120} 470 ${G - 140} S 760 ${G - 190} 930 ${G - 150} S 1260 ${G - 110} 1400 ${G - 160} S 1560 ${G - 140} 1600 ${G - 130} V ${G} H 0 Z`;
+  return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
+<rect width="${W}" height="${H}" fill="url(#sky)"/>${dots}
+${circle(1250, sunY, 92, sun, "none", 0, ' opacity=".9"')}${circle(1250, sunY, 128, "none", sun, 2, ' opacity=".5"')}
+${path(hills, mood === "dusk" ? "#3d4a5c" : "#c9cdb5", "none", 0, ' opacity=".8"')}
+${rect(0, G, W, H - G, ground, "none", 0)}${line(0, G, W, G, 3)}`;
+}
+
+// Interior room: back wall, floor, window.
+function room(wall = C.paper2, floor = "#d9c3a0", lightOn = false) {
+  return `<rect width="${W}" height="${H}" fill="${wall}"/>
+${rect(0, 650, W, 250, floor, "none", 0)}${line(0, 650, W, 650)}
+${rect(1080, 150, 330, 330, lightOn ? "#f7e7c4" : "#e4ebe7")}${line(1245, 150, 1245, 480, 2)}${line(1080, 315, 1410, 315, 2)}
+${path(`M1080 480 L960 650 M1410 480 L1500 650`, "none", C.ink, 1.5, ' opacity=".35"')}
+${path(`M1080 480 L960 650 L1500 650 L1410 480 Z`, lightOn ? "#f3dcae" : "#efe6d4", "none", 0, ' opacity=".55"')}`;
+}
+
+// A gable house front. roof: old | deck | wrap | new | metal | slate | frame
+// wall: paint color, or "frame" (studs) | "wrap"
+function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white } = {}) {
+  const x0 = x - w / 2, x1 = x + w / 2, top = G - wallH, peak = top - 190;
+  const eL = x0 - 46, eR = x1 + 46, eY = top + 6;
+  const tri = `M${eL} ${eY} L${x} ${peak} L${eR} ${eY} Z`;
+  let out = "";
+  // walls
+  if (wall === "frame") {
+    out += line(x0, G - 4, x1, G - 4, 6, C.woodD) + line(x0, top, x1, top, 6, C.woodD);
+    out += range(Math.round(w / 40) + 1).map((i) => line(x0 + i * (w / Math.round(w / 40)), top, x0 + i * (w / Math.round(w / 40)), G, 4, C.woodD)).join("");
+  } else {
+    out += rect(x0, top, w, wallH, wall === "wrap" ? "#f5f5f1" : wall);
+    if (wall === "wrap") out += range(4).map((i) => line(x0 + 10, top + 50 + i * 55, x1 - 10, top + 50 + i * 55, 1.5, "#b9c3c9")).join("");
+    else out += range(Math.floor(wallH / 26)).map((i) => line(x0 + 2, top + 26 * (i + 1), x1 - 2, top + 26 * (i + 1), 1, C.ink, ' opacity=".14"')).join("");
+  }
+  // roof
+  const rows = (gap, c, sw = 1.5, op = 1) => range(Math.ceil((eY - peak) / gap)).map((i) => {
+    const y = peak + gap * (i + 1), t = (y - peak) / (eY - peak);
+    return line(x - (x - eL) * t, y, x + (eR - x) * t, y, sw, c, ` opacity="${op}"`);
+  }).join("");
+  if (roof === "none") {
+    // walls only
+  } else if (roof === "frame") {
+    out += path(`M${eL} ${eY} L${x} ${peak} L${eR} ${eY} Z`, "none", C.woodD, 5);
+    out += range(9).map((i) => { const t = (i + 1) / 10; return line(eL + (x - eL) * t, eY - (eY - peak) * t, eL + (eR - eL) * t, eY, 3, C.woodD); }).join("");
+  } else {
+    const fill = { old: "#a99d89", deck: "#dcc095", wrap: "#d3d1cb", new: C.char, metal: "#5b4636", slate: C.slate }[roof] || C.char;
+    out += path(tri, fill);
+    if (roof === "old") {
+      out += rows(22, C.ink, 1.5, 0.35);
+      const r = rng("roof-old");
+      out += range(9).map(() => rect(x - 200 + r() * 400, peak + 70 + r() * 90, 26, 16, "#7d7262", "none", 0)).join("");
+      out += range(5).map(() => path(`M${x - 250 + r() * 500} ${peak + 60 + r() * 40} q 10 60 -6 110`, "none", "#6b604f", 5, ' opacity=".45"')).join("");
+    }
+    if (roof === "deck") out += range(16).map((i) => line(eL + (eR - eL) * i / 16, eY, x, peak, 1.2, C.woodD, ' opacity=".55"')).join("") + rows(48, C.woodD, 1.2, 0.5);
+    if (roof === "wrap") out += rows(52, "#a8a59e", 1.5) + line(eL, eY, eR, eY, 5, "#8f8b84");
+    if (roof === "new") out += rows(16, "#6e6a64", 1.5);
+    if (roof === "metal") out += range(22).map((i) => { const t = (i + 1) / 23; return line(eL + (eR - eL) * t, eY, x + (eL + (eR - eL) * t - x) * 0.04, peak + 8, 1.8, "#8a705a"); }).join("");
+    if (roof === "slate") out += rows(20, "#8e949b", 1.5) + range(40).map((i) => { const y = peak + 20 * (Math.floor(i / 8) + 2); const t = (y - peak) / (eY - peak); return line(x - (x - eL) * t + ((i % 8) + 0.5) * ((eR - eL) * t / 8), y - 20, x - (x - eL) * t + ((i % 8) + 0.5) * ((eR - eL) * t / 8), y, 1, "#8e949b"); }).join("");
+    out += line(eL - 4, eY, eR + 4, eY, 6, roof === "new" ? "#2a2826" : C.ink);
+  }
+  // windows and door
+  if (windows && wall !== "frame") {
+    const glass = lit ? "#f6d488" : wall === "wrap" ? "#7d8790" : "#9fb2bd";
+    const wy = top + 54;
+    for (const wx of [x0 + w * 0.14, x1 - w * 0.14 - 110]) {
+      out += rect(wx - 8, wy - 8, 126, 136, trim, C.ink, 2) + rect(wx, wy, 110, 120, glass) + line(wx + 55, wy, wx + 55, wy + 120, 2) + line(wx, wy + 60, wx + 110, wy + 60, 2);
+    }
+    if (!garage) out += rect(x - 46, G - 160, 92, 160, door) + circle(x + 28, G - 80, 4, C.gold, "none", 0);
+  }
+  if (garage) out += garage;
+  if (worn && wall !== "frame") {
+    const r = rng("wall-worn");
+    out += range(7).map(() => path(`M${x0 + 20 + r() * (w - 60)} ${top + 10} q ${r() * 12 - 6} ${40 + r() * 60} ${r() * 10 - 5} ${80 + r() * 90}`, "none", C.grime, 6, ' opacity=".28"')).join("");
+  }
+  return out;
+}
+
+// Label on the art: always visible, bottom left.
+function label(text, dark) {
+  const t1 = "Sample picture: make in Higgsfield";
+  const t2 = text.length > 64 ? text.slice(0, 63) + "…" : text;
+  const wpx = Math.max(t1.length * 15.2, t2.length * 12.2) + 56;
+  return `<g font-family="Helvetica, Arial, sans-serif">
+<rect x="48" y="${H - 160}" width="${f(wpx)}" height="112" rx="16" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
+<text x="76" y="${H - 112}" font-size="28" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${esc(t1)}</text>
+<text x="76" y="${H - 74}" font-size="22" fill="${dark ? "#4a443b" : "#d8cfbf"}">${esc(t2)}</text></g>`;
+}
+
+// Viewfinder corner marks and a small "16:9 sketch" tag: reads as a shot to be made.
+function frameMarks(dark) {
+  const c = dark ? "#e6dccb" : C.ink, L = 46, m = 36;
+  const corners = [[m, m, 1, 1], [W - m, m, -1, 1], [m, H - m, 1, -1], [W - m, H - m, -1, -1]]
+    .map(([x, y, sx, sy]) => path(`M${x} ${y + sy * L} V${y} H${x + sx * L}`, "none", c, 3)).join("");
+  return `${corners}<text x="${W - 60}" y="78" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="3" fill="${c}" opacity=".75">16:9 SKETCH</text>`;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+}
+
+// Ground-plane trapezoid for driveways and roads.
+const drive = (fill, topW = 260, botW = 900, topY = G, cx = 800) =>
+  path(`M${cx - topW / 2} ${topY} L${cx + topW / 2} ${topY} L${cx + botW / 2} ${H} L${cx - botW / 2} ${H} Z`, fill);
+
+function blotches(seed, n, box, color, op = 0.35, pebble = 0) {
+  const r = rng(seed);
+  return range(n).map(() => {
+    const cx = box[0] + r() * box[2], cy = box[1] + r() * box[3], rx = pebble || 30 + r() * 90, ry = pebble ? pebble * 0.7 : 12 + r() * 30;
+    return `<ellipse cx="${f(cx)}" cy="${f(cy)}" rx="${f(rx)}" ry="${f(ry)}" fill="${color}" opacity="${op}"/>`;
+  }).join("");
+}
+
+function shrub(x, y, s = 1, fill = C.sageD) {
+  return path(`M${x - 60 * s} ${y} C ${x - 70 * s} ${y - 60 * s} ${x - 20 * s} ${y - 90 * s} ${x} ${y - 70 * s} C ${x + 30 * s} ${y - 100 * s} ${x + 80 * s} ${y - 50 * s} ${x + 60 * s} ${y} Z`, fill);
+}
+
+// Scenes. Each takes (stage, last, variant) and returns { art, mood }.
+// stage 0 is the base picture, `last` is the finished frame.
+const SCENES = {
+  roofing(st, last, v) {
+    const roof = v === 1 ? "metal" : v === 2 ? "slate" : ["old", "deck", "wrap", "new"][st] || "new";
+    const art = house({ roof, worn: st === 0 && v < 0 }) + shrub(400, G, 1) + shrub(1200, G, 0.9);
+    const bundles = st === 1 ? rect(760, 330, 80, 34, "#6e6a64") : "";
+    return { art: art + bundles, mood: st === last || v >= 0 ? "gold" : "day" };
+  },
+  fencing(st, last, v) {
+    const y0 = 600, x0 = 110, x1 = 1490, n = 12, step = (x1 - x0) / n;
+    let a = house({ x: 300, w: 380, wallH: 190, roof: "new" });
+    a += rect(0, G - 2, W, H - G, C.sage, "none", 0) + shrub(1350, G - 40, 0.8);
+    const stage = v >= 0 ? 3 : st;
+    const kind = v === 1 ? "vinyl" : v === 2 ? "rail" : "cedar";
+    if (stage === 0) {
+      a += line(x0, y0 + 60, x1, y0 + 60, 3, C.clay);
+      a += range(n + 1).map((i) => line(x0 + i * step, y0 + 50, x0 + i * step, y0 + 100, 5, C.woodD)).join("");
+    } else {
+      const pc = kind === "vinyl" ? C.white : kind === "rail" ? C.char : C.woodD;
+      if (stage >= 3 && kind === "cedar") a += rect(x0, y0 - 120, x1 - x0, 230, C.wood) + range(70).map((i) => line(x0 + i * (x1 - x0) / 70, y0 - 120, x0 + i * (x1 - x0) / 70, y0 + 110, 1.5, C.woodD)).join("");
+      if (stage >= 3 && kind === "vinyl") a += range(n).map((i) => rect(x0 + i * step + 6, y0 - 120, step - 12, 230, C.white)).join("");
+      if (stage >= 3 && kind === "rail") a += range(n * 6).map((i) => line(x0 + i * step / 6, y0 - 110, x0 + i * step / 6, y0 + 110, 3, C.char)).join("");
+      a += range(n + 1).map((i) => rect(x0 + i * step - 9, y0 - 140, 18, 250, pc)).join("");
+      a += range(n + 1).map((i) => `<ellipse cx="${f(x0 + i * step)}" cy="${y0 + 112}" rx="20" ry="6" fill="${C.stone}"/>`).join("");
+      if (stage >= 2) a += line(x0, y0 - 90, x1, y0 - 90, 10, pc) + line(x0, y0 + 60, x1, y0 + 60, 10, pc);
+    }
+    return { art: a, mood: "gold" };
+  },
+  pressure(st, last, v) {
+    let a = house({ x: 800, w: 700, wallH: 240, roof: "new", wall: v === 1 ? "#fbfbf6" : C.white, worn: st === 0 && v < 0,
+      garage: rect(580, G - 170, 300, 170, "#f1ece2") + range(4).map((i) => line(580, G - 170 + 42 * (i + 1), 880, G - 170 + 42 * (i + 1), 2)).join("") });
+    a += drive(C.stone, 300, 1100, G, 730);
+    if (v === 2) a += rect(0, 760, W, 140, C.wood) + range(7).map((i) => line(0, 760 + i * 20, W, 760 + i * 20, 2, C.woodD)).join("");
+    if (v < 0 && st < last) {
+      const dirt = `<g${st === 1 ? ' clip-path="url(#half)"' : ""}>${drive(C.grime, 300, 1100, G, 730)}${blotches("drive", 16, [300, 730, 900, 170], "#3f3a2f", 0.45)}${blotches("moss", 8, [200, 820, 1100, 80], "#4f6a3f", 0.4)}</g>`;
+      a += st === 1 ? `<defs><clipPath id="half"><rect x="760" y="0" width="900" height="900"/></clipPath></defs>${dirt}${line(760, G, 760, H, 4, C.white)}` : dirt;
+    }
+    if (v < 0 && st >= 1) a += path(`M380 880 q 120 -20 260 0`, "none", "#ffffff", 3, ' opacity=".6"');
+    return { art: a, mood: "day" };
+  },
+  hvac(st, last, v) {
+    if (v === 2) {
+      return { art: room(C.paper2, "#cfb38b") + rect(240, 160, 520, 130, C.white, C.ink, 3, 22) + line(270, 260, 730, 260, 2) + rect(260, 650 - 220, 380, 180, "#8f9c84", C.ink, 3, 12), mood: "day" };
+    }
+    let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 80, 980, G - 80, "#eae3d6") + range(24).map((i) => line(0, 80 + i * 27, 980, 80 + i * 27, 1, C.ink, ' opacity=".14"')).join("");
+    a += rect(0, G, W, H - G, C.sage, "none", 0) + line(0, G, W, G) + rect(1040, 180, 220, 260, "#e4ebe7");
+    const old = st === 0 && v < 0;
+    a += rect(380, G - 10, 470, 26, old ? "#a39c8e" : C.stone, C.ink, 3, 4);
+    if (old) a += line(560, G - 4, 640, G + 14, 2);
+    if (st !== 1 || v >= 0) {
+      const wide = v === 1;
+      a += rect(wide ? 390 : 420, G - 300, wide ? 450 : 390, 290, old ? "#b9b2a2" : "#dfe2e0", C.ink, 3, 10);
+      a += range(16).map((i) => line(wide ? 410 : 440, G - 270 + i * 16, wide ? 520 : 790, G - 270 + i * 16, 1.5, C.ink, ' opacity=".45"')).join("");
+      if (wide) a += circle(690, G - 155, 105, "#c9cecc") + circle(690, G - 155, 22, C.ink, "none");
+      if (old) a += blotches("rust", 7, [430, G - 280, 360, 260], C.rust, 0.4) + shrub(330, G + 4, 0.6, "#8b8f5a") + shrub(900, G + 4, 0.5, "#8b8f5a");
+    }
+    a += path(`M380 ${G - 220} H250 V${G - 380}`, "none", C.ink, 8) + rect(200, G - 470, 90, 110, "#d7d3ca");
+    return { art: a, mood: "day" };
+  },
+  restoration(st, last, v) {
+    let a;
+    if (v === 1) a = room("#efe9de", "#cbb18c") + rect(160, 380, 820, 270, C.white) + range(5).map((i) => line(160 + i * 164, 380, 160 + i * 164, 650, 2)).join("") + rect(160, 360, 820, 22, C.stone) + rect(180, 120, 780, 160, C.white) + range(5).map((i) => line(180 + i * 156, 120, 180 + i * 156, 280, 2)).join("");
+    else if (v === 2) a = room("#eef0ee", "#d8d6cf") + range(10).map((i) => line(0, 120 + i * 53, 1000, 120 + i * 53, 1.5, "#bfc5c3")).join("") + range(12).map((i) => line(i * 85, 120, i * 85, 650, 1.5, "#bfc5c3")).join("");
+    else {
+      a = room(C.paper2, st === 0 ? "#9d8d76" : st === 1 ? "#b9b4aa" : "#c9b493");
+      if (st === 0) a += path(`M0 560 C 200 540 340 575 520 548 S 860 570 1000 552 L 1080 560 V 650 H 0 Z`, "#b9a88d", "none", 0, ' opacity=".7"') + line(0, 556, 1080, 556, 2, C.grime, ' opacity=".6"');
+      if (st === 1) {
+        a += rect(0, 520, 1080, 130, "#e8dcc6", "none", 0) + range(14).map((i) => rect(20 + i * 76, 520, 16, 130, C.wood, C.woodD, 2)).join("") + line(0, 520, 1080, 520, 3);
+        for (const [x, y] of [[300, 760], [700, 790], [1180, 760]]) a += path(`M${x - 70} ${y + 40} L${x - 50} ${y - 60} H${x + 50} L${x + 70} ${y + 40} Z`, "#6c7680") + circle(x, y - 10, 34, "#9aa3ac");
+        a += rect(1300, 690, 140, 150, "#d9dcd8", C.ink, 3, 10);
+      }
+      if (st >= 2) a += line(0, 640, 1080, 640, 8, C.white);
+    }
+    return { art: a, mood: "day" };
+  },
+  builder(st, last, v) {
+    let a = "";
+    const stage = v >= 0 ? 3 : st;
+    if (stage === 0) {
+      a += rect(0, G, W, H - G, "#c8b896", "none", 0) + line(0, G, W, G);
+      a += path(`M820 ${G + 24} L1320 ${G + 24} L1420 ${G + 110} L720 ${G + 110} Z`, "none", C.clay, 3, ' stroke-dasharray="14 10"');
+      for (const [x, y] of [[820, G + 24], [1320, G + 24], [1420, G + 110], [720, G + 110]]) a += line(x, y - 34, x, y + 4, 6, C.woodD);
+      return { art: a, mood: "gold", ground: "#c8b896" };
+    }
+    if (stage === 1) a += rect(470, G - 6, 660, 14, C.stone) + house({ x: 800, w: 640, wallH: 300, roof: "frame", wall: "frame" }) + line(480, G - 150, 1120, G - 150, 6, C.woodD);
+    if (stage === 2) a += house({ x: 800, w: 640, wallH: 300, roof: "wrap", wall: "wrap" });
+    if (stage === 3) {
+      if (v === 2) a += rect(420, G - 280, 760, 280, "#e9e4da") + rect(420, G - 300, 800, 26, C.char) + rect(470, G - 230, 380, 190, "#f6d488") + range(4).map((i) => line(470 + i * 95, G - 230, 470 + i * 95, G - 40, 3)).join("") + rect(900, G - 200, 90, 200, C.woodD);
+      else {
+        const wall = v === 1 ? "#cdb38c" : C.white;
+        a += house({ x: 800, w: 640, wallH: 300, roof: v === 1 ? "new" : "metal", wall, lit: true, trim: v === 0 ? C.char : C.white, door: v === 1 ? C.woodD : C.char });
+        if (v === 0 || v < 0) a += range(17).map((i) => line(484 + i * 38, G - 296, 484 + i * 38, G, 1.5, C.ink, ' opacity=".25"')).join("");
+        a += rect(560, G - 120, 480, 14, C.char) + (v === 1 ? range(2).map((i) => path(`M${600 + i * 380} ${G - 106} L${590 + i * 380} ${G} H${630 + i * 380} L${620 + i * 380} ${G - 106} Z`, C.white)).join("") : range(4).map((i) => line(570 + i * 153, G - 106, 570 + i * 153, G, 5)).join(""));
+      }
+      a += drive("#d9d2c4", 140, 520, G, 1000);
+    }
+    return { art: a, mood: "gold" };
+  },
+  framing(st, last, v) {
+    let a = rect(380, G - 8, 840, 22, C.stone);
+    const stage = v >= 0 ? 3 : st;
+    if (v === 1) return { art: house({ x: 620, w: 520, roof: "new" }) + house({ x: 1150, w: 300, wallH: 220, roof: "frame", wall: "frame" }), mood: "day" };
+    if (v === 2) return { art: a + house({ x: 800, w: 760, wallH: 260, roof: "frame", wall: "frame" }) + rect(560, G - 220, 480, 220, C.paper2, C.woodD, 6), mood: "day" };
+    if (stage === 0) {
+      a += range(6).map((i) => line(420 + i * 150, G - 8, 420 + i * 150, G - 40, 4, C.slate)).join("");
+      a += range(6).map((i) => rect(1280, G - 20 - i * 18, 240, 18, C.wood, C.woodD, 2)).join("");
+    }
+    if (stage >= 1) a += house({ x: 800, w: 800, wallH: 280, roof: stage >= 2 ? "frame" : "none", wall: "frame" });
+    if (stage >= 1) a += rect(500, G - 200, 140, 120, C.paper2, C.woodD, 5) + rect(960, G - 200, 140, 120, C.paper2, C.woodD, 5) + rect(750, G - 220, 100, 220, C.paper2, C.woodD, 5);
+    if (stage === 3) a = rect(380, G - 8, 840, 22, C.stone) + house({ x: 800, w: 800, wallH: 280, roof: "deck", wall: "#dcc095", windows: false }) + rect(500, G - 200, 140, 120, "#4b4038") + rect(960, G - 200, 140, 120, "#4b4038") + rect(750, G - 220, 100, 220, "#4b4038");
+    return { art: a, mood: "day" };
+  },
+  remodeling(st, last, v) {
+    if (v === 1) return { art: room("#efece6", "#d8d4cc") + range(9).map((i) => line(0, 120 + i * 60, 900, 120 + i * 60, 1.5, "#c4c0b8")).join("") + rect(120, 140, 360, 510, "rgba(200,220,225,.45)", C.ink, 3) + rect(620, 470, 300, 180, C.woodD) + rect(600, 450, 340, 24, C.white), mood: "day" };
+    if (v === 2) return { art: room("#eae2d4", "#b88d5f", true) + rect(120, 160, 600, 490, "#d8c6a8") + range(4).map((i) => line(120, 160 + i * 122, 720, 160 + i * 122, 4, C.woodD)).join("") + rect(820, 520, 420, 130, "#8c9a83", C.ink, 3, 18), mood: "gold" };
+    const stage = v >= 0 ? 3 : st;
+    let a = room(stage === 1 ? "#e6dac4" : C.paper2, stage === 0 ? "#d4c27a" : stage === 1 ? "#cdbfa5" : "#c79e6c", stage === 3);
+    if (stage === 0) a += range(4).map((i) => rect(100 + i * 200, 420, 190, 230, "#a5743f", C.ink, 3)).join("") + rect(90, 400, 820, 26, "#d9cfb9") + range(4).map((i) => rect(100 + i * 200, 140, 190, 180, "#a5743f")).join("") + circle(520, 60, 30, "#e8e2c0");
+    if (stage === 1) a += range(14).map((i) => rect(60 + i * 70, 80, 14, 570, C.wood, C.woodD, 2)).join("") + path(`M60 300 C 300 280 500 340 980 300`, "none", C.clay, 3);
+    if (stage >= 2) {
+      a += range(4).map((i) => rect(100 + i * 200, 420, 190, 230, "#f2efe8", C.ink, 3)).join("") + range(4).map((i) => rect(100 + i * 200, 120, 190, 200, "#f2efe8")).join("") + rect(300, 600, 560, 50, "#efe9de");
+      if (stage === 3) {
+        a += rect(90, 398, 820, 26, "#d6d3cc") + range(26).map((i) => line(100 + i * 31, 325, 100 + i * 31, 398, 1.2, C.ink, ' opacity=".3"')).join("");
+        for (const x of [420, 620]) a += line(x, 0, x, 160, 2) + path(`M${x - 40} 210 Q ${x} 140 ${x + 40} 210 Z`, C.gold);
+      }
+    }
+    return { art: a, mood: "day" };
+  },
+  painting(st, last, v) {
+    const color = v === 1 ? "#33435c" : v === 2 ? "#f7f3ea" : st === last || v === 0 ? "#7f9078" : "#a8b3b8";
+    let a = house({ x: 800, w: 720, wallH: 290, roof: "new", wall: color, worn: st === 0 && v < 0, trim: v === 2 ? C.char : C.white, door: v >= 0 || st === last ? "#1f1d1b" : "#7d6d5d" });
+    if (st === 0 && v < 0) a += blotches("peel", 14, [460, 450, 680, 260], "#e9e4dc", 0.85);
+    if (st === 1 && v < 0) {
+      a += blotches("primer", 12, [460, 440, 680, 260], C.white, 0.95);
+      for (const wx of [440 + 720 * 0.14, 1160 - 720 * 0.14 - 110]) a += rect(wx - 8, G - 290 + 46, 126, 136, "#d8c8a6", C.clay, 3);
+    }
+    a += shrub(380, G) + shrub(1220, G, 0.9);
+    return { art: a, mood: st === last || v >= 0 ? "gold" : "day" };
+  },
+  concrete(st, last, v) {
+    let a = house({ x: 800, w: 700, wallH: 220, roof: "new" });
+    const stage = v >= 0 ? 2 : st;
+    if (stage === 0) {
+      a += drive("#a59e90") + blotches("crack", 6, [400, 740, 800, 140], "#7d766a", 0.5);
+      a += path(`M690 ${G} l -30 60 l 40 50 l -60 70`, "none", C.ink, 3) + path(`M920 760 l 40 40 l -10 50 l 60 50`, "none", C.ink, 3) + path(`M520 840 l 120 -16 l 80 20`, "none", C.ink, 3);
+      a += shrub(680, 790, 0.18, "#7c8a52") + shrub(940, 810, 0.2, "#7c8a52");
+    }
+    if (stage === 1) {
+      a += drive("#b6a98f") + blotches("gravel", 30, [380, 730, 840, 160], "#8f8574", 0.4);
+      a += range(8).map((i) => { const t = i / 7; return line(800 - 130 - 320 * t, G + 180 * t, 800 + 130 + 320 * t, G + 180 * t, 2, C.rust); }).join("");
+      a += range(9).map((i) => line(670 + i * 32.5, G, 350 + i * 112.5, H, 2, C.rust)).join("");
+      a += path(`M670 ${G} L350 ${H} M930 ${G} L1250 ${H}`, "none", C.woodD, 10);
+    }
+    if (stage === 2) {
+      a += drive(v === 2 ? "#cdb99c" : "#d6d1c6");
+      if (v === 1) a += range(30).map((i) => { const r = rng("st" + i); return path(`M${f(500 + r() * 600)} ${f(740 + r() * 150)} l 40 -10 l 30 20 l -20 30 l -50 -5 Z`, "none", "#9a9488", 2); }).join("");
+      else if (v === 2) a += blotches("agg", 140, [420, 730, 760, 165], "#8c7356", 0.6, 5);
+      else a += line(800 - 230, G + 70, 800 + 230, G + 70, 2) + line(800 - 360, G + 140, 800 + 360, G + 140, 2) + line(800, G, 800, H, 2);
+    }
+    return { art: a, mood: "day" };
+  },
+  landscaping(st, last, v) {
+    const stage = v >= 0 ? 3 : st;
+    const ground = stage === 0 ? "#bfae82" : stage === 3 ? "#8fa874" : "#b5b58a";
+    let a = house({ x: 820, w: 640, wallH: 230, roof: "new" });
+    if (stage === 0) a += blotches("dirt", 14, [80, 740, 1440, 150], "#9a8462", 0.6) + shrub(560, G + 10, 1.3, "#7f8a56") + shrub(1080, G + 10, 1.4, "#7f8a56") + shrub(800, G + 10, 1.1, "#7f8a56");
+    if (stage >= 1) a += path(`M380 ${G + 60} C 620 ${G + 20} 1000 ${G + 90} 1260 ${G + 40} L 1260 ${G} L 380 ${G} Z`, v === 1 ? C.stone : "#5a4636");
+    if (v === 1) a += blotches("rock", 30, [380, G + 6, 880, 40], C.stoneD, 0.7);
+    if (stage >= 2) a += [440, 560, 700, 960, 1100, 1200].map((x, i) => i % 2 ? path(`M${x} ${G + 30} l -24 -70 M${x} ${G + 30} l 0 -84 M${x} ${G + 30} l 24 -70`, "none", C.sageD, 4) : shrub(x, G + 30, 0.5)).join("");
+    if (stage === 3 && v !== 1) a += range(6).map((i) => rect(0, G + 70 + i * 22, W, 11, "#a1b986", "none", 0)).join("");
+    if (v === 2) a += range(10).map((i) => path(`M${200 + i * 120} ${G + 120} l 90 -6 l 20 34 l -100 10 Z`, C.stone)).join("");
+    return { art: a, mood: "gold", ground };
+  },
+  tree(st, last, v) {
+    let a = house({ x: 980, w: 600, wallH: 230, roof: "new" });
+    const stage = v >= 0 ? 2 : st;
+    if (v === 1 || v === 2) {
+      a += v === 1 ? `<ellipse cx="460" cy="${G + 20}" rx="70" ry="18" fill="${C.wood}" stroke="${C.ink}" stroke-width="3"/>` : `<ellipse cx="460" cy="${G + 30}" rx="90" ry="20" fill="#7b6449"/>`;
+      return { art: a, mood: "gold" };
+    }
+    a += path(`M430 ${G} C 440 600 420 520 450 420 M450 470 C 520 420 600 400 700 380 M445 520 C 380 470 320 460 260 450`, "none", "#5f4b39", stage === 0 ? 26 : 22);
+    const big = stage === 0;
+    a += path(big ? `M120 470 C 60 320 240 160 420 190 C 560 90 860 140 940 300 C 1060 340 1020 470 900 470 C 760 520 300 540 120 470 Z`
+      : `M210 430 C 170 300 300 200 440 220 C 560 150 720 210 740 320 C 800 380 740 450 640 440 C 520 470 320 480 210 430 Z`, big ? "#7a8a5e" : "#8fa06e");
+    if (big) a += path(`M700 380 L 860 330 L 900 300`, "none", "#5f4b39", 10) + path(`M860 330 l 30 -40 M880 316 l 40 10`, "none", "#5f4b39", 5);
+    if (stage === 2) a += range(5).map((i) => line(1250, 250, 900 - i * 110, G, 3, C.gold, ' opacity=".5"')).join("");
+    return { art: a, mood: stage === 2 ? "gold" : "day" };
+  },
+  garage(st, last, v) {
+    const stage = v >= 0 ? 2 : st;
+    const dusk = stage === 2;
+    let door;
+    const gx = 520, gw = 560, gy = G - 230;
+    if (stage === 0 && v < 0) door = rect(gx, gy, gw, 230, "#ebe7df") + range(4).map((i) => line(gx, gy + 57 * (i + 1), gx + gw, gy + 57 * (i + 1), 2)).join("") + path(`M${gx + 160} ${gy + 70} q 30 20 10 50`, "none", C.stoneD, 4) + line(gx + 280, gy + 114, gx + gw, gy + 124, 2);
+    else if (v === 1) door = rect(gx, gy, gw, 230, "#3a3d42") + range(4).map((i) => range(5).map((j) => rect(gx + 12 + j * 108, gy + 10 + i * 55, 100, 46, dusk ? "#d9cba9" : "#c9d2d6", "#3a3d42", 2)).join("")).join("");
+    else if (v === 2) door = rect(gx, gy, gw, 230, C.white) + range(4).map((i) => range(4).map((j) => rect(gx + 16 + j * 136, gy + 12 + i * 55, 120, 42, "none", C.ink, 2)).join("")).join("");
+    else door = rect(gx, gy, gw, 230, "#5a4a3c") + range(4).map((j) => rect(gx + 14 + j * 136, gy + 14, 126, 46, dusk ? "#f2d18a" : "#c9d2d6")).join("") + range(9).map((i) => line(gx + i * 62, gy + 70, gx + i * 62, G, 2, "#3e3229")).join("") + line(gx + gw / 2, gy + 70, gx + gw / 2, G, 4, "#3e3229");
+    let a = house({ x: 800, w: 900, wallH: 300, roof: "new", lit: dusk, garage: door, windows: true });
+    if (dusk) a += circle(470, G - 200, 10, "#ffd98a") + circle(1130, G - 200, 10, "#ffd98a") + circle(470, G - 200, 40, "#ffd98a", "none", 0, ' opacity=".25"') + circle(1130, G - 200, 40, "#ffd98a", "none", 0, ' opacity=".25"');
+    a += drive("#cfc8ba", gw, 1300);
+    return { art: a, mood: dusk ? "dusk" : "day" };
+  },
+  plumbing(st, last, v) {
+    if (v === 1) return { art: room("#e9e6df", C.stone) + rect(560, 160, 300, 380, C.white, C.ink, 3, 16) + circle(710, 260, 40, "#d9dde0") + path(`M620 540 V640 M700 540 V640 M780 540 V640`, "none", C.rust, 10), mood: "day" };
+    if (v === 2) return { art: room("#efeae1", "#cdb592") + rect(300, 480, 900, 170, C.white) + rect(260, 460, 980, 26, "#d8d4cb") + path(`M760 460 V300 Q 760 250 820 250 H880 Q 920 250 920 300`, "none", C.char, 12), mood: "day" };
+    const stage = v >= 0 ? 2 : st;
+    let a = `<rect width="${W}" height="${H}" fill="#e6dccb"/>` + rect(200, 120, 1200, 700, stage === 2 ? "#efe6d3" : "#e2d5bd") + line(800, 120, 800, 820, 3);
+    a += rect(200, 60, 1200, 60, "#cfc8bc") + path(`M700 120 V 260 Q 700 300 740 300 H 860 Q 900 300 900 260 V 120`, "none", C.ink, 3);
+    const pc = stage === 0 ? "#8f8a7d" : C.clay;
+    a += path(`M800 300 V 420 Q 800 470 760 470 H 600 Q 560 470 560 510 V 820`, "none", pc, 22) + path(`M480 820 V 560 H 420 M1120 820 V 560 H 1180`, "none", stage === 0 ? "#8f8a7d" : "#e9e7e1", 16);
+    a += circle(480, 600, 22, stage === 0 ? "#6b8a6b" : "#cfd3d6") + circle(1120, 600, 22, stage === 0 ? "#6b8a6b" : "#cfd3d6");
+    if (stage === 0) a += `<ellipse cx="900" cy="790" rx="220" ry="26" fill="${C.grime}" opacity=".35"/>` + path(`M1180 680 L1200 800 H1320 L1340 680 Z`, "#9da4a8") + blotches("corr", 6, [440, 420, 400, 120], "#6b8a6b", 0.5);
+    if (stage === 2) a += rect(220, 780, 1160, 36, "#f6f1e7", C.ink, 2);
+    return { art: a, mood: "day" };
+  },
+  electrical(st, last, v) {
+    if (v === 1) return { art: room("#ebe4d8", "#bfa27e", true) + range(4).map((i) => circle(200 + i * 300, 40, 18, "#ffe3a3", C.ink, 2)).join("") + range(4).map((i) => path(`M${200 + i * 300} 60 L ${120 + i * 300} 640 H ${280 + i * 300} Z`, "#fff0c8", "none", 0, ' opacity=".35"')).join("") + rect(240, 520, 520, 130, "#8c9a83", C.ink, 3, 18), mood: "gold" };
+    if (v === 2) return { art: room("#e8e5df", C.stone) + rect(640, 220, 220, 300, C.white, C.ink, 3, 22) + rect(690, 300, 120, 60, "#c8d6dc", C.ink, 2, 8) + path(`M750 520 C 760 640 560 620 600 700 C 640 760 860 740 820 650`, "none", C.char, 8), mood: "day" };
+    const stage = v >= 0 ? 1 : st;
+    let a = `<rect width="${W}" height="${H}" fill="${stage === 2 ? "#ede7dc" : "#e3ddd2"}"/>` + rect(0, 760, W, 140, C.stone, "none", 0) + line(0, 760, W, 760);
+    a += rect(560, 120, 480, 600, stage === 0 ? "#b7b2a6" : "#d9dcdc", C.ink, 3, 6);
+    if (stage === 0) {
+      const r = rng("tangle");
+      a += range(18).map(() => path(`M${f(600 + r() * 400)} ${f(160 + r() * 520)} C ${f(560 + r() * 480)} ${f(140 + r() * 560)} ${f(560 + r() * 480)} ${f(140 + r() * 560)} ${f(600 + r() * 400)} ${f(160 + r() * 520)}`, "none", ["#3b3a37", "#8a3b2c", "#d8d2c4"][Math.floor(r() * 3)], 4)).join("");
+      a += range(8).map((i) => circle(700 + (i % 2) * 200, 200 + Math.floor(i / 2) * 110, 26, "#cdb995")).join("");
+    }
+    if (stage === 1) {
+      a += rect(600, 160, 400, 520, "#ecefee", C.ink, 2) + line(800, 170, 800, 670, 4, C.char);
+      a += range(10).map((i) => rect(640, 190 + i * 46, 130, 32, "#2d2f33", "none", 0, 4) + rect(830, 190 + i * 46, 130, 32, "#2d2f33", "none", 0, 4)).join("");
+      a += range(6).map((i) => path(`M${620 + i * 8} 680 V 760`, "none", ["#2d2f33", "#a3342a", C.white][i % 3], 5)).join("");
+    }
+    if (stage === 2) a += rect(570, 130, 460, 580, "#e9ecec", C.ink, 3, 6) + rect(980, 380, 18, 70, C.stoneD, "none", 0, 6);
+    return { art: a, mood: "day" };
+  },
+  pest(st, last, v) {
+    if (v === 1) return { art: `<rect width="${W}" height="${H}" fill="#e4dccd"/>` + range(8).map((i) => rect(80 + i * 190, 100, 40, 520, C.wood, C.woodD, 2)).join("") + rect(0, 80, W, 30, C.woodD) + rect(0, 620, W, 280, "rgba(220,230,232,.7)", C.ink, 2), mood: "day" };
+    if (v === 2) return { art: `<rect width="${W}" height="${H}" fill="#efe6d4"/>` + path(`M0 900 L800 120 L1600 900 Z`, "#e7d8bd") + range(12).map((i) => line(100 + i * 120, 900, 800, 120, 2, C.woodD, ' opacity=".4"')).join("") + blotches("ins", 30, [0, 760, W, 120], "#e9c7a1", 0.9) + rect(740, 360, 120, 120, "#cfd6d8", C.ink, 3), mood: "day" };
+    const stage = v >= 0 ? 2 : st;
+    let a = `<rect width="${W}" height="${H}" fill="${stage === 2 ? "#f2e5cc" : C.sky2}"/>` + rect(0, 0, W, 520, C.white) + range(20).map((i) => line(0, 26 * (i + 1), W, 26 * (i + 1), 1.5, C.ink, ' opacity=".18"')).join("");
+    a += rect(0, 520, W, 220, C.stone) + line(0, 520, W, 520, 4) + rect(0, 740, W, 160, "#9aa58a", "none", 0) + line(0, 740, W, 740);
+    a += path(`M980 600 H1600`, "none", "#d9d4cb", 34) + circle(980, 600, 26, stage === 0 ? "#3a3530" : C.white, C.ink, stage === 0 ? 3 : 8);
+    if (stage === 0) a += rect(300, 512, 360, 14, "#3a3530", "none", 0) + blotches("leaf", 18, [80, 700, 1300, 60], "#9a6c3c", 0.8);
+    else a += rect(0, 740, W, 70, "#c9c3b6", "none", 0) + blotches("grv", 90, [0, 745, W, 60], C.stoneD, 0.6, 6) + line(300, 520, 660, 520, 4, C.white);
+    return { art: a, mood: stage === 2 ? "gold" : "day" };
+  },
+  junk(st, last, v) {
+    if (v === 1) return { art: backdrop("day") + shrub(300, G, 0.9) + `<ellipse cx="900" cy="${G + 80}" rx="300" ry="40" fill="#a1b986"/>`, mood: "day", raw: true };
+    if (v === 2) return { art: room("#efe9df", "#c49a68") + range(10).map((i) => line(0, 650 + i * 26, W, 650 + i * 26, 1.5, C.woodD, ' opacity=".5"')).join(""), mood: "day" };
+    const stage = v >= 0 ? 2 : st;
+    let a = `<rect width="${W}" height="${H}" fill="#ddd5c6"/>` + rect(160, 80, 1280, 560, "#e9e4da") + line(160, 640, 1440, 640) + rect(0, 640, W, 260, "#c9c3b7", "none", 0);
+    a += path(`M160 640 L0 900 M1440 640 L1600 900`, "none", C.ink, 2) + rect(160, 60, 1280, 40, "#cfc8bc");
+    const clutter = (seed, x0, x1) => { const r = rng(seed); return range(16).map(() => { const w = 70 + r() * 130, h = 60 + r() * 120, x = x0 + r() * (x1 - x0 - w); return rect(x, 650 - h - r() * 60, w, h, ["#c9a87a", "#b8956a", "#9d8a74", "#d6c2a0"][Math.floor(r() * 4)]); }).join(""); };
+    if (stage === 0) a += clutter("all", 180, 1420) + rect(700, 520, 380, 120, "#ece6da", C.ink, 3, 22) + circle(320, 600, 48, "none") + circle(470, 600, 48, "none") + path(`M320 600 L 400 520 L 470 600`, "none", C.ink, 3);
+    if (stage === 1) a += clutter("right", 810, 1420) + line(800, 640, 800, 900, 2, C.white);
+    return { art: a, mood: "day" };
+  },
+  cleaning(st, last, v) {
+    if (v === 1) return { art: room("#efebe4", "#d6d2ca") + rect(120, 420, 940, 230, C.white) + rect(100, 400, 980, 24, "#e3e0da") + range(5).map((i) => rect(130 + i * 186, 140, 176, 180, C.white)).join("") + path(`M1220 120 l 18 40 l 40 18 l -40 18 l -18 40 l -18 -40 l -40 -18 l 40 -18 Z`, C.gold, "none", 0), mood: "day" };
+    const stage = v >= 0 ? 2 : st;
+    let a = room(C.paper2, stage === 0 && v < 0 ? "#bda98a" : "#cdb08a", stage === 2);
+    if (v !== 2) {
+      a += rect(160, 420, 640, 160, "#9aa58a", C.ink, 3, 22) + rect(140, 380, 680, 70, "#a9b399", C.ink, 3, 22) + rect(360, 690, 380, 70, "#d9cdb8", C.ink, 3, 8);
+      if (stage === 0) a += path(`M200 410 l 50 -60 l 60 50 Z M640 420 l 40 -70 l 70 60 Z`, "#d6a46c") + rect(420, 790, 240, 50, "#c96f43", C.ink, 2, 6) + blotches("dust", 10, [1080, 160, 330, 320], "#b8b2a6", 0.55) + blotches("crumbs", 10, [360, 680, 380, 30], "#8d7e66", 0.5);
+      if (stage >= 1) a += path(`M220 420 l 50 -54 l 56 54 Z M600 420 l 50 -54 l 56 54 Z`, "#d6a46c") + rect(560, 380, 220, 40, "#c96f43", C.ink, 2, 6);
+      if (stage === 2) a += path(`M1080 480 L860 900 H1300 L1410 480 Z`, "#fff4d8", "none", 0, ' opacity=".5"') + path(`M1500 220 l 12 28 l 28 12 l -28 12 l -12 28 l -12 -28 l -28 -12 l 28 -12 Z`, C.gold, "none", 0);
+    }
+    return { art: a, mood: "day" };
+  },
+  towing(st, last, v) {
+    let a = backdrop("dusk", "#3d4756") + drive("#545d6b", 60, 1500, G, 800) + range(6).map((i) => rect(796, G + 10 + i * 34, 8, 18, "#e9d9a8", "none", 0)).join("");
+    a += line(800 - 30, G, 800 - 750, H, 3, "#d9d2c0") + line(800 + 30, G, 800 + 750, H, 3, "#d9d2c0");
+    const car = (x, y, s = 1, haz = false, hood = false) => path(`M${x - 150 * s} ${y} V${y - 50 * s} Q ${x - 140 * s} ${y - 70 * s} ${x - 100 * s} ${y - 74 * s} L ${x - 70 * s} ${y - 120 * s} H ${x + 70 * s} L ${x + 100 * s} ${y - 74 * s} Q ${x + 140 * s} ${y - 70 * s} ${x + 150 * s} ${y - 50 * s} V ${y} Z`, "#2a2d33", "#11141a", 3)
+      + rect(x - 60 * s, y - 112 * s, 120 * s, 34 * s, "#4c5566", "none", 0)
+      + circle(x - 120 * s, y - 40 * s, 14 * s, haz ? "#ffb347" : "#7a3b33", "none", 0) + circle(x + 120 * s, y - 40 * s, 14 * s, haz ? "#ffb347" : "#7a3b33", "none", 0)
+      + (haz ? circle(x - 120 * s, y - 40 * s, 44 * s, "#ffb347", "none", 0, ' opacity=".25"') + circle(x + 120 * s, y - 40 * s, 44 * s, "#ffb347", "none", 0, ' opacity=".25"') : "")
+      + (hood ? path(`M${x - 100 * s} ${y - 74 * s} L ${x - 60 * s} ${y - 170 * s} H ${x + 60 * s} L ${x + 100 * s} ${y - 74 * s}`, "#2a2d33", "#11141a", 3) : "");
+    const truck = (x, y, s, loaded) => rect(x - 260 * s, y - 70 * s, 400 * s, 30 * s, "#e9e6df", "#11141a", 3) + rect(x + 140 * s, y - 190 * s, 150 * s, 150 * s, "#f1eee8", "#11141a", 3) + rect(x + 170 * s, y - 170 * s, 90 * s, 60 * s, "#4c5566", "none", 0)
+      + circle(x - 180 * s, y - 30 * s, 34 * s, "#1c1f25") + circle(x + 210 * s, y - 30 * s, 34 * s, "#1c1f25") + rect(x + 190 * s, y - 210 * s, 60 * s, 14 * s, "#ffb347", "none", 0)
+      + (loaded ? car(x - 60 * s, y - 70 * s, s * 0.95) : "");
+    const stage = v >= 0 ? [1, 0, 2][v] : st;
+    if (stage === 0) a += car(1040, 860, 1.4, true, v === 1);
+    if (stage === 1) a += truck(980, 740, 1.05, false) + car(1080, 880, 1.4, true);
+    if (stage === 2) a += truck(1000, 840, 1.3, true);
+    return { art: a, mood: "dusk", raw: true };
+  },
+};
+
+// Which stage and variant a slot draws.
+function stageFor(trade, slotId) {
+  const k = CINE_KIT[trade];
+  const last = k ? k.story.length - 1 : 0;
+  if (!k) return { st: 0, last, v: -1 };
+  if (slotId === "before") return { st: 0, last, v: -1 };
+  if (slotId === "after") return { st: last, last, v: -1 };
+  const si = k.story.findIndex((s) => `story-${s.id}` === slotId);
+  if (si >= 0) return { st: si, last, v: -1 };
+  const vi = k.styles.findIndex((s) => `style-${s.id}` === slotId);
+  if (vi >= 0) return { st: last, last, v: vi };
+  return { st: last, last, v: -1 };
+}
+
+const INTERIOR = new Set(["restoration", "remodeling", "plumbing", "electrical", "junk", "cleaning", "pest"]);
+
+export function placeholderSvg(trade, slotId, labelText) {
+  const { st, last, v } = stageFor(trade, slotId);
+  const scene = SCENES[trade];
+  let body, mood = "day";
+  if (scene) {
+    const out = scene(st, last, v);
+    mood = out.mood || "day";
+    const exterior = !out.raw && !INTERIOR.has(trade) && !(trade === "hvac" && v === 2);
+    body = (exterior ? backdrop(mood, out.ground) : "") + out.art;
+    if (exterior) body += line(0, G, W, G, 3);
+  } else {
+    body = backdrop("gold") + house({});
+  }
+  const dark = mood === "dusk";
+  // A soft vignette makes each sketch read as a frame from one camera.
+  const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc("Sample picture: make in Higgsfield. " + labelText)}">${body}${vignette}${frameMarks(dark)}${label(labelText, dark)}</svg>`;
+}
+
+export function placeholderArt(trade, slotId, label) {
+  const k = CINE_KIT[trade];
+  let text = label;
+  if (!text && k) {
+    const s = k.story.find((x) => `story-${x.id}` === slotId);
+    const y = k.styles.find((x) => `style-${x.id}` === slotId);
+    text = s ? s.headline : y ? y.name : slotId === "before" ? "Before" : slotId === "after" ? "After" : slotId;
+  }
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(placeholderSvg(trade, slotId, text || ""));
+}
