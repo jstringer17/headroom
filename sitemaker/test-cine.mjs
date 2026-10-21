@@ -164,7 +164,14 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
     rec("E", "editorial look checks", "skip", "needs the editorial build (data-look=\"editorial\")");
   } else for (const trade of edTrades) {
     const [sz, op] = await firstCell(trade);
-    const b = buildCine({ company: "Sample Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, cine: { prices: { [sz]: { [op]: { low: "100", high: "200" } } } } }, "editorial");
+    const b = buildCine({ company: "Sample Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, insured: true, years: "12", rating: "4.8", reviews: "112", cine: { prices: { [sz]: { [op]: { low: "100", high: "200" } } } } }, "editorial");
+    {
+      const bare = buildCine({ company: "Sample Co", trade, year: 2026 }, "editorial");
+      const { page, ctx } = await open(bare.html, `ed-bare-${trade}`);
+      const txt = await page.evaluate((sel) => [...document.querySelectorAll(sel)].map((e) => e.innerText).join(" "), ED.trustCell);
+      check("E", `${trade}: no trust claims when nothing is ticked`, !/insured|licensed|warranty|24\/7|years|google/i.test(txt), txt.slice(0, 80));
+      await ctx.close();
+    }
     for (const width of [375, 1280]) {
       const tag = `${trade}@${width}`;
       const { page, ctx } = await open(b.html, `ed-${trade}`, { width, tag: `-${width}` });
@@ -188,7 +195,7 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
       check("E", `${tag}: hero picture is cut to a silhouette (clip-path/mask)`, r.hero && r.clip, "no clip-path or mask in hero");
       check("E", `${tag}: work cards are rounded (>=16px) and labeled as sample`, r.cards > 0 && r.minRadius >= 16 && r.sample, `${r.cards} cards, min radius ${r.minRadius}, sample label ${r.sample}`);
       check("E", `${tag}: numbered service rows (3+)`, r.rows >= 3 && r.nums >= 3, `${r.rows} rows, ${r.nums} numbered`);
-      check("E", `${tag}: trust strip has 4 cells`, r.trust && r.cells === 4, `${r.cells} cells`);
+      check("E", `${tag}: trust strip has 4 cells when 4+ facts are typed`, r.trust && r.cells === 4, `${r.cells} cells`);
       check("E", `${tag}: sticky nav`, r.nav, "no sticky/fixed nav");
       // service rows: pick the 2nd row (pointer) and a key press; the picture must change
       const rows = await page.$$(ED.rows);

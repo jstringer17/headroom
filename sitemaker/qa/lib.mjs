@@ -39,7 +39,7 @@ export const ED = {
   rows: '[data-ed="row"], .ed-row',
   rowImg: '[data-ed="row-img"], .ed-row-img img, .ed-service-img img',
   trust: '[data-ed="trust"], .ed-trust',
-  trustCell: '[data-ed="trust"] > *, .ed-trust > *',
+  trustCell: '[data-ed="trust"] > *',
   nav: "nav, header",
 };
 export const NEW_TRADES = ["restoration", "homebuilder", "framing"];
@@ -87,6 +87,6 @@ k.parentElement.addEventListener('pointerdown',function(e){var r=k.parentElement
 export function buildCine(form, look = "cinematic") {
   let html = "";
   try { html = generateSite({ ...form, cinematic: true, look, cine: { ...(form.cine || {}), look } }); } catch { /* engine not merged yet */ }
-  const real = /id="story"/.test(html) && /id="contact"/.test(html);
+  const real = (/id="story"/.test(html) && /id="contact"/.test(html)) || isEditorial(html);
   return real ? { html, real } : { html: samplePage({ prices: !!form.cine?.prices }), real: false };
 }
