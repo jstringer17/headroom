@@ -1448,7 +1448,7 @@ function backdrop(mood = "day", ground = C.sage, sunX = 1250) {
   const hills = `M0 ${G - 90} C 180 ${G - 150} 330 ${G - 120} 470 ${G - 140} S 760 ${G - 190} 930 ${G - 150} S 1260 ${G - 110} 1400 ${G - 160} S 1560 ${G - 140} 1600 ${G - 130} V ${G} H 0 Z`;
   return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>${dots}
-${circle(1250, sunY, 92, sun, "none", 0, ' opacity=".9"')}${circle(1250, sunY, 128, "none", sun, 2, ' opacity=".5"')}
+${circle(sunX, sunY, 92, sun, "none", 0, ' opacity=".9"')}${circle(sunX, sunY, 128, "none", sun, 2, ' opacity=".5"')}
 ${path(hills, mood === "dusk" ? "#3d4a5c" : "#c9cdb5", "none", 0, ' opacity=".8"')}
 ${rect(0, G, W, H - G, ground, "none", 0)}${line(0, G, W, G, 3)}`;
 }
@@ -2439,11 +2439,12 @@ ${ENGINE_JS}
 
 
 
+
+
 // Cinematic mode needs the art files' CINE_KIT, cineLook and placeholderArt.
-// Until src/cine-kit.js and src/cine-look.js are merged, nothing is set and
-// form.cinematic falls back to the classic site.
 let CINE = null;
 function useCine(deps) { CINE = deps; }
+useCine({ CINE_KIT, cineLook, placeholderArt });
 
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -3019,8 +3020,6 @@ function parseLead(text) {
   if (tr) out.trade = tr;
   return out;
 }
-
-useCine({ CINE_KIT, cineLook, placeholderArt });
 
 // Sample Site Maker page logic. Runs after generate.js, trades.js and
 // themes.js are inlined above it (see build.mjs).

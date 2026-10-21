@@ -16,12 +16,13 @@
 import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic } from "./cinematic.js";
+import { CINE_KIT } from "./cine-kit.js";
+import { cineLook, placeholderArt } from "./cine-look.js";
 
 // Cinematic mode needs the art files' CINE_KIT, cineLook and placeholderArt.
-// Until src/cine-kit.js and src/cine-look.js are merged, nothing is set and
-// form.cinematic falls back to the classic site.
 let CINE = null;
 export function useCine(deps) { CINE = deps; }
+useCine({ CINE_KIT, cineLook, placeholderArt });
 
 export function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
