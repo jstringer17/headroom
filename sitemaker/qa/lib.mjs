@@ -3,7 +3,10 @@ import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { generateSite } from "../src/generate.js";
+import { generateSite, useCine } from "../src/generate.js";
+import { CINE_KIT } from "../src/cine-kit.js";
+import { cineLook, placeholderArt } from "../src/cine-look.js";
+useCine({ CINE_KIT, cineLook, placeholderArt }); // same wiring build.mjs appends to maker.html
 
 export const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -37,6 +40,10 @@ export const unitFor = (t) => UNIT_BY_TRADE[t] || "per job";
 export const placeholderText = (src) => { try { return decodeURIComponent(src.replace(/^data:image\/svg\+xml[^,]*,/, "")); } catch { return src; } };
 
 // First (size, option) of the trade's kit, for filling one price cell. Falls back to placeholders if the kit is missing.
+// Every size x option of the kit as a typed price table (test data, clearly not real prices).
+export async function fullTable(trade) {
+  try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; const t = {}; k.sizes.forEach((sz, i) => { t[sz] = {}; k.options.forEach((op, j) => { t[sz][op] = { low: String(1000 + i * 500 + j * 250), high: String(1800 + i * 500 + j * 250) }; }); }); return t; } catch { return {}; }
+}
 export async function firstCell(trade) {
   try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; return [k.sizes[0], k.options[0]]; } catch { return ["__first", "__first"]; }
 }

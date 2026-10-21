@@ -3,7 +3,7 @@
 import { mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine } from "./lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell, fullTable } from "./lib.mjs";
 
 const trades = process.argv.slice(2).length ? process.argv.slice(2) : ["fencing", "roofing", "pressure"];
 const out = join(here, "out");
@@ -14,8 +14,9 @@ const sheet = {}; // trade -> list of {w, kind, file, label}
 let realBuild = false;
 
 for (const trade of trades) {
+  const [sz, op] = await firstCell(trade);
   const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026,
-    cine: { prices: { [process.env.CINE_SIZE || "__first"]: { [process.env.CINE_OPT || "__first"]: { low: "2750", high: "4550" } } } } };
+    cine: { prices: await fullTable(trade) } };
   const b = buildCine(form); realBuild ||= b.real;
   writeFileSync(join(out, `${trade}.html`), b.html);
   sheet[trade] = [];
@@ -28,7 +29,10 @@ for (const trade of trades) {
       await page.goto(pathToFileURL(join(out, `${trade}.html`)).href, { waitUntil: "load" });
       await page.evaluate(() => document.fonts.ready);
       if (reduced) { await shot(page, "reduced-motion", "Reduced motion (full page)", { fullPage: true }); await ctx.close(); continue; }
-      await shot(page, "full", "Full page", { fullPage: true });
+      const H = await page.evaluate(() => document.documentElement.scrollHeight); // let scroll reveals finish before the full-page shot
+      for (let y = 0; y < H; y += 300) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(60); }
+      await page.waitForTimeout(500); await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(300);
+      await shot(page, "full", "Full page (after scrolling through once)", { fullPage: true });
       // 10 frames down the scroll story (or the page if no story marker)
       const story = await page.$(SEL.story);
       const top = story ? await story.evaluate((e) => e.getBoundingClientRect().top + scrollY) : 0;
@@ -40,7 +44,7 @@ for (const trade of trades) {
       }
       // each tab
       const tabs = await page.$$(SEL.tab);
-      if (tabs.length) await tabs[0].scrollIntoViewIfNeeded();
+      if (tabs.length) await page.evaluate(() => { const t = document.querySelector('[role="tab"]'); const s = t.closest("section") || t; scrollTo(0, s.getBoundingClientRect().top + scrollY); });
       for (let i = 0; i < tabs.length; i++) { await tabs[i].click(); await page.waitForTimeout(450); await shot(page, `tab${i + 1}`, `Tab ${i + 1}: ${(await tabs[i].textContent()).trim()}`); }
       // slider 0 / 50 / 100
       const sl = await page.$(SEL.slider);
@@ -51,7 +55,7 @@ for (const trade of trades) {
         } }
       // estimator with a typed price table
       const est = await page.$(SEL.estimator);
-      if (est) { await est.scrollIntoViewIfNeeded(); await page.waitForTimeout(250); await shot(page, "estimator", "Estimator (typed range 2,750 to 4,550)"); }
+      if (est) { await est.scrollIntoViewIfNeeded(); await page.waitForTimeout(250); await shot(page, "estimator", "Estimator (test price table typed in, not real prices)"); }
       else sheet[trade].push({ w: width, file: "", label: "Estimator not found (hidden or not built)" });
       await ctx.close();
     }
