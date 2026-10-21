@@ -1,22 +1,28 @@
 // Cinematic mode look: type, color and visual system (shared contract in
 // org/plan.md; the why is in org/art/direction.md).
-// cineLook(themeKey) -> { css, fontsHref, vars }: one serif display face with a
-// true italic for the accent word, one sans for everything else, cream paper
-// sections between full-bleed picture sections, accent used sparingly.
+// cineLook(themeKey, tradeKey?, { tradeLook }) -> { css, fontsHref, vars }.
+// Default: the classic theme mapped onto cream paper with a serif display face
+// (true italic for the accent word) and one sans. With tradeKey and
+// tradeLook !== false, trades that have a signature palette use it instead
+// (pressure washing carbon + yellow, HVAC carbon + orange, builders wood +
+// blueprint blue, fencing/roofing/restoration cream + serif).
+// The css also bridges the engine's own variables (--serif, --sans, --cream,
+// --ink, --accent...) so the look applies to cinematic.js markup as is.
 // placeholderArt(trade, slotId, label) -> SVG data URI: an ink-on-paper
 // drawing of the picture that belongs in that slot. Never photo-like, and the
 // "Sample picture: make in Higgsfield" label is drawn on the art itself.
+// blueprintArt(trade) -> SVG data URI: a drawn plan sheet for the blueprint tool.
 
 import { THEMES } from "./themes.js";
 import { CINE_KIT } from "./cine-kit.js";
 
 export const CINE_FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700&display=swap";
+  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap";
 
 // Each classic theme mapped onto the cream look. `accent` fills the small
 // button (text on it is `accentInk`), `accentText` is the italic word and
-// links on cream (AA 4.5:1 on paper), `accentHi` is the italic word on dark
-// picture sections, `night` backs dark sections and picture scrims.
+// links on paper (AA 4.5:1), `accentHi` is the italic word on dark picture
+// sections, `night` backs dark sections and picture scrims.
 export const CINE_THEMES = {
   navy:   { night: "#13253a", accent: "#f27a1f", accentInk: "#1a1206", accentText: "#a94a0b", accentHi: "#ff9a4d" },
   forest: { night: "#1d3a2a", accent: "#e9b949", accentInk: "#1d1a0a", accentText: "#7a5710", accentHi: "#f3cd6e" },
@@ -24,9 +30,34 @@ export const CINE_THEMES = {
   sky:    { night: "#0c3c66", accent: "#ffc23d", accentInk: "#1b1503", accentText: "#855a00", accentHi: "#ffd36b" },
 };
 
-const PAPER = { paper: "#f6f1e7", paper2: "#ede5d6", ink: "#1d1b18", muted: "#5b5449", line: "#d9cfbd" };
+const PAPER = { paper: "#f6f1e7", paper2: "#ede5d6", ink: "#1d1b18", muted: "#5b5449", line: "#d9cfbd", display: "serif" };
 
-export function cineVars(themeKey) {
+// Signature palettes per trade (from the reel study, see direction.md).
+// display: serif (italic accent word) or grotesk (heavy sans, accent by color).
+export const CINE_PALETTES = {
+  carbonYellow: { label: "Carbon and yellow", display: "grotesk",
+    paper: "#111214", paper2: "#18191c", ink: "#f3f0e9", muted: "#aaa69d", line: "#2c2d31", night: "#08090a",
+    accent: "#ffd23f", accentInk: "#15130c", accentText: "#ffd23f", accentHi: "#ffd23f" },
+  carbonOrange: { label: "Carbon and orange", display: "grotesk",
+    paper: "#121110", paper2: "#1a1816", ink: "#f4efe8", muted: "#aca59b", line: "#2e2a26", night: "#0a0908",
+    accent: "#ff7a1a", accentInk: "#160c04", accentText: "#ff9147", accentHi: "#ff9147" },
+  woodBlueprint: { label: "Wood and blueprint", display: "serif",
+    paper: "#f3ebdf", paper2: "#e8dccb", ink: "#22190f", muted: "#5d5040", line: "#d6c6ae", night: "#13284a",
+    accent: "#f2c230", accentInk: "#1d1606", accentText: "#1d4f9c", accentHi: "#f2c230" },
+  creamSerif: { label: "Cream and serif", display: "serif",
+    paper: "#f6f1e7", paper2: "#ede5d6", ink: "#1d1b18", muted: "#5b5449", line: "#d9cfbd", night: "#1e1a16",
+    accent: "#ea6a1f", accentInk: "#1a0f05", accentText: "#a94a0b", accentHi: "#ff9a4d" },
+};
+
+export const CINE_TRADE_LOOK = {
+  pressure: "carbonYellow", hvac: "carbonOrange",
+  builder: "woodBlueprint", framing: "woodBlueprint", remodeling: "woodBlueprint",
+  fencing: "creamSerif", roofing: "creamSerif", restoration: "creamSerif",
+};
+
+export function cineVars(themeKey, tradeKey, opts = {}) {
+  const pal = opts.tradeLook !== false && CINE_PALETTES[CINE_TRADE_LOOK[tradeKey]];
+  if (pal) return { ...PAPER, ...pal };
   const t = CINE_THEMES[themeKey] || CINE_THEMES.navy;
   return { ...PAPER, ...t };
 }
@@ -35,12 +66,14 @@ export function cineVars(themeKey) {
 const GRAIN = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0"/></filter><rect width="160" height="160" filter="url(#n)"/></svg>');
 
-export function cineLook(themeKey) {
-  const v = cineVars(themeKey);
+export function cineLook(themeKey, tradeKey, opts = {}) {
+  const v = cineVars(themeKey, tradeKey, opts);
+  const grotesk = v.display === "grotesk";
+  const dark = grotesk; // the grotesk palettes are the dark ones
   const css = `
 :root{--c-paper:${v.paper};--c-paper-2:${v.paper2};--c-ink:${v.ink};--c-muted:${v.muted};--c-line:${v.line};
 --c-night:${v.night};--c-accent:${v.accent};--c-accent-ink:${v.accentInk};--c-accent-text:${v.accentText};--c-accent-hi:${v.accentHi};
---f-display:"Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif;
+--f-display:${grotesk ? '"Manrope","Segoe UI",system-ui,sans-serif' : '"Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif'};
 --f-body:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
 --ease:cubic-bezier(.2,.7,.1,1);--ease-out:cubic-bezier(.16,1,.3,1);--t-fade:900ms;--t-ui:260ms;
 --gap:clamp(20px,4vw,40px);--pad-y:clamp(80px,13vw,168px);--wrap:1180px;--radius:18px}
@@ -142,7 +175,21 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 .cine *,.cine *::before,.cine *::after{transition:none!important;animation:none!important}
 .cine-frame>img{transform:none!important}
 .cine-rise,.cine-caption{opacity:1;transform:none}
-}`;
+}
+/* Bridge: the engine's markup (cinematic.js) reads these, so the look applies there too */
+:root{--serif:var(--f-display);--sans:var(--f-body);--cream:var(--c-paper);--cream2:var(--c-paper-2);--ink:var(--c-ink);--muted:var(--c-muted);
+--dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);color-scheme:${dark ? "dark" : "light"}}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+h1,h2{font-weight:${grotesk ? "800" : "400"};letter-spacing:${grotesk ? "-.035em" : "-.012em"}}
+${grotesk ? "h1 em,h2 em,.line em{font-style:normal}" : ""}
+h1 em,h2 em,.line em{color:var(--c-accent-text)}
+.story h1 em,.story h2 em,.story .line em,.dark-sec em,.final em,.panel em,.est-out em,.top em{color:var(--c-accent-hi)}
+.est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
+box-shadow:0 30px 60px -30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+.est-num{font-family:var(--f-display);font-weight:${grotesk ? "800" : "400"};font-size:clamp(2.6rem,7vw,4.5rem);line-height:1;letter-spacing:-.02em}
+${dark ? `input,select,textarea{color:#1d1b18;background:#fbf8f2}
+form{color:var(--c-ink)}` : ""}
+`;
   return { css, fontsHref: CINE_FONTS_HREF, vars: v };
 }
 
@@ -264,8 +311,8 @@ function label(text, dark) {
   const t2 = text.length > 38 ? text.slice(0, 37) + "\u2026" : text;
   return `<g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
 <rect x="580" y="100" width="440" height="92" rx="14" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
-<text x="800" y="138" font-size="22" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${esc(t1)}</text>
-<text x="800" y="170" font-size="19" fill="${dark ? "#4a443b" : "#d8cfbf"}">${esc(t2)}</text></g>`;
+<text x="800" y="138" font-size="22" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
+<text x="800" y="170" font-size="19" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
 }
 
 // Viewfinder corner marks and a small "16:9 sketch" tag: reads as a shot to be made.
@@ -276,7 +323,7 @@ function frameMarks(dark) {
   return `${corners}<text x="${W - 60}" y="78" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="20" letter-spacing="3" fill="${c}" opacity=".75">16:9 SKETCH</text>`;
 }
 
-function esc(s) {
+function svgEsc(s) {
   return String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 }
 
@@ -339,22 +386,19 @@ const SCENES = {
   },
   hvac(st, last, v) {
     if (v === 2) {
-      return { art: room(C.paper2, "#cfb38b") + rect(240, 160, 520, 130, C.white, C.ink, 3, 22) + line(270, 260, 730, 260, 2) + rect(260, 650 - 220, 380, 180, "#8f9c84", C.ink, 3, 12), mood: "day" };
+      return { art: room(C.paper2, "#cfb38b") + rect(240, 160, 520, 130, C.white, C.ink, 3, 22) + line(270, 260, 730, 260, 2) + rect(260, 650 - 220, 380, 180, "#8f9c84", C.ink, 3, 12), mood: "day", raw: true };
     }
-    let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 80, 980, G - 80, "#eae3d6") + range(24).map((i) => line(0, 80 + i * 27, 980, 80 + i * 27, 1, C.ink, ' opacity=".14"')).join("");
-    a += rect(0, G, W, H - G, C.sage, "none", 0) + line(0, G, W, G) + rect(1040, 180, 220, 260, "#e4ebe7");
-    const old = st === 0 && v < 0;
-    a += rect(380, G - 10, 470, 26, old ? "#a39c8e" : C.stone, C.ink, 3, 4);
-    if (old) a += line(560, G - 4, 640, G + 14, 2);
-    if (st !== 1 || v >= 0) {
-      const wide = v === 1;
-      a += rect(wide ? 390 : 420, G - 300, wide ? 450 : 390, 290, old ? "#b9b2a2" : "#dfe2e0", C.ink, 3, 10);
-      a += range(16).map((i) => line(wide ? 410 : 440, G - 270 + i * 16, wide ? 520 : 790, G - 270 + i * 16, 1.5, C.ink, ' opacity=".45"')).join("");
-      if (wide) a += circle(690, G - 155, 105, "#c9cecc") + circle(690, G - 155, 22, C.ink, "none");
-      if (old) a += blotches("rust", 7, [430, G - 280, 360, 260], C.rust, 0.4) + shrub(330, G + 4, 0.6, "#8b8f5a") + shrub(900, G + 4, 0.5, "#8b8f5a");
-    }
-    a += path(`M380 ${G - 220} H250 V${G - 380}`, "none", C.ink, 8) + rect(200, G - 470, 90, 110, "#d7d3ca");
-    return { art: a, mood: "day" };
+    if (v >= 0) return { art: hvacUnit(false, v === 1), mood: "day", raw: true };
+    // Story: one room from cold to warm.
+    const warm = st / Math.max(1, last);
+    let a = room(warm > 0.5 ? "#efe2cc" : "#dfe2e2", warm > 0.5 ? "#c99a64" : "#a99f92", warm > 0);
+    a += rect(160, 420, 640, 160, "#9aa58a", C.ink, 3, 22) + rect(140, 380, 680, 70, "#a9b399", C.ink, 3, 22);
+    a += path(`M520 380 C 560 330 690 340 720 390 L 700 430 C 650 400 570 410 520 430 Z`, "#cfa98a");
+    if (warm < 1) a += blotches("frost", 9, [1090, 160, 310, 310], "#ffffff", 0.75 * (1 - warm));
+    if (warm > 0) a += line(930, 650, 930, 470, 4) + path(`M880 470 L980 470 L955 400 L905 400 Z`, "#f3d08c") + circle(930, 440, 160 * warm, "#ffcf7a", "none", 0, ' opacity=".22"');
+    a += `<rect width="${W}" height="${H}" fill="${warm > 0.5 ? "#f4a64a" : "#46658c"}" opacity="${warm > 0.5 ? 0.12 * warm : 0.26 * (1 - warm)}"/>`;
+    a += rect(1180, 300, 70, 90, "#f2efe8", C.ink, 2, 10) + circle(1215, 345, 22, "none", warm > 0.5 ? C.clay : C.blue, 4);
+    return { art: a, mood: "day", raw: true };
   },
   restoration(st, last, v) {
     let a;
@@ -584,6 +628,47 @@ const SCENES = {
   },
 };
 
+// Outdoor AC or heat pump beside a house wall.
+function hvacUnit(old, wide) {
+  let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 80, 980, G - 80, "#eae3d6") + range(24).map((i) => line(0, 80 + i * 27, 980, 80 + i * 27, 1, C.ink, ' opacity=".14"')).join("");
+  a += rect(0, G, W, H - G, C.sage, "none", 0) + line(0, G, W, G) + rect(1040, 180, 220, 260, "#e4ebe7");
+  a += rect(380, G - 10, 470, 26, old ? "#a39c8e" : C.stone, C.ink, 3, 4);
+  if (old) a += line(560, G - 4, 640, G + 14, 2);
+  a += rect(wide ? 390 : 420, G - 300, wide ? 450 : 390, 290, old ? "#b9b2a2" : "#dfe2e0", C.ink, 3, 10);
+  a += range(16).map((i) => line(wide ? 410 : 440, G - 270 + i * 16, wide ? 520 : 790, G - 270 + i * 16, 1.5, C.ink, ' opacity=".45"')).join("");
+  if (wide) a += circle(690, G - 155, 105, "#c9cecc") + circle(690, G - 155, 22, C.ink, "none");
+  if (old) a += blotches("rust", 7, [430, G - 280, 360, 260], C.rust, 0.4) + shrub(330, G + 4, 0.6, "#8b8f5a") + shrub(900, G + 4, 0.5, "#8b8f5a");
+  a += path(`M380 ${G - 220} H250 V${G - 380}`, "none", C.ink, 8) + rect(200, G - 470, 90, 110, "#d7d3ca");
+  return a;
+}
+
+// Before/after pairs that are not story frames: (after) -> art, drawn whole.
+const PAIRS = {
+  hvac: (after) => hvacUnit(!after, false),
+  pressure(after) {
+    let a = rect(0, 0, W, H, "#9fb487", "none", 0) + blotches("lawn", 40, [0, 0, W, H], "#8aa273", 0.5);
+    a += rect(470, -10, 660, H + 20, after ? "#d9d6cf" : "#6f6a5f");
+    a += range(4).map((i) => line(470, 225 * (i + 1) - 20, 1130, 225 * (i + 1) - 20, 3, after ? "#a9a59c" : "#4b473f")).join("") + line(800, 0, 800, H, 3, after ? "#a9a59c" : "#4b473f");
+    if (!after) {
+      a += blotches("pw-grime", 18, [480, 0, 640, H], "#3f3b33", 0.45) + blotches("pw-moss", 12, [470, 0, 60, H], "#4f6a3f", 0.6) + blotches("pw-moss2", 12, [1070, 0, 60, H], "#4f6a3f", 0.6);
+      a += path(`M600 0 C 590 300 640 600 620 900 M980 0 C 990 300 950 600 970 900`, "none", "#2f2c26", 26, ' opacity=".35"');
+      a += `<ellipse cx="760" cy="520" rx="70" ry="44" fill="#26241f" opacity=".6"/>`;
+    }
+    return a;
+  },
+  framing(after) {
+    let a = room(after ? "#f1ece3" : "#e6d6bb", after ? "#d2b48a" : "#cbb79a", after);
+    if (!after) {
+      a += range(15).map((i) => rect(40 + i * 70, 90, 14, 560, C.wood, C.woodD, 2)).join("") + rect(30, 80, 1060, 14, C.wood, C.woodD, 2);
+      a += range(8).map((i) => line(i * 200, 0, i * 200 + 40, 70, 8, C.woodD)).join("");
+      a += line(1380, 650, 1380, 520, 4) + rect(1340, 470, 80, 50, "#f3d08c", C.ink, 3, 6);
+    } else {
+      a += line(0, 640, 1080, 640, 8, C.white) + range(3).map((i) => circle(300 + i * 300, 40, 14, "#ffe3a3", C.ink, 2)).join("");
+    }
+    return a;
+  },
+};
+
 // Which stage and variant a slot draws.
 function stageFor(trade, slotId) {
   const k = CINE_KIT[trade];
@@ -604,10 +689,12 @@ export function placeholderSvg(trade, slotId, labelText) {
   const { st, last, v } = stageFor(trade, slotId);
   const scene = SCENES[trade];
   let body, mood = "day";
-  if (scene) {
+  if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
+    body = PAIRS[trade](slotId === "after");
+  } else if (scene) {
     const out = scene(st, last, v);
     mood = out.mood || "day";
-    const exterior = !out.raw && !INTERIOR.has(trade) && !(trade === "hvac" && v === 2);
+    const exterior = !out.raw && !INTERIOR.has(trade);
     body = (exterior ? backdrop(mood, out.ground) : "") + out.art;
     if (exterior) body += line(0, G, W, G, 3);
   } else {
@@ -616,7 +703,7 @@ export function placeholderSvg(trade, slotId, labelText) {
   const dark = mood === "dusk";
   // A soft vignette makes each sketch read as a frame from one camera.
   const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc("Sample picture: make in Higgsfield. " + labelText)}">${body}${vignette}${frameMarks(dark)}${label(labelText, dark)}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + labelText)}">${body}${vignette}${frameMarks(dark)}${label(labelText, dark)}</svg>`;
 }
 
 export function placeholderArt(trade, slotId, label) {
@@ -628,4 +715,37 @@ export function placeholderArt(trade, slotId, label) {
     text = s ? s.headline : y ? y.name : slotId === "before" ? "Before" : slotId === "after" ? "After" : slotId;
   }
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(placeholderSvg(trade, slotId, text || ""));
+}
+
+// A drawn plan sheet (white lines on blueprint blue) for the blueprint tool:
+// the engine lays it over the finished picture and wipes it away. It is a
+// drawing, not a photo, so it needs no label and costs no Higgsfield picture.
+export function blueprintSvg(trade) {
+  const B = "#1d4f9c", Ln = "#e8f0ff";
+  const l = (x1, y1, x2, y2, w = 2.5) => line(x1, y1, x2, y2, w, Ln);
+  const r = (x, y, w, h, sw = 2.5) => rect(x, y, w, h, "none", Ln, sw);
+  const grid = range(33).map((i) => line(i * 50, 0, i * 50, H, 1, Ln, ' opacity=".12"')).join("") +
+    range(19).map((i) => line(0, i * 50, W, i * 50, 1, Ln, ' opacity=".12"')).join("");
+  let plan;
+  if (trade === "remodeling") {
+    // kitchen plan: counters, island, sink, range
+    plan = r(300, 180, 1000, 560, 6) + r(300, 180, 1000, 90) + r(300, 180, 90, 560) + r(620, 420, 360, 140) +
+      circle(520, 225, 26, "none", Ln, 2.5) + r(800, 195, 110, 60) + range(4).map((i) => circle(830 + (i % 2) * 50, 210 + Math.floor(i / 2) * 30, 9, "none", Ln, 2)).join("") +
+      path(`M1300 600 A 120 120 0 0 0 1180 720`, "none", Ln, 2.5) + l(1180, 720, 1300, 720);
+  } else {
+    // house floor plan: outer walls, rooms, doors, windows, stair
+    plan = r(260, 150, 1080, 600, 7) + l(700, 150, 700, 520) + l(260, 520, 1000, 520) + l(1000, 150, 1000, 750) + l(700, 380, 1000, 380) +
+      path(`M700 470 A 50 50 0 0 1 750 520`, "none", Ln, 2) + path(`M1000 600 A 60 60 0 0 0 940 660`, "none", Ln, 2) + path(`M560 750 A 70 70 0 0 1 630 680`, "none", Ln, 2) +
+      range(8).map((i) => l(1050 + i * 34, 560, 1050 + i * 34, 740, 2)).join("") + l(1050, 650, 1320, 650, 2) +
+      [[380, 150], [880, 150], [1160, 150], [260, 330], [1340, 300]].map(([x, y]) => (y === 150 ? r(x, y - 8, 120, 16, 2) : r(x - 8, y, 16, 120, 2))).join("");
+  }
+  // dimension lines and a title box drawn with strokes only (no lettering)
+  const dims = l(260, 100, 1340, 100, 1.5) + l(260, 88, 260, 112, 1.5) + l(1340, 88, 1340, 112, 1.5) +
+    l(1400, 150, 1400, 750, 1.5) + l(1388, 150, 1412, 150, 1.5) + l(1388, 750, 1412, 750, 1.5) +
+    r(1180, 790, 360, 80, 2) + l(1180, 820, 1540, 820, 1.5) + l(1300, 820, 1300, 870, 1.5);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Drawn plan"><rect width="${W}" height="${H}" fill="${B}"/>${grid}${plan}${dims}</svg>`;
+}
+
+export function blueprintArt(trade) {
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(blueprintSvg(trade));
 }
