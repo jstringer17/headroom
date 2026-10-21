@@ -3044,7 +3044,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-pic img.swap{opacity:0}
 .ed-sample{right:auto!important;left:16px}
 /* process, estimate, contact */
-.ed-steps{display:grid;gap:30px;margin-top:8px}
+.ed-process{display:grid;gap:32px}
+.ed-process-pic{position:relative;border-radius:var(--ed-card);overflow:hidden;aspect-ratio:4/3;background:var(--ed-dark)}
+.ed-process-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
+.ed-steps{display:grid;gap:22px;margin-top:8px}
 .ed-steps li{padding-top:14px;border-top:1.5px solid var(--ed-ink)}
 .ed-steps b{display:block;font:500 40px/1 var(--ed-serif);margin-bottom:10px;color:var(--ed-accent)}
 .ed-steps h3{font:700 20px/1.25 var(--ed-sans)}
@@ -3100,13 +3103,15 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-trust li:first-child{border-left:0}
   .ed-cards{grid-template-columns:repeat(3,1fr);gap:22px}
   .ed-card{aspect-ratio:3/4}
-  .ed-steps{grid-template-columns:repeat(3,1fr);gap:32px}
+  .ed-steps{grid-template-columns:1fr 1fr;gap:28px 32px}
   .ed-est{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
   .ed-beat .ed-wrap{grid-template-columns:1.2fr 1fr;align-items:end}
   .ed-beat p{justify-self:end;text-align:left}
   .ed-final .ed-grid{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
 }
 @media (min-width:1024px){
+  .ed-process{grid-template-columns:1fr 1.15fr;gap:64px;align-items:center}
+  .ed-process-pic{aspect-ratio:4/5}
   body{padding-bottom:0}
   .ed-sticky,.ed-call{display:none}
   .ed-links{display:flex}
@@ -3220,6 +3225,7 @@ function generateEditorial(form, d, deps) {
   const e = kit.editorial || {};
   const pick = (id, fb) => (id && exists(id) ? id : fb);
   const heroId = pick(e.hero, story.length ? story[story.length - 1].id : pool[0]);
+  const processId = pick(e.process, story.length > 1 ? story[1].id : pool[0]);
   const beatId = pick(e.beat, styles.length ? styles[0].id : pool[0]);
   const workIds = [0, 1, 2].map((i) => pick(e.work && e.work[i], pool[i % pool.length]));
   const rows = d.services.slice(0, 6);
@@ -3254,7 +3260,7 @@ function generateEditorial(form, d, deps) {
   const trust = cells.length ? `<section class="ed-trust" aria-label="At a glance"><div class="ed-wrap"><ul data-ed="trust" style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
 
   // Second beat
-  const beat = `<section class="ed-beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
+  const beat = `<section class="ed-beat" data-ed="beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
   <p class="ed-big">${story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
   <p>${esc(t.sub)}</p>
 </div></section>`;
@@ -3313,12 +3319,16 @@ function generateEditorial(form, d, deps) {
   // Process, reviews note, contact
   const steps = [
     ["Call or send a request", d.phone ? `Call ${phoneShow}, or fill out the form on this page.` : "Call us, or fill out the form on this page."],
-    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
+    ["We look at the job", "We come out, look at the work, and ask what you want done."],
+    [d.freeEstimates ? "You get a free estimate" : "You get a clear price", "We tell you the price before any work starts."],
     ["The work gets done", "We do the job you agreed to."],
   ];
-  const process = `<section class="ed-sec" id="how"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><h2>How it <em>goes</em></h2></div>
-  <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${i + 1}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
+  const process = `<section class="ed-sec" id="how" data-ed="process"><div class="ed-wrap ed-process">
+  <div class="ed-process-pic ed-rv" aria-hidden="true">${pic(processId)}</div>
+  <div class="ed-process-text">
+    <div class="ed-head ed-rv"><p class="ed-eyebrow">How it goes</p><h2>Four <em>steps</em></h2></div>
+    <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${edPad(i + 1)}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
+  </div>
 </div></section>`;
   const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
   <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>

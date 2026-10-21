@@ -85,6 +85,7 @@ for (const trade of TRADE_ORDER) {
   ok(plain.includes("Sample projects: names and homes are fictional.") && (plain.match(/class="ed-card"/g) || []).length === 3, `${trade}: editorial work cards or note wrong`);
   ok(!plain.includes('id="price"') && !/Insured|Open 24\/7/.test(plain.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "")), `${trade}: editorial shows an unticked fact or a price without typed ranges`);
   ok(!/<script[^>]+src=/i.test(plain), `${trade}: editorial loads an outside script`);
+  ok(plain.includes('data-ed="beat"') && plain.includes('data-ed="process"') && (plain.match(/<ol class="ed-steps">[\s\S]*?<\/ol>/)[0].match(/<li /g) || []).length === 4, `${trade}: editorial beat or four-step process missing`);
   const full = generateSite({ ...base, insured: true, emergency: true, years: "9", city: "Tulsa, OK" });
   ok((full.match(/<li class="ed-rv"><svg/g) || []).length === 4, `${trade}: editorial trust strip should show 4 facts when 4+ are ticked`);
   for (const width of [375, 1280]) {
