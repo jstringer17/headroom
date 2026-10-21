@@ -13,6 +13,7 @@ const browser = await pw.chromium.launch(launchOpts());
 const sheet = {}; // trade -> list of {w, kind, file, label}
 let realBuild = false;
 
+const toSection = (page, sel) => page.evaluate((q) => { const e = document.querySelector(q); const sec = e.closest("section") || e; scrollTo(0, sec.getBoundingClientRect().top + scrollY - 70); }, sel);
 for (const trade of trades) {
   const [sz, op] = await firstCell(trade);
   const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, rating: "4.8", reviews: "112", years: "12", insured: true, // test facts typed in so trust line can be judged
@@ -45,18 +46,18 @@ for (const trade of trades) {
       }
       // each tab
       const tabs = await page.$$(SEL.tab);
-      if (tabs.length) await page.evaluate(() => { const t = document.querySelector('[role="tab"]'); const s = t.closest("section") || t; scrollTo(0, s.getBoundingClientRect().top + scrollY); });
+      if (tabs.length) await toSection(page, SEL.tab);
       for (let i = 0; i < tabs.length; i++) { await tabs[i].click(); await page.waitForTimeout(450); await shot(page, `tab${i + 1}`, `Tab ${i + 1}: ${(await tabs[i].textContent()).trim()}`); }
       // slider 0 / 50 / 100
       const sl = await page.$(SEL.slider);
-      if (sl) { await sl.scrollIntoViewIfNeeded(); await sl.focus();
+      if (sl) { await toSection(page, SEL.slider); await page.waitForTimeout(300); await sl.focus({ preventScroll: true });
         for (const [k, v] of [["Home", 0], ["", 50], ["End", 100]]) {
           if (k) await page.keyboard.press(k); else { await page.keyboard.press("Home"); for (let n = 0; n < 50 && +(await sl.getAttribute("aria-valuenow")) < 50; n++) await page.keyboard.press("ArrowRight"); }
           await page.waitForTimeout(250); await shot(page, `slider${v}`, `Slider at ${v}`);
         } }
       // estimator with a typed price table
       const est = await page.$(SEL.estimator);
-      if (est) { await est.scrollIntoViewIfNeeded(); await page.waitForTimeout(250); await shot(page, "estimator", "Estimator (test price table typed in, not real prices)"); }
+      if (est) { await toSection(page, SEL.estimator); await page.waitForTimeout(400); await shot(page, "estimator", "Estimator (test price table typed in, not real prices)"); }
       else sheet[trade].push({ w: width, file: "", label: "Estimator not found (hidden or not built)" });
       await ctx.close();
     }
