@@ -2957,9 +2957,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-row[aria-expanded=true] .ed-row-body{display:block}
 .ed-no-js .ed-row-body{display:block}
 .ed-pic{position:relative;border-radius:var(--ed-card);overflow:hidden;aspect-ratio:4/3;background:#000}
-.ed-pic img{opacity:0;transition:opacity .6s var(--ed-ease)}
-.ed-pic img.on{opacity:1}
-.ed-no-js .ed-pic img:first-child{opacity:1}
+.ed-pic img{transition:opacity .35s var(--ed-ease)}
+.ed-pic img.swap{opacity:0}
+.ed-sample{right:auto!important;left:16px}
 /* process, estimate, contact */
 .ed-steps{display:grid;gap:30px;margin-top:8px}
 .ed-steps li{padding-top:14px;border-top:1.5px solid var(--ed-ink)}
@@ -3040,11 +3040,23 @@ const ED_JS = `(function(){
 var root=document.documentElement;root.classList.add("js");root.classList.remove("ed-no-js");
 var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+/* picture lookup: every picture is in the page once, copies are filled in from it */
+var lib={};
+function scan(r){[].slice.call(r.querySelectorAll("img[data-slot]")).forEach(function(im){var k=im.getAttribute("data-slot"),sr=im.getAttribute("src");if(sr&&sr.indexOf("R0lGODlhAQABAAAAACH5")<0&&!lib[k])lib[k]=sr})}
+scan(document);var tp=document.getElementById("ed-pool");if(tp&&tp.content)scan(tp.content);
+[].slice.call(document.querySelectorAll("img[data-slot]")).forEach(function(im){var sr=im.getAttribute("src");if(sr&&sr.indexOf("R0lGODlhAQABAAAAACH5")>=0&&lib[im.getAttribute("data-slot")])im.src=lib[im.getAttribute("data-slot")]});
 /* service rows: hover, focus or tap opens a row and swaps the picture */
-var rows=[].slice.call(document.querySelectorAll(".ed-row")),pics=[].slice.call(document.querySelectorAll(".ed-pic img"));
-function open(i){rows.forEach(function(r,j){r.setAttribute("aria-expanded",j===i?"true":"false")});pics.forEach(function(p,j){p.className=j===i?"on":""})}
+var rows=[].slice.call(document.querySelectorAll(".ed-row")),rimg=document.querySelector("[data-ed=row-img]");
+function open(i){
+  rows.forEach(function(r,j){r.setAttribute("aria-expanded",j===i?"true":"false")});
+  var id=rows[i].getAttribute("data-pic");
+  if(rimg&&lib[id]&&rimg.getAttribute("data-slot")!==id){
+    rimg.setAttribute("data-slot",id);rimg.classList.add("swap");
+    setTimeout(function(){rimg.src=lib[id];rimg.classList.remove("swap")},reduce?0:180);
+    if(reduce){rimg.src=lib[id];rimg.classList.remove("swap")}
+  }
+}
 if(rows.length){
-  open(0);
   rows.forEach(function(r,i){
     r.addEventListener("click",function(){open(i)});
     r.addEventListener("mouseenter",function(){if(matchMedia("(hover:hover)").matches)open(i)});
@@ -3108,7 +3120,16 @@ function generateEditorial(form, d, deps) {
   const slots = cineSlots(kit);
   const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
   const src = (id) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id));
-  const pic = (id, attrs = "") => `<img src="${esc(src(id))}" alt="" ${attrs}>`;
+  // An uploaded picture is large, so each one is written into the page once; later uses
+  // carry only data-slot and the script copies the picture over (keeps the file small).
+  const BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+  const written = new Set();
+  const pic = (id, attrs = "") => {
+    const big = /^data:image\/(jpeg|png|webp)/.test(src(id));
+    const dupe = big && written.has(id);
+    written.add(id);
+    return `<img src="${dupe ? BLANK : esc(src(id))}" data-slot="${esc(id)}" alt="" ${attrs}>`;
+  };
 
   const story = kit.story || [], styles = kit.styles || [];
   const exists = (id) => slots.some((s) => s.id === id);
@@ -3130,7 +3151,7 @@ function generateEditorial(form, d, deps) {
   const eyebrow = `${esc(tradeName)}${area ? ` &middot; ${area}` : ""}`;
 
   // Hero
-  const hero = `<section class="ed-hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
+  const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${callHref}">${edIcon(ED_PHONE, 18)}<span>${callText}</span></a><a class="ed-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div></div>
@@ -3146,7 +3167,7 @@ function generateEditorial(form, d, deps) {
   if (d.rating) facts.push(["rating", `${d.rating.toFixed(1)} on Google`, d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}.` : "Google rating."]);
   if (area) facts.push(["area", "Service area", `${area} and nearby towns.`]);
   const cells = facts.slice(0, 4);
-  const trust = cells.length ? `<section class="ed-trust" aria-label="At a glance"><div class="ed-wrap"><ul style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
+  const trust = cells.length ? `<section class="ed-trust" aria-label="At a glance"><div class="ed-wrap"><ul data-ed="trust" style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
 
   // Second beat
   const beat = `<section class="ed-beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
@@ -3165,20 +3186,22 @@ function generateEditorial(form, d, deps) {
       ["Type", edText(p.type, 40) || d.services[i % d.services.length][0]],
       ["Time", edText(p.time, 40) || "&mdash;"],
     ];
-    return `<li class="ed-rv"><article><div class="ed-card">${pic(id)}<span class="ed-pill">${edPad(i + 1)} / 03</span><h3>${esc(nm)}</h3></div>
+    return `<li class="ed-rv"><article><div class="ed-card" data-ed="card">${pic(id)}<span class="ed-pill ed-sample">Sample project</span><span class="ed-pill">${edPad(i + 1)} / 03</span><h3>${esc(nm)}</h3></div>
     <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${v === "&mdash;" ? v : esc(v)}</dd></div>`).join("")}</dl></article></li>`;
   }).join("");
-  const work = `<section class="ed-sec" id="work"><div class="ed-wrap">
+  const work = `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Our work</p><h2>Recent jobs</h2></div>
   <ul class="ed-cards">${cards}</ul>
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
 </div></section>`;
 
   // Services: large numbered rows, the open row swaps the picture
+  const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we do</h2></div>
-  <div class="ed-svc"><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div>
-  <div class="ed-pic" aria-hidden="true">${svcIds.map((id, i) => pic(id, i === 0 ? 'class="on"' : "")).join("")}</div></div>
+  <div class="ed-svc"><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div>
+  <div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}</div></div>
+  <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
 </div></section>`;
 
   // Estimate: typed ranges only, hidden when there are none
@@ -3236,7 +3259,7 @@ function generateEditorial(form, d, deps) {
     .map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 
   return `<!doctype html>
-<html lang="en" class="ed-no-js">
+<html lang="en" class="ed-no-js editorial" data-look="editorial">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -3253,7 +3276,7 @@ ${lookExtra.css || ""}
 </style>
 </head>
 <body class="ed">
-<header class="ed-nav"><div class="ed-wrap">
+<header class="ed-nav" data-ed="nav"><div class="ed-wrap">
   <a class="ed-logo" href="#top">${name}</a><span class="ed-pill">Sample site</span>
   <nav class="ed-links" aria-label="Sections">${links}</nav>
   <a class="ed-tel" href="${callHref}">${d.phone ? phoneShow : "Call us"}</a><a class="ed-btn sm" href="#contact">${askLabel}</a>
@@ -3397,7 +3420,8 @@ function h1Sizes(text, layout) {
 
 function generateSite(form) {
   const d = normalize(form);
-  if (form && form.cinematic && CINE && CINE.CINE_KIT[d.tradeKey]) return (form.look === "editorial" ? generateEditorial : generateCinematic)(form, d, CINE);
+  const editorial = form && (form.look === "editorial" || (form.cine && form.cine.look === "editorial"));
+  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, CINE);
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";

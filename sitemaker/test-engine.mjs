@@ -81,7 +81,7 @@ for (const [pct, verdict] of [["", false], ["50", true]]) {
 for (const trade of TRADE_ORDER) {
   const base = { company: "Test Co", trade, year: 2026, phone: "9185550100", cinematic: true, look: "editorial" };
   const plain = generateSite(base);
-  ok(/class="ed-no-js"|class="ed"/.test(plain) && plain.includes('<body class="ed">'), `${trade}: editorial page not built`);
+  ok(plain.includes('data-look="editorial"') && plain.includes('data-ed="hero"') && plain.includes('data-ed="nav"'), `${trade}: editorial page not built`);
   ok(plain.includes("Sample projects: names and homes are fictional.") && (plain.match(/class="ed-card"/g) || []).length === 3, `${trade}: editorial work cards or note wrong`);
   ok(!plain.includes('id="price"') && !/Insured|Open 24\/7/.test(plain.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "")), `${trade}: editorial shows an unticked fact or a price without typed ranges`);
   ok(!/<script[^>]+src=/i.test(plain), `${trade}: editorial loads an outside script`);
@@ -96,12 +96,16 @@ for (const trade of TRADE_ORDER) {
     ok(sw[0] <= sw[1], `${trade}@${width}: editorial scrolls sideways (${sw[0]} > ${sw[1]})`);
     ok(errs.length === 0, `${trade}@${width}: editorial page error ${errs[0]}`);
     if (width === 1280 && trade === TRADE_ORDER[0]) {
-      const rows = await page.$$(".ed-row");
-      await rows[1].click();
-      const st = await page.evaluate(() => [...document.querySelectorAll(".ed-row")].map((r) => r.getAttribute("aria-expanded")).join() + "|" + [...document.querySelectorAll(".ed-pic img")].map((i) => i.className).join());
-      ok(st.startsWith("false,true") && /^[^|]*\|(?:,)?on/.test(st) === false && st.split("|")[1].split(",")[1] === "on", `editorial rows: click did not open row 2 / swap picture (${st})`);
+      const rows = await page.$$("[data-ed=row]");
+      const src0 = await page.getAttribute("[data-ed=row-img]", "src");
+      await rows[1].click(); await page.waitForTimeout(450);
+      const src1 = await page.getAttribute("[data-ed=row-img]", "src");
+      ok(src1 !== src0 && (await rows[1].getAttribute("aria-expanded")) === "true", `editorial rows: click did not open row 2 / swap picture`);
+      await rows[2].focus(); await page.keyboard.press("Enter"); await page.waitForTimeout(450);
+      const src2 = await page.getAttribute("[data-ed=row-img]", "src");
+      ok(src2 !== src1 && (await rows[2].getAttribute("aria-expanded")) === "true", "editorial rows: Enter did not open row 3 / swap picture");
       await rows[1].focus(); await page.keyboard.press("ArrowDown");
-      ok(await page.evaluate(() => document.activeElement.classList.contains("ed-row") && document.querySelectorAll(".ed-row")[2] === document.activeElement), "editorial rows: ArrowDown does not move to the next row");
+      ok(await page.evaluate(() => document.querySelectorAll("[data-ed=row]")[2] === document.activeElement), "editorial rows: ArrowDown does not move to the next row");
     }
     await page.close();
   }

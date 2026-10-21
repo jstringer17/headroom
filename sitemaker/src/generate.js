@@ -115,7 +115,8 @@ function h1Sizes(text, layout) {
 
 export function generateSite(form) {
   const d = normalize(form);
-  if (form && form.cinematic && CINE && CINE.CINE_KIT[d.tradeKey]) return (form.look === "editorial" ? generateEditorial : generateCinematic)(form, d, CINE);
+  const editorial = form && (form.look === "editorial" || (form.cine && form.cine.look === "editorial"));
+  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, CINE);
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
