@@ -6,7 +6,7 @@
 // styles: 2-4 tabs for "Pick your style". beforeAfter: one drag pair; the
 // before picture shows normal age and wear, never a claim about our own job.
 // estimator: labels only. Prices come only from what the owner types.
-// Copy rules: plain words, no prices, no review counts, no made-up claims.
+// Copy rules: plain words, no prices, no rating numbers, no made-up claims.
 // Trades are listed in the CEO's picture order (roofing and fencing first).
 
 const SUFFIX =
@@ -343,7 +343,7 @@ export const CINE_KIT = {
         prompt: E("the lawn is now thick even green grass, freshly mowed in straight stripes, edges crisp.") },
     ],
     styles: [
-      { id: "lawn", name: "Lawn and beds", note: "Green grass, crisp edges, fresh mulch.",
+      { id: "green", name: "Lawn and beds", note: "Green grass, crisp edges, fresh mulch.",
         prompt: P("A suburban front yard with thick green striped lawn and crisp mulched planting beds, golden hour.") },
       { id: "xeric", name: "Low water", note: "Stone, grasses and plants that need little water.",
         prompt: P("A suburban front yard landscaped with river rock, ornamental grasses and drought-tolerant plants, golden hour.") },
@@ -372,7 +372,7 @@ export const CINE_KIT = {
         prompt: E("the yard is clean with no debris and warm sunlight now reaches the lawn and the front of the house.") },
     ],
     styles: [
-      { id: "trim", name: "Trimming", note: "Shape, thin and lift the canopy.",
+      { id: "trimming", name: "Trimming", note: "Shape, thin and lift the canopy.",
         prompt: P("A healthy, neatly trimmed mature oak tree in a front yard with a clear space above the house roof, soft sun.") },
       { id: "removal", name: "Tree removal", note: "Safe removal, piece by piece.",
         prompt: P("A front yard with a fresh flat tree stump and clean lawn where a large tree used to be, soft sun.") },
@@ -488,7 +488,7 @@ export const CINE_KIT = {
         prompt: E("the camera has the same view in warm late afternoon light, everything clean and tidy.") },
     ],
     styles: [
-      { id: "home", name: "Home protection", note: "Inside and outside, all year.",
+      { id: "protect", name: "Home protection", note: "Inside and outside, all year.",
         prompt: P("The clean base of a house with a neat gravel band along the foundation and trimmed shrubs, soft daylight.") },
       { id: "termite", name: "Termites", note: "Inspection and treatment for wood.",
         prompt: P("Clean, solid wood framing in a bright crawl space with a clear vapor barrier on the ground, soft light.") },
@@ -596,15 +596,16 @@ export const CINE_KIT = {
 };
 
 // Every picture slot for a trade, in kit order: the ids the maker uses for
-// form.cine.images[slotId], with a short label and the Higgsfield prompt.
-export function cineSlots(trade) {
+// form.cine.images[slotId] (the bare story/style id, or before/after; unique
+// within a trade), with a short label and the Higgsfield prompt.
+export function kitSlots(trade) {
   const k = CINE_KIT[trade];
   if (!k) return [];
   const n = k.story.length;
   return [
-    ...k.story.map((s, i) => ({ slotId: `story-${s.id}`, kind: "story", index: i,
+    ...k.story.map((s, i) => ({ slotId: s.id, kind: "story", index: i,
       label: `Story ${i + 1} of ${n}: ${s.headline}`, prompt: s.prompt })),
-    ...k.styles.map((s, i) => ({ slotId: `style-${s.id}`, kind: "style", index: i,
+    ...k.styles.map((s, i) => ({ slotId: s.id, kind: "style", index: i,
       label: `Style: ${s.name}`, prompt: s.prompt })),
     { slotId: "before", kind: "before", index: 0, label: `Before: ${k.beforeAfter.title}`, prompt: k.beforeAfter.before.prompt },
     { slotId: "after", kind: "after", index: 0, label: `After: ${k.beforeAfter.title}`, prompt: k.beforeAfter.after.prompt },

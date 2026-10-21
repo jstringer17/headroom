@@ -136,12 +136,12 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 /* Focus, motion */
 .cine :focus-visible{outline:2px solid var(--c-accent-text);outline-offset:3px;border-radius:8px}
 .cine-photo :focus-visible,.cine-dark :focus-visible{outline-color:var(--c-accent-hi)}
-.cine-reveal{opacity:0;transform:translateY(24px);transition:opacity 800ms var(--ease-out),transform 800ms var(--ease-out)}
-.cine-reveal.is-on{opacity:1;transform:none}
+.cine-rise{opacity:0;transform:translateY(24px);transition:opacity 800ms var(--ease-out),transform 800ms var(--ease-out)}
+.cine-rise.is-on{opacity:1;transform:none}
 @media (prefers-reduced-motion:reduce){
 .cine *,.cine *::before,.cine *::after{transition:none!important;animation:none!important}
 .cine-frame>img{transform:none!important}
-.cine-reveal,.cine-caption{opacity:1;transform:none}
+.cine-rise,.cine-caption{opacity:1;transform:none}
 }`;
   return { css, fontsHref: CINE_FONTS_HREF, vars: v };
 }
@@ -256,15 +256,16 @@ function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, wo
   return out;
 }
 
-// Label on the art: always visible, bottom left.
+// Label on the art: always visible. Top center and narrow (440 of 1600), so
+// it survives object-fit: cover on a phone (about 450 wide stays in view)
+// and stays clear of headlines and buttons, which sit at the bottom.
 function label(text, dark) {
   const t1 = "Sample picture: make in Higgsfield";
-  const t2 = text.length > 64 ? text.slice(0, 63) + "…" : text;
-  const wpx = Math.max(t1.length * 15.2, t2.length * 12.2) + 56;
-  return `<g font-family="Helvetica, Arial, sans-serif">
-<rect x="48" y="${H - 160}" width="${f(wpx)}" height="112" rx="16" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
-<text x="76" y="${H - 112}" font-size="28" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${esc(t1)}</text>
-<text x="76" y="${H - 74}" font-size="22" fill="${dark ? "#4a443b" : "#d8cfbf"}">${esc(t2)}</text></g>`;
+  const t2 = text.length > 38 ? text.slice(0, 37) + "\u2026" : text;
+  return `<g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
+<rect x="580" y="100" width="440" height="92" rx="14" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
+<text x="800" y="138" font-size="22" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${esc(t1)}</text>
+<text x="800" y="170" font-size="19" fill="${dark ? "#4a443b" : "#d8cfbf"}">${esc(t2)}</text></g>`;
 }
 
 // Viewfinder corner marks and a small "16:9 sketch" tag: reads as a shot to be made.
@@ -590,9 +591,9 @@ function stageFor(trade, slotId) {
   if (!k) return { st: 0, last, v: -1 };
   if (slotId === "before") return { st: 0, last, v: -1 };
   if (slotId === "after") return { st: last, last, v: -1 };
-  const si = k.story.findIndex((s) => `story-${s.id}` === slotId);
+  const si = k.story.findIndex((s) => s.id === slotId);
   if (si >= 0) return { st: si, last, v: -1 };
-  const vi = k.styles.findIndex((s) => `style-${s.id}` === slotId);
+  const vi = k.styles.findIndex((s) => s.id === slotId);
   if (vi >= 0) return { st: last, last, v: vi };
   return { st: last, last, v: -1 };
 }
@@ -622,8 +623,8 @@ export function placeholderArt(trade, slotId, label) {
   const k = CINE_KIT[trade];
   let text = label;
   if (!text && k) {
-    const s = k.story.find((x) => `story-${x.id}` === slotId);
-    const y = k.styles.find((x) => `style-${x.id}` === slotId);
+    const s = k.story.find((x) => x.id === slotId);
+    const y = k.styles.find((x) => x.id === slotId);
     text = s ? s.headline : y ? y.name : slotId === "before" ? "Before" : slotId === "after" ? "After" : slotId;
   }
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(placeholderSvg(trade, slotId, text || ""));
