@@ -5,7 +5,12 @@
 // `accent` is the one word of the headline shown in italic.
 // styles: 2-4 tabs for "Pick your style". beforeAfter: one drag pair; the
 // before picture shows normal age and wear, never a claim about our own job.
-// estimator: labels only. Prices come only from what the owner types.
+// estimator: labels only, unit is the default price unit (same words as
+// cinematic.js CINE_UNITS). Prices come only from what the owner types.
+// tool: the one interactive moment this trade leads with (ideas from the
+// lynam_up reels): wash = drag to clean the before/after pair, blueprint =
+// a drawn plan laid over the finished picture, dial = a warmth dial over the
+// first and last story frames, tabs = style tabs, drag = before/after slider.
 // Copy rules: plain words, no prices, no rating numbers, no made-up claims.
 // Trades are listed in the CEO's picture order (roofing and fencing first).
 
@@ -55,8 +60,9 @@ export const CINE_KIT = {
       before: { prompt: P("Close view of one section of an asphalt shingle roof after a wind storm: several shingles torn off, bare spots, bent flashing, overcast light.") },
       after: { prompt: A("the same roof section repaired with matching new shingles laid flat in straight rows, new flashing, soft sun.") },
     },
+    tool: { kind: "drag", title: "Drag to see the repair." },
     estimator: {
-      unit: "roof",
+      unit: "per sq ft",
       sizes: ["Small home", "Medium home", "Large home"],
       options: ["Architectural shingle", "Standing seam metal", "Slate look", "Repair only"],
     },
@@ -86,8 +92,9 @@ export const CINE_KIT = {
       before: { prompt: P("An old wooden fence gate in a backyard, gray weathered boards, leaning and sagging, one board cracked, rusty hinge, soft overcast light.") },
       after: { prompt: A("a new cedar gate hangs straight and level in the same spot with new black hinges and latch, fresh boards on both sides.") },
     },
+    tool: { kind: "tabs", title: "Choose your fence." },
     estimator: {
-      unit: "fence",
+      unit: "per linear foot",
       sizes: ["Short run (one side)", "Medium yard", "Full backyard"],
       options: ["Cedar privacy", "White vinyl", "Black aluminum", "Gate only"],
     },
@@ -111,12 +118,13 @@ export const CINE_KIT = {
         prompt: P("A freshly cleaned backyard wood deck with even warm boards and clean railings, soft daylight.") },
     ],
     beforeAfter: {
-      title: "Before the wash, after the wash.",
-      before: { prompt: P("Close view of a stone patio with dark green and black mildew in the joints and gray grime across the stones, soft light.") },
-      after: { prompt: A("the same patio clean, warm natural stone color, clean joints.") },
+      title: "Grime, then clean.",
+      before: { prompt: P("Straight top-down drone view of a concrete driveway, dark gray with grime, green mildew along the edges and joints, tire tracks and an oil spot, a strip of green lawn on both sides, even soft daylight.") },
+      after: { prompt: A("the whole driveway is clean, bright even light gray concrete, crisp joints, the lawn unchanged.") },
     },
+    tool: { kind: "wash", title: "Drag to wash it clean." },
     estimator: {
-      unit: "job",
+      unit: "per sq ft",
       sizes: ["Small (walkway or patio)", "Medium (driveway)", "Large (driveway and house)"],
       options: ["Driveway", "House washing", "Deck or patio", "Roof soft wash"],
     },
@@ -124,12 +132,12 @@ export const CINE_KIT = {
 
   hvac: {
     story: [
-      { id: "old", headline: "An old unit works too hard.", accent: "hard",
-        prompt: P("An old outdoor air conditioner unit beside a light-colored house wall: faded and rust-stained metal case, bent fins, weeds around a cracked pad, soft morning side light, eye-level view from the side yard.") },
-      { id: "pad", headline: "A level pad to start.", accent: "level",
-        prompt: E("the old unit is gone and a new clean level composite pad sits on fresh gravel, the line set tidy and capped.") },
-      { id: "new", headline: "Cool air, new unit.", accent: "new",
-        prompt: E("a new modern light gray outdoor air conditioner unit sits on the new pad with neat insulated lines and a clean disconnect box.") },
+      { id: "cold", headline: "Cold creeps in at the glass.", accent: "creeps",
+        prompt: P("A quiet living room in winter at dusk: wide wood floor, a soft sofa with a folded knit blanket, tall windows with frost creeping across the inside of the panes, snow outside, cold blue light, the room dim and chilly. Eye-level wide view from the corner of the room.") },
+      { id: "warming", headline: "Warm air, moving again.", accent: "Warm",
+        prompt: E("warm amber light from table lamps now fills half the room, the frost on the windows is melting at the edges, the blue tone is fading.") },
+      { id: "warm", headline: "Comfort, all evening long.", accent: "Comfort",
+        prompt: E("the whole room glows warm and golden, the window glass is clear, the blanket lies loose on the sofa, cozy evening light.") },
     ],
     styles: [
       { id: "central", name: "Central air", note: "One outdoor unit cools the whole house.",
@@ -140,12 +148,13 @@ export const CINE_KIT = {
         prompt: P("A sleek white ductless mini-split wall unit high on the wall of a calm, bright modern living room, soft window light.") },
     ],
     beforeAfter: {
-      title: "Dirty coil, clean coil.",
-      before: { prompt: P("Close view of an outdoor air conditioner coil caked with dust, cottonwood fluff and leaves, soft light.") },
-      after: { prompt: A("the same coil clean with straight bright fins and no debris.") },
+      title: "Old unit, new unit.",
+      before: { prompt: P("An old outdoor air conditioner unit beside a light-colored house wall: faded and rust-stained metal case, bent fins, weeds around a cracked pad, soft morning side light, eye-level view from the side yard.") },
+      after: { prompt: A("a new modern light gray outdoor unit sits on a new level pad with neat insulated lines, weeds cleared.") },
     },
+    tool: { kind: "dial", title: "Set it to warm." },
     estimator: {
-      unit: "system",
+      unit: "per job",
       sizes: ["Small home", "Medium home", "Large home"],
       options: ["Central air", "Heat pump", "Ductless mini-split", "Tune-up"],
     },
@@ -173,8 +182,9 @@ export const CINE_KIT = {
       before: { prompt: P("A living room ceiling corner with a large brown water stain ring and bubbling paint, soft light.") },
       after: { prompt: A("the same ceiling corner smooth, repaired and freshly painted white.") },
     },
+    tool: { kind: "drag", title: "Drag from damage to done." },
     estimator: {
-      unit: "area",
+      unit: "per job",
       sizes: ["One room", "A few rooms", "Whole floor"],
       options: ["Water damage", "Fire and smoke", "Mold clean-up"],
     },
@@ -204,8 +214,9 @@ export const CINE_KIT = {
       before: { prompt: P("An empty, graded building lot with string lines marking a house footprint, golden hour.") },
       after: { prompt: A("a finished two-story home with a covered porch and fresh lawn stands on the lot.") },
     },
+    tool: { kind: "blueprint", title: "The plan, then the home." },
     estimator: {
-      unit: "home",
+      unit: "per sq ft",
       sizes: ["Up to 2,000 sq ft", "2,000 to 3,000 sq ft", "Over 3,000 sq ft"],
       options: ["Modern farmhouse", "Craftsman", "Modern"],
     },
@@ -231,12 +242,13 @@ export const CINE_KIT = {
         prompt: P("A wood-framed detached garage with a wide door opening and roof trusses, morning light, clean site.") },
     ],
     beforeAfter: {
-      title: "Bare slab, full frame.",
-      before: { prompt: P("A bare, clean concrete house slab with anchor bolts, morning light.") },
-      after: { prompt: A("a complete two-story wood house frame with trusses stands on the slab.") },
+      title: "Framed, then finished.",
+      before: { prompt: P("Inside a new house during framing: a large open living room with bare wood studs, ceiling joists, window openings with daylight pouring in, a clean plywood subfloor, a work light on a stand, wide eye-level view.") },
+      after: { prompt: A("the same room is finished: smooth painted walls and ceiling, trimmed windows, a light wood floor, soft recessed lights, empty and calm.") },
     },
+    tool: { kind: "blueprint", title: "Every stud on the plan." },
     estimator: {
-      unit: "frame",
+      unit: "per sq ft",
       sizes: ["Garage or small addition", "Single-story home", "Two-story home"],
       options: ["New home", "Addition", "Garage or shop"],
     },
@@ -266,8 +278,9 @@ export const CINE_KIT = {
       before: { prompt: P("A dated small bathroom with a pink tile wall, an old tub with a stained curtain rod and a worn vanity, soft light.") },
       after: { prompt: A("the same bathroom with a glass walk-in shower, large light tile and a new wood vanity.") },
     },
+    tool: { kind: "blueprint", title: "Drawn first, then built." },
     estimator: {
-      unit: "project",
+      unit: "per job",
       sizes: ["Refresh", "Mid-size remodel", "Full remodel"],
       options: ["Kitchen", "Bathroom", "Basement"],
     },
@@ -295,8 +308,9 @@ export const CINE_KIT = {
       before: { prompt: P("Close view of a window frame with cracked, peeling white paint and gray bare wood showing, soft light.") },
       after: { prompt: A("the same window frame smooth and freshly painted bright white.") },
     },
+    tool: { kind: "tabs", title: "Try a color." },
     estimator: {
-      unit: "job",
+      unit: "per job",
       sizes: ["A few rooms", "Whole inside", "Whole outside"],
       options: ["Interior", "Exterior", "Cabinets", "Deck or fence stain"],
     },
@@ -324,8 +338,9 @@ export const CINE_KIT = {
       before: { prompt: P("A front walkway of broken, tilted concrete slabs with a trip edge and weeds, soft light.") },
       after: { prompt: A("the same walkway poured new, smooth and level with straight joints.") },
     },
+    tool: { kind: "tabs", title: "Pick a finish." },
     estimator: {
-      unit: "slab",
+      unit: "per sq ft",
       sizes: ["Walkway", "Patio", "Driveway"],
       options: ["Broom finish", "Stamped", "Exposed aggregate"],
     },
@@ -355,8 +370,9 @@ export const CINE_KIT = {
       before: { prompt: P("An overgrown planting bed along a house with weeds, tangled shrubs and no edge, soft light.") },
       after: { prompt: A("the same bed trimmed, weeded, edged crisply and topped with fresh dark mulch.") },
     },
+    tool: { kind: "drag", title: "Drag to see it cared for." },
     estimator: {
-      unit: "yard",
+      unit: "per job",
       sizes: ["Small yard", "Medium yard", "Large yard"],
       options: ["Lawn and beds", "Low water", "Patio or path", "Monthly care"],
     },
@@ -384,8 +400,9 @@ export const CINE_KIT = {
       before: { prompt: P("A big broken oak limb hanging from a tree over a backyard fence after a storm, overcast light.") },
       after: { prompt: A("the broken limb removed with a clean cut on the trunk and the yard clear.") },
     },
+    tool: { kind: "drag", title: "Drag to clear the limb." },
     estimator: {
-      unit: "tree",
+      unit: "per job",
       sizes: ["Small tree", "Medium tree", "Large tree"],
       options: ["Trimming", "Removal", "Stump grinding"],
     },
@@ -413,8 +430,9 @@ export const CINE_KIT = {
       before: { prompt: P("Close view of a dented, faded steel garage door with a cracked bottom seal, soft light.") },
       after: { prompt: A("a new smooth dark garage door panel and new bottom seal in the same spot.") },
     },
+    tool: { kind: "tabs", title: "Pick a door." },
     estimator: {
-      unit: "door",
+      unit: "per job",
       sizes: ["Single door", "Double door"],
       options: ["Carriage style", "Modern glass", "Classic raised panel", "Repair or spring"],
     },
@@ -442,8 +460,9 @@ export const CINE_KIT = {
       before: { prompt: P("An old rusty tank water heater in a dim utility corner with a rust stain on the floor, soft light.") },
       after: { prompt: A("a new white tank water heater with new copper lines and a clean drain pan in the same corner.") },
     },
+    tool: { kind: "drag", title: "Drag for the new install." },
     estimator: {
-      unit: "job",
+      unit: "per job",
       sizes: ["Small repair", "Medium job", "Large job"],
       options: ["Leak or clog", "Water heater", "Fixture install", "Repipe"],
     },
@@ -471,8 +490,9 @@ export const CINE_KIT = {
       before: { prompt: P("Close view of an old fuse box with screw-in fuses and cloth-covered wires, dim light.") },
       after: { prompt: A("a new modern breaker panel with neat wiring in the same spot.") },
     },
+    tool: { kind: "drag", title: "Drag for the new panel." },
     estimator: {
-      unit: "job",
+      unit: "per job",
       sizes: ["Small job", "Medium job", "Large job"],
       options: ["Panel upgrade", "Lighting", "EV charger", "Outlets and switches"],
     },
@@ -500,8 +520,9 @@ export const CINE_KIT = {
       before: { prompt: P("Close view of a gap where a pipe enters a house wall, rough edges, dirt and cobwebs, soft light.") },
       after: { prompt: A("the same pipe entry neatly sealed with a clean collar and fresh caulk.") },
     },
+    tool: { kind: "drag", title: "Drag to seal it." },
     estimator: {
-      unit: "home",
+      unit: "per job",
       sizes: ["Apartment or small home", "Medium home", "Large home"],
       options: ["One-time service", "Quarterly plan", "Termites", "Rodents"],
     },
@@ -529,8 +550,9 @@ export const CINE_KIT = {
       before: { prompt: P("The inside of a backyard shed crammed with old paint cans, broken tools and boxes, soft light from the door.") },
       after: { prompt: A("the same shed empty and swept clean.") },
     },
+    tool: { kind: "wash", title: "Drag to clear it out." },
     estimator: {
-      unit: "load",
+      unit: "per job",
       sizes: ["A few items", "Half a truck", "Full truck"],
       options: ["Garage", "Yard debris", "Move-out", "Single item"],
     },
@@ -558,8 +580,9 @@ export const CINE_KIT = {
       before: { prompt: P("A glass shower door with hard water spots and soap haze, soft bathroom light.") },
       after: { prompt: A("the same glass shower door perfectly clear and shining.") },
     },
+    tool: { kind: "wash", title: "Drag to clean it." },
     estimator: {
-      unit: "home",
+      unit: "per job",
       sizes: ["1 to 2 bedrooms", "3 bedrooms", "4 or more bedrooms"],
       options: ["Standard clean", "Deep clean", "Move-in or move-out"],
     },
@@ -587,8 +610,9 @@ export const CINE_KIT = {
       before: { prompt: P("A plain dark sedan with a flat front tire on a quiet road shoulder at dusk, hazard lights on.") },
       after: { prompt: A("the same sedan on a new spare tire and the shoulder clear, hazard lights off.") },
     },
+    tool: { kind: "drag", title: "Drag to get moving." },
     estimator: {
-      unit: "call",
+      unit: "per job",
       sizes: ["In town", "Up to 25 miles", "Long distance"],
       options: ["Tow", "Jump start", "Tire change", "Lockout"],
     },

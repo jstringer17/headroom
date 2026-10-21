@@ -63,3 +63,15 @@ Sources: the lynam_up fence reel (org/inspiration/lynam_up-reels.md, frames revi
 - Import: `cineLook(theme)` gives `{ css, fontsHref, vars }`; `placeholderArt(trade, slotId, label)`; `kitSlots(trade)` (in cine-kit.js) lists every slot with id, kind, label and prompt; `CINE_ORDER` is the CEO's picture order.
 - Slot ids: the bare story or style `id` (unique within a trade), plus `before` and `after`, the same ids cinematic.js uses. `form.cine.images[slotId]` overrides the drawing.
 - 19 trades in the kit. restoration, builder and framing are new (CEO answer 2026-10-21) and still need trades.js entries (owner of trades.js); the kit is ready for them.
+
+## Round 2 (2026-10-21): ideas from 6 more reel contact sheets (org/inspiration/frames/)
+Taken (ideas, my words; no names or text copied):
+1. **Palette per trade**, now in `CINE_PALETTES` + `CINE_TRADE_LOOK`: pressure washing carbon + yellow, HVAC carbon + orange (heavy sans headline, accent word by color), home builder / framing / remodeling warm wood paper + blueprint blue text + yellow button, fencing / roofing / restoration cream + serif + orange. Other trades keep the theme the owner picks. All text pairs AA (lowest 4.57:1).
+2. **One featured tool per trade** (`tool` in the kit): wash = drag to clean (pressure, junk, cleaning), blueprint = a drawn plan wiped away to show the finished picture (builder, framing, remodeling; `blueprintArt(trade)` draws it, no Higgsfield credit), dial = warmth dial that blends the cold and warm story frames (HVAC), tabs (fencing, painting, concrete, garage), drag (the rest, e.g. restoration damage to done).
+3. **Feelings over equipment.** The HVAC story is now one room going from cold (frost on the panes, blue light) to warm (amber lamps); the unit swap moved to the before/after pair.
+4. **Top-down drag to clean.** The pressure washing pair is a straight-down driveway view so the drag reads like washing a strip.
+5. **Framing to finished.** The framing pair is a framed room, then the same room finished.
+6. **Dark glass estimator.** `.est-out` gets a subtle glass gradient, a hairline border and a big display-font range; one accent button.
+Rejected: neon and 360 spins from the car reel (off-brand for trades, needs 3D); the reels' exact headlines (we write our own).
+
+Engine notes: pass the trade to `cineLook(theme, trade)` (and `{ tradeLook: false }` if the owner turns trade colors off); read `kit.tool.kind` to pick the featured tool; the CSS bridge maps the engine's own variables (`--serif`, `--sans`, `--cream`, `--ink`, `--accent`, `--dark`...) to the look, so no markup change is needed.
