@@ -12,6 +12,7 @@
   const hasCine = typeof CINE_KIT !== "undefined";
   const cineImages = {}; // trade -> slotId -> picture
   const cineUnits = {}; // trade -> chosen unit
+  const cineRpct = {}; // trade -> typed percent
   const cinePrices = {}; // trade -> size -> option -> { low, high }
 
   TRADE_ORDER.forEach((k) => {
@@ -63,6 +64,7 @@
       '<p class="status" aria-live="polite"></p></div>').join("");
     const pr = cinePrices[key] = cinePrices[key] || {};
     const est = kit.estimator || { sizes: [], options: [] };
+    $("cine-rpct-wrap").hidden = key !== "hvac"; $("cine-rpct").value = cineRpct[key] || "";
     const unit = cineUnit(key, cineUnits[key]);
     $("cine-prices").innerHTML = '<label class="field" for="cine-unit"><span>Price is</span><select id="cine-unit">' +
       CINE_UNITS.map((u) => '<option' + (u === unit ? " selected" : "") + ">" + u + "</option>").join("") + "</select></label>" + est.sizes.map((sz) => '<div class="price-row"><b>' + esc(sz) + "</b>" + est.options.map((op) => {
@@ -89,7 +91,7 @@
       theme,
       heroImage: heroData || $("hero-url").value.trim(),
       cinematic: hasCine && $("cinematic").checked,
-      cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]) } : undefined,
+      cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
     };
   }
 
@@ -123,6 +125,7 @@
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "cinematic") buildCine();
+    if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;
     if (e.target.id === "cine-unit") cineUnits[tradeSel.value] = e.target.value;
     const dp = e.target.dataset || {};
     if (dp.end) {

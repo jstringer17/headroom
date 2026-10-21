@@ -7,6 +7,7 @@
 //   images: { [slotId]: data URI or https URL },   slotId = a story step id,
 //                                                   a style id, "before" or "after"
 //   unit: "per job" | "per sq ft" | "per linear foot" | "per hour" (default depends on the trade)
+//   repairPct: "50" (HVAC only; owner types it, blank = the calculator shows the two numbers and no verdict)
 //   prices: { [size]: { [option]: { low, high } } } typed by the owner
 // }
 //
@@ -95,7 +96,7 @@ const ENGINE_CSS = `
 :root{--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--cream:#f6f0e4;--cream2:#ece4d3;--card:rgba(255,255,255,.14);--ease:cubic-bezier(.16,1,.3,1);--hh:64px;--max:1200px;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:72px}
-body{margin:0;background:var(--cream);color:var(--ink);font:400 18px/1.6 var(--sans);overflow-x:clip;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+body{margin:0;background:var(--cream);color:var(--ink);font:400 18px/1.6 var(--sans);overflow-x:clip;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
 h1,h2,h3,p,dl,dd,figure{margin:0}
 h1,h2{font-family:var(--serif);font-weight:500;letter-spacing:-.015em;line-height:1.04;text-wrap:balance}
 h1 em,h2 em,.line em{font-style:italic;color:var(--accent)}
@@ -126,22 +127,20 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[role=slider]:focus-v
 .line .h{display:block;font:500 clamp(40px,10.5vw,104px)/1 var(--serif);letter-spacing:-.02em;max-width:14ch;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
 .story-cta{position:relative;z-index:3;display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:28px max(20px,env(safe-area-inset-left,0px));max-width:var(--max);margin:0 auto}
 .story-sub{flex:1 1 100%;color:rgba(255,255,255,.88);max-width:44ch;font-size:clamp(17px,2vw,20px);line-height:1.5}
-.prog{display:none}
 .cine-motion .story{height:calc(var(--n) * 100vh);height:calc(var(--n) * 100svh)}
 .cine-motion .pin{position:sticky;top:var(--hh);height:calc(100vh - var(--hh));height:calc(100svh - var(--hh));overflow:hidden}
 .cine-motion .step{position:absolute;inset:0;min-height:0;display:block}
 .cine-motion .frame img{transform-origin:50% 55%;will-change:transform,opacity}
 .cine-motion .frame{will-change:opacity}
-.cine-motion .step .line{position:absolute;left:0;right:0;bottom:calc(150px + env(safe-area-inset-bottom,0px));padding-bottom:0;will-change:transform,opacity}
+.cine-motion .step .line{position:absolute;left:0;right:0;bottom:calc(var(--cta-h,140px) + 28px);padding-bottom:0;will-change:transform,opacity}
 .cine-motion .step:not(:first-child) .line{opacity:0}
-.cine-motion .story-cta{position:absolute;left:0;right:0;bottom:0;padding-bottom:calc(28px + env(safe-area-inset-bottom,0px));padding-top:0;margin:0 auto;pointer-events:none}
+.cine-motion .story-cta{position:absolute;left:0;right:0;bottom:4px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));padding-top:0;margin:0 auto;pointer-events:none}
 .cine-motion .story-cta>*{pointer-events:auto}
 .cine-motion .story-sub{display:none}
-.cine-motion .prog{display:flex;gap:6px;position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(36px + env(safe-area-inset-bottom,0px));z-index:4}
-.prog i{display:block;width:6px;height:28px;border-radius:3px;background:rgba(255,255,255,.35);transition:background-color .3s,transform .3s}
-.prog i.on{background:var(--accent);transform:scaleY(1.2)}
-.cue{display:none}
-.cine-motion .cue{display:block;position:absolute;left:50%;top:14px;z-index:4;transform:translateX(-50%);font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.prog-bar,.prog-count{display:none}
+.cine-motion .prog-bar{display:block;position:absolute;left:0;right:0;bottom:0;height:4px;z-index:4;background:rgba(255,255,255,.18)}
+.prog-bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);will-change:transform}
+.cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:rgba(255,255,255,.8);font-variant-numeric:tabular-nums}
 /* sections on cream */
 .sec{padding-block:72px}
 .sec h2{font-size:clamp(38px,7vw,72px)}
@@ -194,7 +193,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,[role=slider]:focus-v
 .rr fieldset{border:0;margin:0;padding:0}
 .rr legend{padding:0;margin-bottom:10px;font:600 14px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .rr input[type=number]{width:100%;font:400 17px/1.4 var(--sans);border:1.5px solid #a79f8c;border-radius:10px;padding:13px 14px;margin-top:6px}
-.rr-out{font:500 22px/1.3 var(--serif);min-height:3em}
+.rr-out{font:500 22px/1.3 var(--serif)}
+.rr-nums{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rr-nums dt{font:600 12px/1.2 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rr-nums dd{margin-top:6px;font:500 26px/1.1 var(--serif);overflow-wrap:anywhere}
 /* price estimator */
 .est{display:grid;gap:28px}
 .est fieldset{border:0;margin:0;padding:0;min-width:0}
@@ -241,15 +243,15 @@ textarea{min-height:100px;resize:vertical}
 footer{background:var(--dark2);color:rgba(255,255,255,.76);font-size:15px}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:36px}
 .foot-name{font:500 22px/1.2 var(--serif);color:#fff}
-.mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:50;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark)}
-.mobile-call .btn{width:100%}
+.mobile-call{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50}
+.mobile-call .btn{box-shadow:0 6px 22px rgba(0,0,0,.35);min-height:48px}
 .mobile-call{transform:translateY(110%);visibility:hidden;transition:transform .45s var(--ease)}
 .past .mobile-call{transform:none;visibility:visible}
 @media (prefers-reduced-motion:no-preference){
   .cine-reveal .rv{transition:opacity .9s var(--ease),transform .9s var(--ease)}
   .cine-reveal .rv:not(.in){opacity:0;transform:translateY(22px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.prog i,.mobile-call{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.mobile-call{transition:none}}
 @media (min-width:760px){
   .sec{padding-block:112px}
   .svcs{grid-template-columns:1fr 1fr}
@@ -262,7 +264,6 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
   .grid>.head{grid-column:1/span 5}
   .grid>.body{grid-column:7/span 6}
   .story-sub{flex:0 1 auto}
-  .cine-motion .step .line{bottom:150px}
 }
 @media (min-width:1024px){
   body{padding-bottom:0}
@@ -291,7 +292,7 @@ if(story&&!reduce){
   var frames=steps.map(function(s){return s.querySelector(".frame")});
   var imgs=steps.map(function(s){return s.querySelector(".frame img")});
   var lines=steps.map(function(s){return s.querySelector(".line")});
-  var ticks=[].slice.call(story.querySelectorAll(".prog i"));
+  var bar=story.querySelector(".prog-bar i"),count=story.querySelector(".prog-count"),shown=0,cta=story.querySelector(".story-cta");
   var pin=story.querySelector(".pin"),live=false,queued=false;
   var paint=function(){
     queued=false;
@@ -299,16 +300,19 @@ if(story&&!reduce){
     var p=total>0?clamp(-r.top/total,0,1):0;
     var pos=p*(n-1);
     for(var i=0;i<n;i++){
-      frames[i].style.opacity=i===0?1:clamp(pos-(i-1),0,1);
+      frames[i].style.opacity=i===0?1:clamp((pos-(i-0.62))/0.24,0,1);
       var z=clamp(pos-i+1,0,2);
       imgs[i].style.transform="scale("+(1+0.045*z).toFixed(4)+")";
-      var d=Math.abs(pos-i),o=clamp(1.15-d*2.1,0,1);
+      var d=Math.abs(pos-i),o=clamp((0.5-d)/0.14,0,1);
       lines[i].style.opacity=o;
       lines[i].style.transform="translateY("+((pos-i)*-36).toFixed(1)+"px)";
       lines[i].style.visibility=o<0.02?"hidden":"visible";
-      if(ticks[i])ticks[i].className=Math.round(pos)===i?"on":"";
-    }
+      }
+    bar.style.transform="scaleX("+p.toFixed(4)+")";
+    var cur=Math.round(pos)+1;if(cur!==shown){shown=cur;count.textContent=cur+" / "+n}
   };
+  var space=function(){story.style.setProperty("--cta-h",cta.offsetHeight+"px")};
+  space();addEventListener("resize",space);
   var ask=function(){if(!queued){queued=true;requestAnimationFrame(paint)}};
   root.classList.add("cine-motion");
   paint();
@@ -346,7 +350,8 @@ if(tabs.length){
 var ba=document.getElementById("ba");
 if(ba){
   var h=ba.querySelector("[role=slider]");
-  var set=function(v){v=clamp(Math.round(v),0,100);ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
+  var tl=ba.querySelector(".ba-tag.l"),tr=ba.querySelector(".ba-tag.r");
+  var set=function(v){v=clamp(Math.round(v),0,100);var w=ba.offsetWidth,x=v/100*w;tl.style.visibility=x<tl.offsetWidth+36?"hidden":"visible";tr.style.visibility=w-x<tr.offsetWidth+36?"hidden":"visible";ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
   var fromX=function(x){var r=ba.getBoundingClientRect();set((x-r.left)/r.width*100)};
   var drag=false;
   ba.addEventListener("pointerdown",function(e){if(e.pointerType==="mouse"&&e.button!==0)return;drag=true;try{ba.setPointerCapture(e.pointerId)}catch(_){}fromX(e.clientX);h.focus({preventScroll:true})});
@@ -385,18 +390,14 @@ if(dial){
 }
 var rr=document.getElementById("rr");
 if(rr){
-  var low=+rr.getAttribute("data-low"),q=document.getElementById("rr-quote"),ro=document.getElementById("rr-out");
+  var low=+rr.getAttribute("data-low"),pct=+rr.getAttribute("data-pct"),q=document.getElementById("rr-quote"),qo=document.getElementById("rr-q"),ro=document.getElementById("rr-out");
   var calc=function(){
     var v=parseFloat(q.value);
-    if(!(v>0)){ro.textContent="Type your repair quote.";return}
-    var age=+(rr.querySelector("input[name=rr-age]:checked")||{value:1}).value,ratio=v/low;
-    var money="$"+low.toLocaleString("en-US");
-    ro.textContent=(ratio>=0.5||(age===2&&ratio>=0.3))
-      ?"Worth pricing a new system. This repair is a big share of a new system, which starts at "+money+" here."
-      :"A repair may make sense. A new system starts at "+money+" here.";
+    if(!(v>0)){qo.textContent="Type it above";ro.textContent="";return}
+    qo.textContent="$"+Math.round(v).toLocaleString("en-US");
+    ro.textContent=pct?(v/low*100>=pct?"This repair is "+pct+"% or more of a new system. Worth pricing a new one.":"This repair is under "+pct+"% of a new system. A repair may make sense."):"";
   };
-  q.addEventListener("input",calc);[].slice.call(rr.querySelectorAll("input[name=rr-age]")).forEach(function(i){i.addEventListener("change",calc)});
-  calc();
+  q.addEventListener("input",calc);calc();
 }
 
 /* 4. price estimator: shows only ranges the owner typed */
@@ -464,8 +465,7 @@ export function generateCinematic(form, d, deps) {
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}
     <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="btn btn-glass" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div>
-    <div class="prog" aria-hidden="true">${story.map(() => "<i></i>").join("")}</div>
-    <span class="cue" aria-hidden="true">Scroll</span>
+    <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${story.length}</span>
   </div>
 </section>`;
 
@@ -517,15 +517,17 @@ export function generateCinematic(form, d, deps) {
   let hvacSec = "";
   if (d.tradeKey === "hvac") {
     const replaceLow = prices && prices.lows.length ? Math.min(...prices.lows) : null;
+    const pct = parseInt(String((cine.repairPct ?? "")).replace(/[^\d]/g, ""), 10);
+    const repairPct = pct >= 1 && pct <= 100 ? pct : null; // typed by the owner; blank = no verdict
     hvacSec = `<section class="sec" id="comfort"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">Comfort</span><h2>Dial it <em>in</em>.</h2></div>
   <div class="tools rv">
     <div class="dial-card"><div class="dial" id="dial" role="slider" tabindex="0" aria-label="Thermostat" aria-valuemin="60" aria-valuemax="85" aria-valuenow="72" aria-valuetext="72 degrees"><svg viewBox="0 0 200 200" aria-hidden="true"><path class="d-track" d="M 42 158 A 82 82 0 1 1 158 158"/><path class="d-arc" id="d-arc" d="M 42 158 A 82 82 0 1 1 158 158"/><circle class="d-knob" id="d-knob" r="9" cx="100" cy="100"/></svg><div class="d-read"><span id="d-val">72</span><small>&deg;F</small></div></div><p class="est-note" style="color:var(--muted)">Drag the dial or use the arrow keys. This is just for fun; it does not control anything.</p></div>
-    ${replaceLow ? `<div class="rr" id="rr" data-low="${replaceLow}"><h3>Repair it or replace it?</h3>
-      <fieldset class="opts"><legend>How old is your system?</legend>${["Under 8 years", "8 to 12 years", "Over 12 years"].map((a, i) => `<label class="opt"><input type="radio" name="rr-age" value="${i}"${i === 1 ? " checked" : ""}><span>${a}</span></label>`).join("")}</fieldset>
+    ${replaceLow ? `<div class="rr" id="rr" data-low="${replaceLow}" data-pct="${repairPct || ""}"><h3>Repair it or replace it?</h3>
       <label for="rr-quote">What was the repair quote? ($)<input type="number" id="rr-quote" inputmode="numeric" min="0" step="1" placeholder="Like 1200"></label>
-      <p class="rr-out" id="rr-out" aria-live="polite">Type your repair quote.</p>
-      <p class="est-note" style="color:var(--muted)">A rule of thumb, not advice. We will look at your system and tell you straight.</p></div>` : ""}
+      <dl class="rr-nums"><div><dt>Your repair quote</dt><dd id="rr-q">Type it above</dd></div><div><dt>A new system starts at</dt><dd>${esc(usd(replaceLow))}</dd></div></dl>
+      <p class="rr-out" id="rr-out" aria-live="polite"></p>
+      <p class="est-note" style="color:var(--muted)">Prices are estimates. We will look at your system and tell you straight.</p></div>` : ""}
   </div>
 </div></section>`;
   }
