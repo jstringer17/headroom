@@ -1566,7 +1566,17 @@ const C = {
   sage: "#a7b394", sageD: "#6f7f62", clay: "#c46a3c", wood: "#cf9f69", woodD: "#a3733f",
   stone: "#bdb6a9", stoneD: "#8f887c", grime: "#6f6553", night: "#2f3b4c", night2: "#53607a",
   gold: "#efbe62", white: "#fbf8f2", slate: "#6c727a", char: "#3c3a37", blue: "#56708c", rust: "#9a5a33",
+  hill: "#c9cdb5", dot: "#cfc4b0", sunDay: "#f1d9a6", cloud: "#fbf7ef",
 };
+const LIGHT = { ...C };
+// Carbon ink mode for the dark trade palettes: light lines on near-black, the
+// clean or finished thing bright, one yellow accent. Same drawings, swapped inks.
+const CARBON = {
+  ink: "#ece6d8", paper: "#1b1d20", paper2: "#202327", sky1: "#121417", sky2: "#262a2f", sage: "#252a24", sageD: "#3f4b39",
+  white: "#2b2e33", stone: "#dcd8ce", stoneD: "#8c8880", grime: "#3a3327", char: "#16171a", hill: "#2c3035", dot: "#393d43",
+  sunDay: "#ffd23f", gold: "#ffd23f", cloud: "#2f3338", blue: "#8fb3d9",
+};
+const CARBON_TRADES = new Set(["pressure", "hvac"]);
 
 const f = (n) => Math.round(n * 10) / 10;
 const line = (x1, y1, x2, y2, w = 3, c = C.ink, extra = "") =>
@@ -1586,40 +1596,42 @@ function rng(seed) {
 }
 
 // Sky, sun, far trees and ground. mood: day | gold | dusk
-function backdrop(mood = "day", ground = C.sage, sunX = 1250) {
+function backdrop(mood = "day", ground = C.sage, sunX = 1250, gy = G) {
   const sky = mood === "dusk" ? [C.night, C.night2] : mood === "gold" ? ["#ead9bd", "#f7ecdb"] : [C.sky1, C.sky2];
   const sunY = mood === "gold" ? 420 : mood === "dusk" ? 520 : 250;
-  const sun = mood === "dusk" ? "#e9a86a" : mood === "gold" ? C.gold : "#f1d9a6";
+  const sun = mood === "dusk" ? "#e9a86a" : mood === "gold" ? C.gold : C.sunDay;
   const dots = range(15).map((i) => range(8).map((j) =>
-    `<circle cx="${60 + i * 106}" cy="${50 + j * 84}" r="1.6" fill="${mood === "dusk" ? "#8d97ab" : "#cfc4b0"}"/>`).join("")).join("");
-  const hills = `M0 ${G - 90} C 180 ${G - 150} 330 ${G - 120} 470 ${G - 140} S 760 ${G - 190} 930 ${G - 150} S 1260 ${G - 110} 1400 ${G - 160} S 1560 ${G - 140} 1600 ${G - 130} V ${G} H 0 Z`;
+    `<circle cx="${60 + i * 106}" cy="${50 + j * 84}" r="1.6" fill="${mood === "dusk" ? "#8d97ab" : C.dot}"/>`).join("")).join("");
+  const hills = `M0 ${gy - 90} C 180 ${gy - 150} 330 ${gy - 120} 470 ${gy - 140} S 760 ${gy - 190} 930 ${gy - 150} S 1260 ${gy - 110} 1400 ${gy - 160} S 1560 ${gy - 140} 1600 ${gy - 130} V ${gy} H 0 Z`;
+  const cloud = (x, y, s) => `<g opacity=".8" fill="${mood === "dusk" ? "#56627a" : C.cloud}"><ellipse cx="${x}" cy="${y}" rx="${110 * s}" ry="${26 * s}"/><ellipse cx="${x - 40 * s}" cy="${y - 18 * s}" rx="${60 * s}" ry="${30 * s}"/><ellipse cx="${x + 34 * s}" cy="${y - 22 * s}" rx="${50 * s}" ry="${28 * s}"/></g>`;
   return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>${dots}
-${circle(sunX, sunY, 92, sun, "none", 0, ' opacity=".9"')}${circle(sunX, sunY, 128, "none", sun, 2, ' opacity=".5"')}
-${path(hills, mood === "dusk" ? "#3d4a5c" : "#c9cdb5", "none", 0, ' opacity=".8"')}
-${rect(0, G, W, H - G, ground, "none", 0)}${line(0, G, W, G, 3)}`;
+<g class="drift2">${cloud(420, 300, 1)}</g><g class="drift">${cloud(1000, 210, 0.8)}</g>
+${circle(sunX, sunY, 128, "none", sun, 2, ' class="glow" opacity=".5"')}${circle(sunX, sunY, 92, sun, "none", 0, ' opacity=".9"')}
+${path(hills, mood === "dusk" ? "#3d4a5c" : C.hill, "none", 0, ' opacity=".8"')}
+${rect(0, gy, W, H - gy, ground, "none", 0)}${line(0, gy, W, gy, 3)}`;
 }
 
 // Interior room: back wall, floor, window.
-function room(wall = C.paper2, floor = "#d9c3a0", lightOn = false) {
+function room(wall = C.paper2, floor = "#d9c3a0", lightOn = false, wx = 1080) {
   return `<rect width="${W}" height="${H}" fill="${wall}"/>
 ${rect(0, 650, W, 250, floor, "none", 0)}${line(0, 650, W, 650)}
-${rect(1080, 150, 330, 330, lightOn ? "#f7e7c4" : "#e4ebe7")}${line(1245, 150, 1245, 480, 2)}${line(1080, 315, 1410, 315, 2)}
-${path(`M1080 480 L960 650 M1410 480 L1500 650`, "none", C.ink, 1.5, ' opacity=".35"')}
-${path(`M1080 480 L960 650 L1500 650 L1410 480 Z`, lightOn ? "#f3dcae" : "#efe6d4", "none", 0, ' opacity=".55"')}`;
+${rect(wx, 150, 330, 330, lightOn ? "#f7e7c4" : "#e4ebe7")}${line(wx + 165, 150, wx + 165, 480, 2)}${line(wx, 315, wx + 330, 315, 2)}
+${path(`M${wx} 480 L${wx - 120} 650 M${wx + 330} 480 L${wx + 420} 650`, "none", C.ink, 1.5, ' opacity=".35"')}
+${path(`M${wx} 480 L${wx - 120} 650 L${wx + 420} 650 L${wx + 330} 480 Z`, lightOn ? "#f3dcae" : "#efe6d4", "none", 0, ' class="glow" opacity=".55"')}`;
 }
 
 // A gable house front. roof: old | deck | wrap | new | metal | slate | frame
 // wall: paint color, or "frame" (studs) | "wrap"
-function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white } = {}) {
-  const x0 = x - w / 2, x1 = x + w / 2, top = G - wallH, peak = top - 190;
+function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white, base = G } = {}) {
+  const x0 = x - w / 2, x1 = x + w / 2, top = base - wallH, peak = top - 190;
   const eL = x0 - 46, eR = x1 + 46, eY = top + 6;
   const tri = `M${eL} ${eY} L${x} ${peak} L${eR} ${eY} Z`;
   let out = "";
   // walls
   if (wall === "frame") {
-    out += line(x0, G - 4, x1, G - 4, 6, C.woodD) + line(x0, top, x1, top, 6, C.woodD);
-    out += range(Math.round(w / 40) + 1).map((i) => line(x0 + i * (w / Math.round(w / 40)), top, x0 + i * (w / Math.round(w / 40)), G, 4, C.woodD)).join("");
+    out += line(x0, base - 4, x1, base - 4, 6, C.woodD) + line(x0, top, x1, top, 6, C.woodD);
+    out += range(Math.round(w / 40) + 1).map((i) => line(x0 + i * (w / Math.round(w / 40)), top, x0 + i * (w / Math.round(w / 40)), base, 4, C.woodD)).join("");
   } else {
     out += rect(x0, top, w, wallH, wall === "wrap" ? "#f5f5f1" : wall);
     if (wall === "wrap") out += range(4).map((i) => line(x0 + 10, top + 50 + i * 55, x1 - 10, top + 50 + i * 55, 1.5, "#b9c3c9")).join("");
@@ -1658,7 +1670,7 @@ function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, wo
     for (const wx of [x0 + w * 0.14, x1 - w * 0.14 - 110]) {
       out += rect(wx - 8, wy - 8, 126, 136, trim, C.ink, 2) + rect(wx, wy, 110, 120, glass) + line(wx + 55, wy, wx + 55, wy + 120, 2) + line(wx, wy + 60, wx + 110, wy + 60, 2);
     }
-    if (!garage) out += rect(x - 46, G - 160, 92, 160, door) + circle(x + 28, G - 80, 4, C.gold, "none", 0);
+    if (!garage) out += rect(x - 46, base - 160, 92, 160, door) + circle(x + 28, base - 80, 4, C.gold, "none", 0);
   }
   if (garage) out += garage;
   if (worn && wall !== "frame") {
@@ -1719,7 +1731,7 @@ const SCENES = {
   },
   fencing(st, last, v) {
     const y0 = 600, x0 = 110, x1 = 1490, n = 12, step = (x1 - x0) / n;
-    let a = house({ x: 300, w: 380, wallH: 190, roof: "new" });
+    let a = house({ x: 800, w: 420, wallH: 200, roof: "new" });
     a += rect(0, G - 2, W, H - G, C.sage, "none", 0) + shrub(1350, G - 40, 0.8);
     const stage = v >= 0 ? 3 : st;
     const kind = v === 1 ? "vinyl" : v === 2 ? "rail" : "cedar";
@@ -1738,16 +1750,24 @@ const SCENES = {
     return { art: a, mood: "gold" };
   },
   pressure(st, last, v) {
-    let a = house({ x: 800, w: 700, wallH: 240, roof: "new", wall: v === 1 ? "#fbfbf6" : C.white, worn: st === 0 && v < 0,
-      garage: rect(580, G - 170, 300, 170, "#f1ece2") + range(4).map((i) => line(580, G - 170 + 42 * (i + 1), 880, G - 170 + 42 * (i + 1), 2)).join("") });
-    a += drive(C.stone, 300, 1100, G, 730);
-    if (v === 2) a += rect(0, 760, W, 140, C.wood) + range(7).map((i) => line(0, 760 + i * 20, W, 760 + i * 20, 2, C.woodD)).join("");
-    if (v < 0 && st < last) {
-      const dirt = `<g${st === 1 ? ' clip-path="url(#half)"' : ""}>${drive(C.grime, 300, 1100, G, 730)}${blotches("drive", 16, [300, 730, 900, 170], "#3f3a2f", 0.45)}${blotches("moss", 8, [200, 820, 1100, 80], "#4f6a3f", 0.4)}</g>`;
-      a += st === 1 ? `<defs><clipPath id="half"><rect x="760" y="0" width="900" height="900"/></clipPath></defs>${dirt}${line(760, G, 760, H, 4, C.white)}` : dirt;
+    const story = v < 0;
+    const B = 430;
+    let a = house({ base: B, x: 800, w: 520, wallH: 190, roof: "new", wall: v === 1 ? "#ebe8e1" : C.white, worn: story && st === 0,
+      garage: rect(650, B - 130, 230, 130, C.white) + range(3).map((i) => line(650, B - 130 + 32 * (i + 1), 880, B - 130 + 32 * (i + 1), 2)).join("") });
+    a += drive(C.stone, 230, 1700, B, 765);
+    if (v === 2) a += rect(0, 770, W, 130, C.wood) + range(6).map((i) => line(0, 770 + i * 22, W, 770 + i * 22, 2, C.woodD)).join("");
+    if (story && st < last) {
+      const dirt = `${drive(C.grime, 230, 1700, B, 765)}${blotches("drive", 30, [200, 470, 1150, 420], "#15130f", 0.55)}${blotches("moss", 12, [40, 640, 1500, 240], "#4f6a3f", 0.55)}${path(`M600 ${B} L330 ${H} M910 ${B} L1150 ${H}`, "none", "#0d0c0a", 34, ' opacity=".4"')}`;
+      if (st === 0) a += dirt;
+      else {
+        // left half washed: sharp edge, yellow wash line, a little mist
+        a += `<defs><clipPath id="half"><rect x="760" y="0" width="900" height="900"/></clipPath></defs><g clip-path="url(#half)">${dirt}</g>`;
+        a += line(760, B, 760, H, 6, "#ffd23f") + line(760, B, 760, H, 22, "#ffd23f", ' opacity=".18" class="glow"');
+        a += blotches("mist", 9, [700, 470, 130, 400], "#ffffff", 0.25, 18);
+      }
     }
-    if (v < 0 && st >= 1) a += path(`M380 880 q 120 -20 260 0`, "none", "#ffffff", 3, ' opacity=".6"');
-    return { art: a, mood: "day" };
+    if (story && st === last) a += range(5).map((i) => path(`M${520 + i * 140} ${560 + (i % 2) * 90} l 8 18 l 18 8 l -18 8 l -8 18 l -8 -18 l -18 -8 l 18 -8 Z`, "#ffd23f", "none", 0, ' class="glow"')).join("");
+    return { art: a, mood: "day", gy: B };
   },
   hvac(st, last, v) {
     if (v === 2) {
@@ -1756,13 +1776,13 @@ const SCENES = {
     if (v >= 0) return { art: hvacUnit(false, v === 1), mood: "day", raw: true };
     // Story: one room from cold to warm.
     const warm = st / Math.max(1, last);
-    let a = room(warm > 0.5 ? "#efe2cc" : "#dfe2e2", warm > 0.5 ? "#c99a64" : "#a99f92", warm > 0);
-    a += rect(160, 420, 640, 160, "#9aa58a", C.ink, 3, 22) + rect(140, 380, 680, 70, "#a9b399", C.ink, 3, 22);
-    a += path(`M520 380 C 560 330 690 340 720 390 L 700 430 C 650 400 570 410 520 430 Z`, "#cfa98a");
-    if (warm < 1) a += blotches("frost", 9, [1090, 160, 310, 310], "#ffffff", 0.75 * (1 - warm));
-    if (warm > 0) a += line(930, 650, 930, 470, 4) + path(`M880 470 L980 470 L955 400 L905 400 Z`, "#f3d08c") + circle(930, 440, 160 * warm, "#ffcf7a", "none", 0, ' opacity=".22"');
-    a += `<rect width="${W}" height="${H}" fill="${warm > 0.5 ? "#f4a64a" : "#46658c"}" opacity="${warm > 0.5 ? 0.12 * warm : 0.26 * (1 - warm)}"/>`;
-    a += rect(1180, 300, 70, 90, "#f2efe8", C.ink, 2, 10) + circle(1215, 345, 22, "none", warm > 0.5 ? C.clay : C.blue, 4);
+    let a = room(warm > 0.5 ? "#3a2a1c" : "#1c232b", warm > 0.5 ? "#7a4f2a" : "#2a2f36", warm > 0, 635);
+    a += rect(480, 470, 640, 160, "#55604c", C.ink, 3, 22) + rect(460, 430, 680, 70, "#66725a", C.ink, 3, 22);
+    a += path(`M840 430 C 880 380 1010 390 1040 440 L 1020 480 C 970 450 890 460 840 480 Z`, "#b98d6c");
+    if (warm < 1) a += blotches("frost", 10, [645, 160, 310, 310], "#ffffff", 0.8 * (1 - warm), 34);
+    if (warm > 0) a += line(1270, 650, 1270, 470, 4) + path(`M1220 470 L1320 470 L1295 400 L1245 400 Z`, "#f3d08c") + circle(1270, 440, 200 * warm, "#ffb347", "none", 0, ' class="glow" opacity=".28"');
+    a += `<rect width="${W}" height="${H}" fill="${warm > 0.5 ? "#ff8a2a" : "#4a6c96"}" opacity="${warm > 0.5 ? 0.14 * warm : 0.22 * (1 - warm)}"/>`;
+    a += rect(300, 300, 70, 90, "#f2efe8", "#16171a", 2, 10) + circle(335, 345, 22, "none", warm > 0.5 ? "#ff7a1a" : C.blue, 4);
     return { art: a, mood: "day", raw: true };
   },
   restoration(st, last, v) {
@@ -1995,7 +2015,7 @@ const SCENES = {
 
 // Outdoor AC or heat pump beside a house wall.
 function hvacUnit(old, wide) {
-  let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 80, 980, G - 80, "#eae3d6") + range(24).map((i) => line(0, 80 + i * 27, 980, 80 + i * 27, 1, C.ink, ' opacity=".14"')).join("");
+  let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 80, 980, G - 80, C.paper2) + range(24).map((i) => line(0, 80 + i * 27, 980, 80 + i * 27, 1, C.ink, ' opacity=".14"')).join("");
   a += rect(0, G, W, H - G, C.sage, "none", 0) + line(0, G, W, G) + rect(1040, 180, 220, 260, "#e4ebe7");
   a += rect(380, G - 10, 470, 26, old ? "#a39c8e" : C.stone, C.ink, 3, 4);
   if (old) a += line(560, G - 4, 640, G + 14, 2);
@@ -2011,8 +2031,8 @@ function hvacUnit(old, wide) {
 const PAIRS = {
   hvac: (after) => hvacUnit(!after, false),
   pressure(after) {
-    let a = rect(0, 0, W, H, "#9fb487", "none", 0) + blotches("lawn", 40, [0, 0, W, H], "#8aa273", 0.5);
-    a += rect(470, -10, 660, H + 20, after ? "#d9d6cf" : "#6f6a5f");
+    let a = rect(0, 0, W, H, C.sage, "none", 0) + blotches("lawn", 40, [0, 0, W, H], C.sageD, 0.5);
+    a += rect(470, -10, 660, H + 20, after ? C.stone : "#4a4439");
     a += range(4).map((i) => line(470, 225 * (i + 1) - 20, 1130, 225 * (i + 1) - 20, 3, after ? "#a9a59c" : "#4b473f")).join("") + line(800, 0, 800, H, 3, after ? "#a9a59c" : "#4b473f");
     if (!after) {
       a += blotches("pw-grime", 18, [480, 0, 640, H], "#3f3b33", 0.45) + blotches("pw-moss", 12, [470, 0, 60, H], "#4f6a3f", 0.6) + blotches("pw-moss2", 12, [1070, 0, 60, H], "#4f6a3f", 0.6);
@@ -2050,25 +2070,42 @@ function stageFor(trade, slotId) {
 
 const INTERIOR = new Set(["restoration", "remodeling", "plumbing", "electrical", "junk", "cleaning", "pest"]);
 
+// Gentle looping motion inside the drawing (clouds drift, light breathes),
+// off for people who ask for reduced motion.
+const MOTION = `<style>.drift{animation:dr 38s ease-in-out infinite alternate}.drift2{animation:dr 56s ease-in-out infinite alternate-reverse}
+.glow{animation:gl 5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+@keyframes dr{from{transform:translateX(-60px)}to{transform:translateX(60px)}}@keyframes gl{from{opacity:.25}to{opacity:.75}}
+@media (prefers-reduced-motion:reduce){.drift,.drift2,.glow{animation:none}}</style>`;
+
 function placeholderSvg(trade, slotId, labelText) {
-  const { st, last, v } = stageFor(trade, slotId);
-  const scene = SCENES[trade];
-  let body, mood = "day";
-  if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
-    body = PAIRS[trade](slotId === "after");
-  } else if (scene) {
-    const out = scene(st, last, v);
-    mood = out.mood || "day";
-    const exterior = !out.raw && !INTERIOR.has(trade);
-    body = (exterior ? backdrop(mood, out.ground) : "") + out.art;
-    if (exterior) body += line(0, G, W, G, 3);
-  } else {
-    body = backdrop("gold") + house({});
+  const carbon = CARBON_TRADES.has(trade);
+  Object.assign(C, carbon ? CARBON : LIGHT);
+  try {
+    const { st, last, v } = stageFor(trade, slotId);
+    const k = CINE_KIT[trade];
+    const isStory = !!(k && k.story.some((s) => s.id === slotId));
+    const scene = SCENES[trade];
+    let body, mood = "day";
+    if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
+      body = PAIRS[trade](slotId === "after");
+    } else if (scene) {
+      const out = scene(st, last, v);
+      // One camera for the whole story: the light of the last frame on every frame,
+      // so nothing but the work changes when frames crossfade.
+      mood = isStory ? scene(last, last, -1).mood || "day" : out.mood || "day";
+      const exterior = !out.raw && !INTERIOR.has(trade);
+      body = (exterior ? backdrop(mood, out.ground, 1250, out.gy || G) : "") + out.art;
+    } else {
+      body = backdrop("gold") + house({});
+    }
+    const dark = mood === "dusk" || carbon;
+    // Story frames share one label so it does not ghost during the crossfade.
+    const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
+    const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark)}</svg>`;
+  } finally {
+    Object.assign(C, LIGHT);
   }
-  const dark = mood === "dusk";
-  // A soft vignette makes each sketch read as a frame from one camera.
-  const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + labelText)}">${body}${vignette}${frameMarks(dark)}${label(labelText, dark)}</svg>`;
 }
 
 function placeholderArt(trade, slotId, label) {
