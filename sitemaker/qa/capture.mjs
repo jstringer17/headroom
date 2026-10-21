@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 const look = (args.find((a) => a.startsWith("--look=")) || "--look=cinematic").split("=")[1];
 const trades = args.filter((a) => !a.startsWith("--")).length ? args.filter((a) => !a.startsWith("--")) : ["fencing", "roofing", "pressure"];
 const out = join(here, look === "cinematic" ? "out" : `out-${look}`);
-rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
+try { rmSync(out, { recursive: true, force: true }); } catch { /* stuck empty dir: reuse it */ } mkdirSync(out, { recursive: true });
 const pw = loadPlaywright();
 const browser = await pw.chromium.launch(launchOpts());
 const sheet = {}; // trade -> list of {w, kind, file, label}
