@@ -66,6 +66,13 @@ details.lead[open]{display:grid;gap:10px}
 .stage iframe{display:block;border:0;background:#ffffff;width:100%;height:72vh;min-height:560px;border-radius:6px;box-shadow:0 2px 14px rgba(0,0,0,.14)}
 .stage.phone iframe{width:390px;max-width:100%;height:760px;border-radius:22px;border:8px solid #1b1f1d}
 .code-box{display:grid;gap:8px}
+.file-btn{position:relative;justify-self:start}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.file-btn:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.hero-pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.hero-pick img{width:120px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.note{font-weight:600;color:var(--ink)}
+#higgs-prompt{min-height:120px}
 .code-box textarea{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;min-height:120px}
 @media (min-width:960px){
   .app{grid-template-columns:minmax(340px,420px) minmax(0,1fr);align-items:start}
@@ -124,6 +131,27 @@ details.lead[open]{display:grid;gap:10px}
     <fieldset class="group">
       <legend>Services to show</legend>
       <div class="checks two" id="services"></div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Hero picture <span class="req">(optional)</span></legend>
+      <p class="hint">Leave empty for a clean design with no picture.</p>
+      <label class="btn file-btn" for="hero-file">Upload a picture<input type="file" id="hero-file" accept="image/jpeg,image/png,image/webp"></label>
+      <label class="field" for="hero-url"><span>Or paste a picture link</span>
+        <input type="text" id="hero-url" inputmode="url" placeholder="https://..."></label>
+      <div class="hero-pick" id="hero-pick" hidden>
+        <img id="hero-thumb" alt="Chosen hero picture">
+        <button class="btn" type="button" id="hero-clear">Remove picture</button>
+      </div>
+      <p class="status" id="hero-status" aria-live="polite"></p>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Picture idea for Higgsfield</legend>
+      <p class="hint note">Use for the hero picture only, never as fake work photos.</p>
+      <textarea id="higgs-prompt" readonly aria-label="Higgsfield picture prompt"></textarea>
+      <div><button class="btn btn-sec" type="button" id="higgs-copy">Copy prompt</button></div>
+      <p class="status" id="higgs-status" aria-live="polite"></p>
     </fieldset>
 
     <fieldset class="group">

@@ -1,14 +1,16 @@
 // Sample Site Maker: the generator.
 // generateSite(form) is a pure function: form data in, one self-contained
 // HTML document out (only Google Fonts load from the network, with system
-// font fallbacks). No photos, no invented reviews, no invented people.
+// font fallbacks). No invented reviews, people or claims. The only picture is
+// a hero picture the owner adds (heroImage: data URI or https URL).
 //
 // form = {
 //   company*, trade* (key of TRADES), city, phone, rating, reviews, years,
 //   services: [names] (default: the trade's first `pick`),
 //   emergency (default false), freeEstimates (default true, false for
 //   towing, junk removal and HVAC),
-//   insured (default false), theme (default: trade default), year
+//   insured (default false), theme (default: trade default), year,
+//   heroImage (optional)
 // }
 import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
@@ -61,12 +63,6 @@ export function normalize(form) {
 const svg = (inner, size, extra = "") =>
   `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${inner}</svg>`;
 const ICON_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
-const ICON_CHECK = '<path d="M4.5 12.5l4.5 4.5 10.5-11"/>';
-const ICON_CLOCK = '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>';
-const ICON_SHIELD = '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8-7.5 9.5-4.3-1.5-7.5-5-7.5-9.5V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>';
-const ICON_TAG = '<path d="M3.5 12.5V4h8.5l8.5 8.5-8 8z"/><circle cx="8" cy="8.5" r="1.4"/>';
-const ICON_PIN = '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>';
-const ICON_CAL = '<rect x="3.5" y="5" width="17" height="15" rx="1.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>';
 const STAR = '<path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/>';
 
 function stars(rating, size) {
@@ -77,219 +73,322 @@ function stars(rating, size) {
   return `<span class="stars" style="width:${w}px;height:${size}px" role="img" aria-label="${rating} out of 5 stars"><span class="stars-row off">${row("currentColor")}</span><span class="stars-row on" style="width:${on.toFixed(1)}px">${row("currentColor")}</span></span>`;
 }
 
+// Only a base64 image data URI or a plain https URL is accepted as the hero picture.
+export function safeImage(src) {
+  const s = String(src || "").trim();
+  if (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s)) return s;
+  if (/^https:\/\/[^\s"'<>()\\]+$/.test(s)) return s;
+  return "";
+}
+
+const ICON_ARROW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
+const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
+
 export function generateSite(form) {
   const d = normalize(form);
   const t = d.trade;
-  const tradeName = t.label.replace(/ \(.*\)$/, "");
   const th = THEMES[d.themeKey];
+  const tradeName = t.label.replace(/ \(.*\)$/, "");
+  const hero = safeImage(form && form.heroImage);
   const name = esc(d.company);
   const area = d.city ? esc(d.city) : "";
   const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
   const phoneShow = d.phone ? esc(d.phone.show) : "";
-  const callLabel = d.phone ? `Call ${phoneShow}` : "Call us";
-  const callBtn = (cls) => d.phone && d.phone.tel
-    ? `<a class="${cls}" href="tel:${esc(d.phone.tel)}">${svg(ICON_PHONE, 20)}<span>${callLabel}</span></a>`
-    : `<a class="${cls}" href="#contact">${svg(ICON_PHONE, 20)}<span>${callLabel}</span></a>`;
+  const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
+  const callText = d.phone ? `Call ${phoneShow}` : "Call us";
+  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svg(ICON_PHONE, 19)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
-  const trust = [];
-  if (d.emergency) trust.push([ICON_CLOCK, "Open 24/7 for emergencies"]);
-  if (d.freeEstimates) trust.push([ICON_TAG, "Free estimates"]);
-  if (d.insured) trust.push([ICON_SHIELD, "Licensed and insured"]);
-  if (d.years) trust.push([ICON_CAL, `${d.years} year${d.years === 1 ? "" : "s"} in business`]);
-  trust.push([ICON_PIN, area ? `Serving ${area}` : "Serving your area"]);
+  // Trust bar: always four cells, each one a fact the owner typed or ticked.
+  const cells = [
+    ["Service area", area || "Your town"],
+    ["Pricing", d.freeEstimates ? "Free estimates" : "Ask for a price"],
+    ["Emergencies", d.emergency ? "Open 24/7" : "Call to ask"],
+  ];
+  if (d.rating) cells.push(["Google rating", `${d.rating.toFixed(1)} ${stars(d.rating, 16)}`, true]);
+  else if (d.years) cells.push(["In business", `${d.years} year${d.years === 1 ? "" : "s"}`]);
+  else if (d.insured) cells.push(["Coverage", "Licensed and insured"]);
+  else cells.push(["Phone", d.phone ? phoneShow : "Call us"]);
+  const trust = cells.map(([k, v, raw]) => `<div class="cell rv"><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("");
 
-  const services = d.services.map(([n, desc]) =>
-    `<li class="svc"><span class="svc-mark">${svg(ICON_CHECK, 18)}</span><div><h3>${esc(n)}</h3><p>${esc(desc)}</p></div></li>`).join("");
+  const services = d.services.map(([n, desc], i) =>
+    `<li class="rv" style="--i:${i}"><a href="#contact"><span class="svc-name">${esc(n)}</span><span class="svc-desc">${esc(desc)}</span><span class="svc-go">${svg(ICON_ARROW, 22)}</span></a></li>`).join("");
 
   const steps = [
-    ["Call or send a request", d.phone ? `Call ${phoneShow} or fill out the form below.` : "Call us or fill out the form below."],
+    ["Call or send a request", d.phone ? `Call ${phoneShow}, or fill out the form on this page.` : "Call us, or fill out the form on this page."],
     [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
     ["The work gets done", "We do the job you agreed to."],
-  ].map(([h, p], i) => `<li class="step"><span class="step-n">${i + 1}</span><div><h3>${esc(h)}</h3><p>${p}</p></div></li>`).join("");
+  ].map(([h, p], i) => `<li class="rv" style="--i:${i}"><span class="step-n" aria-hidden="true">${i + 1}</span><h3>${esc(h)}</h3><p>${p}</p></li>`).join("");
 
-  let ratingBlock;
-  if (d.rating) {
-    ratingBlock = `<div class="rating"><div class="rating-num">${d.rating.toFixed(1)}</div><div>${stars(d.rating, 26)}<p class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div></div>`;
-  } else {
-    ratingBlock = "";
-  }
+  const reviews = d.rating ? `<section class="sec" id="reviews"><div class="wrap grid">
+  <div class="head rv"><h2>What customers say</h2></div>
+  <div class="body rev rv">
+    <div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
+    <p class="rev-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
+  </div>
+</div></section>` : "";
+
+  const svcList = d.services.map((s) => s[0].toLowerCase());
+  const svcSentence = svcList.length > 1 ? `${svcList.slice(0, -1).join(", ")}, and ${svcList[svcList.length - 1]}` : svcList[0];
+  const faqs = [
+    ["How much will it cost?", d.freeEstimates ? "Every job is different. We look at yours and give you a free estimate before any work starts." : "Every job is different. Call us and we will tell you the price before any work starts."],
+    ["What areas do you serve?", `${area || "Our town"} and nearby towns. Not sure about your street? Call and ask.`],
+    ["Do you take emergency calls?", d.emergency ? `Yes. We are open 24/7 for emergencies.${d.phone ? ` Call ${phoneShow}.` : ""}` : "Call us and ask about emergency service."],
+    [`What ${tradeName.toLowerCase()} work do you do?`, `${svcSentence.charAt(0).toUpperCase() + svcSentence.slice(1)}. If your job is not on the list, just ask.`],
+    ["How do I get started?", `${d.phone ? `Call ${phoneShow}` : "Call us"} or send the form below. Have the address and a short note about the job ready.`],
+  ].map(([q, a]) => `<details class="rv"><summary><span>${esc(q)}</span>${svg(ICON_PLUS, 22)}</summary><p>${a}</p></details>`).join("");
 
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
-  const pattern = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><path d="M0 28L28 0" stroke="${th.accent}" stroke-opacity=".22" stroke-width="7"/></svg>`);
+  const sig = `<svg class="sig" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="${t.line}" pathLength="1"/></svg>`;
 
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
 <meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
+<meta name="theme-color" content="${th.dark}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=Public+Sans:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <style>
-:root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--white:#ffffff;
---display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;--body:"Public Sans","Segoe UI",Roboto,Helvetica,Arial,sans-serif;color-scheme:light}
+/* One accent, two neutrals. Big Shoulders (built, signage letters) over Hanken Grotesk. 12-column grid, 8px rhythm. */
+:root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--paper:#ffffff;
+--on-dark:#ffffff;--on-dark-2:rgba(255,255,255,.74);--rule-dark:rgba(255,255,255,.16);
+--display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",Impact,sans-serif;--body:"Hanken Grotesk","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--ease:cubic-bezier(.16,1,.3,1);--max:1240px;--gut:max(20px,env(safe-area-inset-left,0px));color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
-body{margin:0;background:var(--white);color:var(--ink);font:400 17px/1.6 var(--body);padding-bottom:76px}
-h1,h2,h3{font-family:var(--display);font-stretch:85%;line-height:1.1;margin:0;text-wrap:balance}
-p{margin:0}
-a{color:inherit}
-.wrap{max-width:1120px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border-radius:6px;font:700 17px/1 var(--display);font-stretch:90%;letter-spacing:.01em;text-decoration:none;border:2px solid transparent;cursor:pointer}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:80px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.6 var(--body);padding-bottom:76px}
+::selection{background:var(--accent);color:var(--accent-ink)}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;font-weight:800;text-transform:uppercase;letter-spacing:.005em}
+p,dl,dd{margin:0}
+a{color:inherit;text-underline-offset:4px}
+img,svg{max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding-left:var(--gut);padding-right:max(20px,env(safe-area-inset-right,0px))}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border:0;border-radius:4px;font:600 17px/1 var(--body);letter-spacing:.01em;text-decoration:none;cursor:pointer;transition:transform .35s var(--ease),background-color .35s var(--ease)}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
-.btn-ghost{border-color:rgba(255,255,255,.45);color:var(--white)}
-.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn-accent:hover{transform:translateY(-2px)}
+.btn-line{color:var(--on-dark);box-shadow:inset 0 0 0 1.5px var(--rule-dark)}
+.btn-line:hover{box-shadow:inset 0 0 0 1.5px var(--on-dark)}
 /* header */
-.top{background:var(--dark);color:var(--white);border-bottom:1px solid rgba(255,255,255,.08)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:64px}
-.brand{display:flex;align-items:center;gap:10px;min-width:0;text-decoration:none}
-.brand-mark{flex:none;display:grid;place-items:center;width:38px;height:38px;border-radius:6px;background:var(--accent);color:var(--accent-ink)}
-.brand-name{font:800 19px/1.1 var(--display);font-stretch:85%;overflow-wrap:anywhere}
-.top-call{display:none}
+.top{position:sticky;top:0;z-index:20;background:var(--dark);color:var(--on-dark);transition:box-shadow .4s var(--ease)}
+.top.scrolled{box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.top .wrap{display:flex;align-items:center;gap:28px;min-height:68px}
+.brand-name{font:800 24px/1 var(--display);text-transform:uppercase;letter-spacing:.01em;text-decoration:none;margin-right:auto;overflow-wrap:anywhere;min-width:0}
+.nav{display:none;gap:28px;font-size:15px;font-weight:500}
+.nav a{text-decoration:none;color:var(--on-dark-2);transition:color .25s}
+.nav a:hover{color:var(--on-dark)}
+.top .btn{display:none;min-height:44px;padding:0 18px;font-size:15px}
 /* hero */
-.hero{background:var(--dark);color:var(--white);position:relative;overflow:hidden}
-.hero .wrap{display:grid;gap:28px;padding-block:40px 44px;position:relative}
-.eyebrow{display:inline-block;font:700 13px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--hi)}
-.hero h1{font-size:clamp(34px,8.6vw,60px);font-weight:800;margin-top:14px}
-.hero-sub{margin-top:16px;font-size:18px;color:rgba(255,255,255,.82);max-width:34em}
-.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
-.hero-cta .btn{flex:1 1 220px}
-.hero-art{display:none}
-.sign{position:relative;aspect-ratio:1;max-width:100%;border-radius:10px;background:var(--dark2) url("data:image/svg+xml,${pattern}");display:grid;place-items:center;color:var(--hi)}
-.sign::after{content:"";position:absolute;inset:18px;border:2px solid rgba(255,255,255,.14);border-radius:6px}
-.sign-badge{position:absolute;left:24px;bottom:24px;right:24px;background:var(--dark);color:var(--white);border-radius:6px;padding:14px 16px;font:700 16px/1.25 var(--display);font-stretch:90%;z-index:1}
-.sign-badge small{display:block;font:600 12px/1.3 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--hi);margin-bottom:4px}
-/* trust */
-.trust{background:var(--light);border-bottom:1px solid var(--line)}
-.trust ul{list-style:none;margin:0;padding:18px 0;display:flex;flex-wrap:wrap;gap:10px 22px}
-.trust li{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--ink)}
-.trust li svg{color:var(--dark2);flex:none}
+.hero{position:relative;background:var(--dark);color:var(--on-dark);overflow:hidden;isolation:isolate}
+.hero .wrap{position:relative;padding-block:48px 0}
+.hero h1{font-size:clamp(60px,16.5vw,168px);font-weight:900;line-height:.86;letter-spacing:-.005em;max-width:9.5ch}
+.hero-sub{margin-top:28px;font-size:clamp(18px,2.2vw,22px);line-height:1.5;color:var(--on-dark-2);max-width:34ch}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
+.hero-cta .btn{flex:1 1 240px}
+.sig{display:block;width:100%;height:auto;margin-top:40px;overflow:visible}
+.sig path{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.hero-img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
+.has-img::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 55%,rgba(0,0,0,.38) 100%),linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,0) 70%)}
+.has-img .wrap{padding-block:220px 56px}
+.has-img .hero-sub{color:rgba(255,255,255,.88)}
+/* trust bar */
+.trust{background:var(--dark);color:var(--on-dark)}
+.trust dl{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule-dark)}
+.cell{padding:22px 16px 26px 0}
+.cell:nth-child(even){padding-left:16px;border-left:1px solid var(--rule-dark)}
+.cell:nth-child(n+3){border-top:1px solid var(--rule-dark)}
+.cell dt{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark-2)}
+.cell dd{margin-top:6px;font:800 clamp(24px,3vw,32px)/1.05 var(--display);text-transform:uppercase;display:flex;align-items:center;flex-wrap:wrap;gap:10px;overflow-wrap:anywhere}
+.cell .stars{color:var(--hi)}
 /* sections */
-.sec{padding-block:56px}
-.sec-alt{background:var(--light)}
-.sec-head{max-width:40em;margin-bottom:28px}
-.sec-head h2{font-size:clamp(28px,6vw,40px);font-weight:800}
-.sec-head p{margin-top:10px;color:var(--muted)}
-.svcs{list-style:none;margin:0;padding:0;display:grid;gap:12px;grid-template-columns:1fr}
-.svc{display:flex;gap:14px;align-items:flex-start;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:18px}
-.svc-mark{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--dark);color:var(--hi)}
-.svc h3{font-size:20px;font-weight:700}
-.svc p{margin-top:4px;color:var(--muted);font-size:16px}
-.sec-alt .svc{background:var(--white)}
-.urgent{background:var(--accent);color:var(--accent-ink)}
-.urgent .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;padding-block:24px}
-.urgent p{font:800 clamp(22px,5vw,30px)/1.15 var(--display);font-stretch:85%}
-.urgent .btn{background:var(--dark);color:var(--white)}
-.steps{list-style:none;margin:0;padding:0;display:grid;gap:18px}
-.step{display:flex;gap:16px;align-items:flex-start}
-.step-n{flex:none;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;border:2px solid var(--dark);font:800 20px/1 var(--display);color:var(--dark)}
-.step h3{font-size:20px;font-weight:700;margin-top:8px}
-.step p{margin-top:4px;color:var(--muted)}
-.reviews{display:grid;gap:18px}
-.rating{display:flex;align-items:center;gap:18px;background:var(--white);border:1px solid var(--line);border-radius:8px;padding:20px}
-.rating-num{font:800 56px/1 var(--display);font-stretch:85%;color:var(--dark);font-variant-numeric:tabular-nums}
-.rating-sub{margin-top:6px;color:var(--muted);font-weight:600}
-.stars{position:relative;display:block;color:var(--accent)}
+.sec{padding-block:88px}
+.tint{background:var(--light)}
+.sec h2{font-size:clamp(44px,8vw,84px);line-height:.9}
+.lede{margin-top:20px;color:var(--muted);max-width:36ch}
+.grid{display:grid;gap:40px}
+.svcs{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.svcs a{display:grid;grid-template-columns:1fr auto;gap:6px 20px;padding:24px 0;border-bottom:1px solid var(--line);text-decoration:none;transition:padding .45s var(--ease)}
+.svc-name{font:800 clamp(26px,3.4vw,36px)/1 var(--display);text-transform:uppercase}
+.svc-desc{grid-column:1;color:var(--muted);font-size:17px;max-width:44ch}
+.svc-go{grid-row:1/3;grid-column:2;align-self:center;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink);transition:background-color .35s var(--ease),color .35s var(--ease),box-shadow .35s var(--ease),transform .45s var(--ease)}
+.svcs a:hover{padding-left:12px}
+.svcs a:hover .svc-go{background:var(--accent);color:var(--accent-ink);box-shadow:none;transform:rotate(-45deg)}
+.steps{list-style:none;margin:56px 0 0;padding:0;display:grid;gap:48px;counter-reset:s}
+.step-n{display:block;font:900 120px/.8 var(--display);color:transparent;-webkit-text-stroke:1.5px var(--ink);margin-bottom:20px}
+.steps h3{font-size:30px;line-height:1}
+.steps p{margin-top:10px;color:var(--muted);max-width:30ch}
+.rev{display:grid;gap:24px;align-content:start}
+.rating{display:flex;align-items:center;gap:24px}
+.rating-num{font:900 120px/.8 var(--display);font-variant-numeric:tabular-nums}
+.rating-sub{display:block;margin-top:10px;color:var(--muted);font-weight:500}
+.stars{position:relative;display:block;flex:none;color:var(--accent)}
 .stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:var(--line);width:100%}
-.review-slot{border:2px dashed var(--line);border-radius:8px;padding:20px;color:var(--muted);background:var(--white)}
-.review-slot strong{display:block;color:var(--ink);font:700 18px/1.3 var(--display);font-stretch:90%;margin-bottom:4px}
-.contact{display:grid;gap:28px}
-.contact-info{display:grid;gap:16px;align-content:start}
-.contact-line{display:flex;gap:12px;align-items:flex-start}
-.contact-line svg{flex:none;margin-top:3px;color:var(--dark2)}
-.contact-line b{display:block;font:700 13px/1.2 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.contact-line span{font-size:19px;font-weight:600;overflow-wrap:anywhere}
-form{display:grid;gap:14px;background:var(--light);border:1px solid var(--line);border-radius:8px;padding:20px}
-label{display:grid;gap:6px;font-weight:600;font-size:15px}
-input,select,textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--ink);background:var(--white);border:1px solid #b9c2cb;border-radius:6px;padding:12px}
+.trust .stars-row.off{color:var(--rule-dark)}
+.rev-note{color:var(--muted);max-width:44ch;padding-top:24px;border-top:1px solid var(--line)}
+.rev-note strong{color:var(--ink);font-weight:600}
+.area-town{font:900 clamp(56px,12vw,128px)/.85 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
+.area-sub{margin-top:18px;color:var(--muted);max-width:34ch}
+.rings{display:block;width:100%;max-width:440px;height:auto;justify-self:end}
+.rings circle{fill:none;stroke:var(--line);stroke-width:1.5}
+.rings .r2{stroke-dasharray:4 8}
+.rings .dot{fill:var(--accent);stroke:none}
+.rings .pulse{stroke:var(--accent);stroke-width:1.5;transform-origin:220px 220px}
+.faq{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px 0;cursor:pointer;font:700 clamp(22px,2.6vw,28px)/1.15 var(--display);text-transform:uppercase}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary svg{flex:none;transition:transform .4s var(--ease)}
+.faq details[open] summary svg{transform:rotate(45deg)}
+.faq details p{padding:0 0 26px;color:var(--muted);max-width:60ch}
+/* final call + form */
+.final{background:var(--dark);color:var(--on-dark)}
+.final h2{font-size:clamp(52px,10vw,120px)}
+.final .lede{color:var(--on-dark-2)}
+.big-phone{display:inline-block;margin-top:32px;font:900 clamp(40px,7vw,72px)/1 var(--display);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.final dl{display:grid;gap:4px;margin-top:28px;color:var(--on-dark-2)}
+.final dl div{display:flex;gap:8px;flex-wrap:wrap}
+.final dt{color:var(--on-dark);font-weight:600}
+form{display:grid;gap:18px;align-content:start}
+label{display:grid;gap:8px;font-size:15px;font-weight:500;color:var(--on-dark-2)}
+input,select,textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--on-dark);background:transparent;border:0;border-bottom:1.5px solid var(--rule-dark);border-radius:0;padding:10px 0 12px;transition:border-color .3s}
+select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M2 5l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 2px center}
+select option{color:#111111}
+input:focus,select:focus,textarea:focus{border-bottom-color:var(--accent);outline:none}
 textarea{min-height:96px;resize:vertical}
-.form-note{font-size:15px;color:var(--muted)}
-.form-done{background:var(--white);border-radius:6px;padding:12px;font-weight:600}
-footer{background:var(--dark);color:rgba(255,255,255,.8);font-size:15px}
-footer .wrap{display:grid;gap:8px;padding-block:32px}
-footer strong{color:var(--white);font:800 20px/1.2 var(--display);font-stretch:85%}
-.mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--dark);padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));box-shadow:0 -4px 16px rgba(0,0,0,.18)}
-.mobile-call .btn{width:100%}
-@media (min-width:720px){
-  .svcs{grid-template-columns:1fr 1fr}
-  .steps{grid-template-columns:repeat(3,1fr)}
-  .step{flex-direction:column}
-  .step h3{margin-top:0}
-  .reviews{grid-template-columns:auto 1fr;align-items:stretch}
-  .contact{grid-template-columns:1fr 1.2fr}
+form .btn{margin-top:10px}
+.form-note{font-size:15px;color:var(--on-dark-2)}
+footer{background:var(--dark2);color:var(--on-dark-2);font-size:15px}
+footer .wrap{display:grid;gap:36px;padding-block:64px 32px}
+.foot-name{font:900 clamp(40px,7vw,72px)/.9 var(--display);text-transform:uppercase;color:var(--on-dark);overflow-wrap:anywhere}
+.foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.foot-cols h3{font:600 13px/1.2 var(--body);letter-spacing:.08em;color:var(--on-dark);margin-bottom:12px}
+.foot-cols ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.foot-cols a{text-decoration:none}
+.foot-cols a:hover{color:var(--on-dark)}
+.foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:24px;border-top:1px solid var(--rule-dark);font-size:14px}
+.mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:10px;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.16)}
+.mobile-call .btn{flex:1}
+/* motion: only when the browser allows it; everything is visible without it */
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes pulse{0%{transform:scale(.2);opacity:.9}100%{transform:scale(1);opacity:0}}
+@media (prefers-reduced-motion:no-preference){
+  .motion .sig path{stroke-dasharray:1;animation:draw 2.2s var(--ease) .2s both}
+  .motion .rv{transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
+  .motion .rv:not(.in){opacity:0;transform:translateY(24px)}
+  .rings .pulse{animation:pulse 3.2s var(--ease) infinite}
 }
-@media (min-width:960px){
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.svcs a,.svc-go{transition:none}.rings .pulse{display:none}}
+@media (min-width:760px){
+  .trust dl{grid-template-columns:repeat(4,1fr)}
+  .cell,.cell:nth-child(even){padding:28px 24px 32px;border-left:1px solid var(--rule-dark);border-top:0}
+  .cell:first-child{padding-left:0;border-left:0}
+  .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:24px}
+  .grid>.head{grid-column:1/span 5}
+  .grid>.body{grid-column:6/span 7}
+  .steps{grid-template-columns:repeat(3,1fr);gap:32px}
+  .foot-cols{grid-template-columns:repeat(3,1fr)}
+  .sec{padding-block:128px}
+}
+@media (min-width:1024px){
   body{padding-bottom:0}
   .mobile-call{display:none}
-  .top-call{display:inline-flex;min-height:44px;font-size:16px}
-  .hero .wrap{grid-template-columns:1.25fr 1fr;align-items:center;padding-block:72px}
-  .hero-art{display:block}
+  .nav{display:flex}
+  .top .btn{display:inline-flex}
+  .hero .wrap{padding-block:72px 88px}
+  .hero h1{font-size:clamp(96px,10.5vw,140px)}
+  .sig{position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:88px;width:50%;margin:0}
+  .hero-sub{max-width:30ch}
   .hero-cta .btn{flex:0 0 auto}
-  .svcs{grid-template-columns:repeat(3,1fr)}
-  .sec{padding-block:80px}
+  .has-img .wrap{padding-block:300px 88px}
+  .grid>.head .sticky{position:sticky;top:120px}
+  footer .wrap{grid-template-columns:5fr 7fr;align-items:end}
+  .foot-base{grid-column:1/-1}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="brand" href="#top"><span class="brand-mark">${svg(t.icon, 24)}</span><span class="brand-name">${name}</span></a>
-  ${callBtn("btn btn-accent top-call")}
+<header class="top" id="top-bar"><div class="wrap">
+  <a class="brand-name" href="#top">${name}</a>
+  <nav class="nav" aria-label="Sections"><a href="#services">Services</a><a href="#how">How it works</a><a href="#area">Service area</a><a href="#faq">Questions</a></nav>
+  ${callBtn("btn btn-accent")}
 </div></header>
 <main id="top">
-<section class="hero" aria-label="Intro"><div class="wrap">
-  <div>
-    <span class="eyebrow">${esc(tradeName)}${area ? ` in ${area}` : ""}</span>
-    <h1>${esc(t.headline)}</h1>
-    <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-    <div class="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-ghost" href="#contact">${askLabel}</a></div>
-  </div>
-  <div class="hero-art" aria-hidden="true"><div class="sign">${svg(t.icon, 170, 'stroke-width="1.3"')}<div class="sign-badge"><small>${esc(tradeName)}</small>${d.emergency ? "Open 24/7 for emergencies" : (area ? `Serving ${area}` : "Serving your area")}</div></div></div>
+<section class="hero${hero ? " has-img" : ""}" aria-label="Intro">${hero ? `<img class="hero-img" src="${esc(hero)}" alt="" fetchpriority="high">` : ""}<div class="wrap">
+  <h1>${esc(t.headline)}</h1>
+  <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
+  <div class="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line" href="#contact">${askLabel}</a></div>
+  ${hero ? "" : sig}
 </div></section>
-<section class="trust" aria-label="Why call us"><div class="wrap"><ul>${trust.map(([i, txt]) => `<li>${svg(i, 20)}${esc(txt)}</li>`).join("")}</ul></div></section>
-<section class="sec" id="services"><div class="wrap">
-  <div class="sec-head"><h2>What we do</h2><p>${name} handles these ${esc(tradeName.toLowerCase())} jobs${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div>
-  <ul class="svcs">${services}</ul>
+<section class="trust" aria-label="At a glance"><div class="wrap"><dl>${trust}</dl></div></section>
+<section class="sec" id="services"><div class="wrap grid">
+  <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">${esc(tradeName)} work for homes and businesses${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
+  <ul class="svcs body">${services}</ul>
 </div></section>
-${d.emergency ? `<section class="urgent" aria-label="Emergency service"><div class="wrap"><p>Need help right now? We answer 24/7.</p>${callBtn("btn")}</div></section>` : ""}
-<section class="sec sec-alt" id="how"><div class="wrap">
-  <div class="sec-head"><h2>How it works</h2></div>
+<section class="sec tint" id="how"><div class="wrap">
+  <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
 </div></section>
-${ratingBlock ? `<section class="sec" id="reviews"><div class="wrap">
-  <div class="sec-head"><h2>What customers say</h2></div>
-  <div class="reviews">${ratingBlock}<div class="review-slot"><strong>Real reviews go here</strong>Customer reviews from ${name}'s Google profile get added when the site goes live.</div></div>
-</div></section>` : ""}
-<section class="sec sec-alt" id="contact"><div class="wrap contact">
-  <div class="contact-info">
-    <div class="sec-head" style="margin-bottom:4px"><h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2><p>Call us, or send the form and we will call you back.</p></div>
-    <div class="contact-line">${svg(ICON_PHONE, 22)}<div><b>Phone</b><span>${d.phone ? phoneShow : "Phone number here"}</span></div></div>
-    <div class="contact-line">${svg(ICON_PIN, 22)}<div><b>Service area</b><span>${area ? `${area} and nearby towns` : "Your town and nearby towns"}</span></div></div>
-    <div class="contact-line">${svg(ICON_CLOCK, 22)}<div><b>${d.emergency ? "Hours" : "Emergencies"}</b><span>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</span></div></div>
+${reviews}
+<section class="sec${d.rating ? " tint" : ""}" id="area"><div class="wrap grid">
+  <div class="head rv"><h2>Where we work</h2></div>
+  <div class="body area rv">
+    <p class="area-town">${area || "Your town"}</p>
+    <p class="area-sub">And the towns nearby. Not sure we come to your street? Call and ask.</p>
+    <svg class="rings" viewBox="0 0 440 440" aria-hidden="true"><circle cx="220" cy="220" r="210"/><circle class="r2" cx="220" cy="220" r="140"/><circle cx="220" cy="220" r="70"/><circle class="pulse" cx="220" cy="220" r="210"/><circle class="dot" cx="220" cy="220" r="8"/></svg>
   </div>
-  <form id="ask" novalidate>
+</div></section>
+<section class="sec${d.rating ? "" : " tint"}" id="faq"><div class="wrap grid">
+  <div class="head"><div class="sticky rv"><h2>Questions</h2><p class="lede">Straight answers before you call.</p></div></div>
+  <div class="body faq">${faqs}</div>
+</div></section>
+<section class="sec final" id="contact"><div class="wrap grid">
+  <div class="head rv">
+    <h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
+    <p class="lede">Call now, or send the form and we will call you back.</p>
+    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : `<p class="big-phone">Phone number here</p>`}
+    <dl>
+      <div><dt>Service area:</dt><dd>${area ? `${area} and nearby towns` : "Your town and nearby towns"}</dd></div>
+      <div><dt>${d.emergency ? "Hours:" : "Emergencies:"}</dt><dd>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</dd></div>
+    </dl>
+  </div>
+  <form id="ask" class="body rv" novalidate>
     <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input id="f-phone" name="phone" type="tel" autocomplete="tel"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
     <button class="btn btn-accent" type="submit">Send request</button>
-    <p class="form-note" id="f-note">We will call you back.</p>
+    <p class="form-note" id="f-note" aria-live="polite">We will call you back.</p>
   </form>
 </div></section>
 </main>
 <footer><div class="wrap">
-  <strong>${name}</strong>
-  <span>${esc(tradeName)}${area ? ` &middot; ${area}` : ""}${d.phone ? ` &middot; ${phoneShow}` : ""}${d.insured ? " &middot; Licensed and insured" : ""}</span>
-  <span>&copy; ${esc(d.year)} ${name}. Sample site.</span>
+  <p class="foot-name">${name}</p>
+  <div class="foot-cols">
+    <div><h3>SERVICES</h3><ul>${d.services.slice(0, 5).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
+    <div><h3>CONTACT</h3><ul><li>${d.phone ? `<a href="${callHref}">${phoneShow}</a>` : "Phone number here"}</li><li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
+    <div><h3>COMPANY</h3><ul><li>${esc(tradeName)}</li>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#faq">Questions</a></li></ul></div>
+  </div>
+  <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>Sample site</span></div>
 </div></footer>
 <div class="mobile-call">${callBtn("btn btn-accent")}</div>
 <script>
-document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var n=document.getElementById("f-note");n.className="form-done";n.textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+(function(){
+  var bar=document.getElementById("top-bar");
+  addEventListener("scroll",function(){bar.classList.toggle("scrolled",scrollY>8)},{passive:true});
+  document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+  if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  var els=[].slice.call(document.querySelectorAll(".rv"));
+  els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
+  document.documentElement.classList.add("motion");
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
+  els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
+})();
 </script>
 </body>
 </html>

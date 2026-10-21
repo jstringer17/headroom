@@ -27,13 +27,15 @@ mkdirSync(shotDir, { recursive: true });
 
 const fails = [];
 const ok = (cond, msg) => { if (!cond) fails.push(msg); };
-const BANNED = /award[- ]winning|best in (town|the)|#1|number one|trusted by|5-star service|guaranteed|top[- ]rated|same day|cleans? up after|fixed fast|fix it fast|done right|built to last/i;
+const BANNED = /award[- ]winning|best in (town|the)|#1\b|number one|trusted by|5-star service|guaranteed|top[- ]rated|same day|cleans? up after|fixed fast|fix it fast|done right|built to last/i;
 
 // ---- 1. pure function checks ----
 for (const key of TRADE_ORDER) {
   const html = generateSite({ company: "Test Co", trade: key, year: 2026 });
   ok(html === generateSite({ company: "Test Co", trade: key, year: 2026 }), `${key}: generator is not deterministic`);
-  ok(!/<img\b/i.test(html), `${key}: has <img>`);
+  ok(!/<img\b/i.test(html), `${key}: has <img> without a hero picture`);
+  ok(/no people/i.test(TRADES[key].prompt) && /no text/i.test(TRADES[key].prompt), `${key}: Higgsfield prompt must say no people and no text`);
+  ok(TRADES[key].line && html.includes('class="sig"'), `${key}: signature line missing`);
   ok(!BANNED.test(html.replace(/<style[\s\S]*?<\/style>/, "")), `${key}: banned claim in copy`);
   ok(!/<script[^>]+src=/i.test(html), `${key}: loads an outside script`);
   const ext = [...html.matchAll(/(?:href|src)="(https?:[^"]+)"/g)].map((m) => m[1]).filter((u) => !/fonts\.(googleapis|gstatic)\.com/.test(u));
@@ -53,6 +55,14 @@ for (const key of TRADE_ORDER) {
   ok(h2.includes("4.6") && h2.includes("From 38 Google reviews"), "rating: typed numbers not shown");
   ok(!h2.includes("<b>x</b>"), "escape: company name not escaped");
 }
+// hero picture: data URI or https only, one <img>, no signature line
+{
+  const px = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
+  const h = generateSite({ company: "T", trade: "roofing", heroImage: px });
+  ok((h.match(/<img\b/g) || []).length === 1 && h.includes("has-img") && !h.includes('class="sig"'), "hero: data picture not used");
+  ok(generateSite({ company: "T", trade: "roofing", heroImage: "https://example.com/a.jpg" }).includes('src="https://example.com/a.jpg"'), "hero: https link not used");
+  for (const bad of ["javascript:alert(1)", 'https://x.com/a.jpg" onerror="x', "data:text/html;base64,AAAA"]) ok(!/<img\b/.test(generateSite({ company: "T", trade: "roofing", heroImage: bad })), "hero: unsafe picture accepted: " + bad);
+}
 // lead paste
 {
   const a = parseLead('{"n":"Acme Roofing LLC","c":"Roofing contractor","r":4.6,"p":"(918) 555-0142","t":"Tulsa","s":"OK","q":"roofer"}');
@@ -64,10 +74,10 @@ for (const key of TRADE_ORDER) {
 
 // ---- 2. browser checks: every trade, phone + computer width ----
 const browser = await playwright.chromium.launch(process.env.HTTPS_PROXY ? { proxy: { server: process.env.HTTPS_PROXY } } : {});
-const ctxOpts = { ignoreHTTPSErrors: true }; // only fonts go out, through the sandbox proxy
+const ctxOpts = { ignoreHTTPSErrors: true, reducedMotion: "reduce" }; // only fonts go out, through the sandbox proxy
 const offsite = [];
 
-async function checkPage(page, label) {
+async function checkPage(page, label, imgCount = 0) {
   const r = await page.evaluate(() => {
     const doc = document.documentElement;
     const empty = [];
@@ -85,7 +95,7 @@ async function checkPage(page, label) {
   });
   ok(r.sw <= r.cw, `${label}: sideways scroll (${r.sw} > ${r.cw}) ${r.wide.join(" ")}`);
   ok(r.empty.length === 0, `${label}: empty sections ${r.empty.join(",")}`);
-  ok(r.imgs === 0, `${label}: has images`);
+  ok(r.imgs === imgCount, `${label}: ${r.imgs} images, expected ${imgCount}`);
   return r;
 }
 
@@ -124,6 +134,23 @@ for (const { key, form } of sets) {
 }
 ok(offsite.length === 0, `sites asked the network for: ${offsite.slice(0, 5).join(" | ")}`);
 
+// motion on: every section still ends up visible after scrolling through
+{
+  const mctx = await browser.newContext({ ...ctxOpts, reducedMotion: "no-preference" });
+  const page = await mctx.newPage();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(pathToFileURL(join(outDir, "roofing.html")).href, { waitUntil: "load" });
+  for (let y = 0; y < 9000; y += 500) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(60); }
+  await page.waitForTimeout(1200);
+  const hidden = await page.evaluate(() => [...document.querySelectorAll(".rv")].filter((el) => getComputedStyle(el).opacity !== "1").length);
+  ok(hidden === 0, `motion: ${hidden} parts still hidden after scrolling`);
+  await mctx.close();
+}
+
+// a big test picture for the hero upload
+const bigJpg = join(outDir, "big-hero.jpg");
+execSync(`ffmpeg -loglevel error -y -f lavfi -i testsrc2=size=3200x2000 -frames:v 1 -q:v 2 "${bigJpg}"`);
+
 // ---- 3. the maker page itself ----
 const makerFile = pathToFileURL(join(here, "maker.html")).href;
 for (const width of [375, 1280]) {
@@ -137,7 +164,7 @@ for (const width of [375, 1280]) {
   await page.waitForTimeout(400);
   let doc = await page.frameLocator("#frame").locator("h1").innerText();
   ok(/roof/i.test(doc), `maker@${width}: roofing preview missing (${doc})`);
-  ok((await page.frameLocator("#frame").locator(".brand-name").innerText()) === "Ridge Top Roofing", `maker@${width}: name not in preview`);
+  ok((await page.frameLocator("#frame").locator(".brand-name").textContent()) === "Ridge Top Roofing", `maker@${width}: name not in preview`);
   await page.selectOption("#trade", "hvac");
   await page.fill("#company", "North Wind Heating and Air");
   await page.waitForTimeout(400);
@@ -150,6 +177,14 @@ for (const width of [375, 1280]) {
   await page.waitForTimeout(400);
   ok((await page.inputValue("#company")) === "Cool Breeze Heating & Air" && (await page.inputValue("#rating")) === "4.8", `maker@${width}: lead fill failed`);
   ok((await page.frameLocator("#frame").locator(".rating-num").innerText()) === "4.8", `maker@${width}: rating not in preview`);
+  // Higgsfield prompt follows the trade
+  ok(/no people/i.test(await page.inputValue("#higgs-prompt")) && /air conditioner/i.test(await page.inputValue("#higgs-prompt")), `maker@${width}: Higgsfield prompt missing`);
+  // hero picture upload gets shrunk and embedded
+  await page.setInputFiles("#hero-file", bigJpg);
+  await page.waitForFunction(() => /Picture added/.test(document.getElementById("hero-status").textContent), null, { timeout: 15000 });
+  await page.waitForTimeout(400);
+  const hero = await page.frameLocator("#frame").locator(".hero-img").evaluate((im) => ({ w: im.naturalWidth, len: im.getAttribute("src").length }));
+  ok(hero.w <= 1600 && hero.w > 0 && hero.len * 0.75 <= 410 * 1024, `maker@${width}: hero picture not shrunk (${hero.w}px, ${Math.round(hero.len * 0.75 / 1024)} KB)`);
   // download (outside Claude it is a plain browser download)
   const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#download")]);
   const saved = join(outDir, `maker-download-${width}.html`);
@@ -167,8 +202,9 @@ for (const width of [375, 1280]) {
   const page = await off.newPage();
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(pathToFileURL(join(outDir, "maker-download-375.html")).href, { waitUntil: "load" });
-  const r = await checkPage(page, "download-offline@375");
-  ok((await page.locator(".brand-name").innerText()) === "Cool Breeze Heating & Air", "download-offline: wrong content");
+  const r = await checkPage(page, "download-offline@375", 1);
+  ok((await page.locator(".brand-name").textContent()) === "Cool Breeze Heating & Air", "download-offline: wrong content");
+  ok((await page.locator(".hero-img").count()) === 1, "download-offline: hero picture not inside the file");
   await off.close();
 }
 await browser.close();

@@ -8,6 +8,7 @@
   let themeTouched = false;
   let lastHtml = "";
   let downloads = null;
+  let heroData = "";
 
   TRADE_ORDER.forEach((k) => {
     const o = document.createElement("option");
@@ -39,6 +40,7 @@
       $("freeEstimates").checked = t.freeEstimates !== false;
     }
     if (!themeTouched) $("theme-" + t.theme).checked = true;
+    $("higgs-prompt").value = t.prompt;
   }
 
   function readForm() {
@@ -56,6 +58,7 @@
       freeEstimates: $("freeEstimates").checked,
       insured: $("insured").checked,
       theme,
+      heroImage: heroData || $("hero-url").value.trim(),
     };
   }
 
@@ -87,7 +90,8 @@
 
   $("maker").addEventListener("input", (e) => {
     if (e.target.name === "theme") themeTouched = true;
-    if (e.target.id !== "lead-paste") render();
+    if (e.target.id === "hero-url") onHeroUrl();
+    if (e.target.id !== "lead-paste" && e.target.id !== "hero-file") render();
   });
   $("maker").addEventListener("submit", (e) => e.preventDefault());
   tradeSel.addEventListener("change", () => { setTrade(tradeSel.value); render(); });
@@ -153,6 +157,66 @@
     st.textContent = "Filled in: " + keys.map((k) => words[k]).filter(Boolean).join(", ") + ". Check it looks right.";
     st.className = "status";
     render();
+  });
+
+  // Hero picture: shrink to about 1600px wide JPEG under ~400 KB so the
+  // download stays one small file.
+  function heroSay(msg, bad) { const s = $("hero-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); }
+  function showHero(src) {
+    $("hero-pick").hidden = !src;
+    if (src) $("hero-thumb").src = src; else $("hero-thumb").removeAttribute("src");
+  }
+  function shrink(img) {
+    const canvas = document.createElement("canvas");
+    let width = Math.min(1600, img.naturalWidth);
+    for (let round = 0; round < 4; round++) {
+      canvas.width = width;
+      canvas.height = Math.round(img.naturalHeight * width / img.naturalWidth);
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      for (const q of [0.82, 0.72, 0.62, 0.52]) {
+        const url = canvas.toDataURL("image/jpeg", q);
+        if (url.length * 0.75 <= 400 * 1024) return url;
+      }
+      width = Math.round(width * 0.8);
+    }
+    return canvas.toDataURL("image/jpeg", 0.5);
+  }
+  $("hero-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { heroSay("Pick a JPG, PNG, or WebP picture.", true); return; }
+    heroSay("Getting the picture ready...");
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      heroData = shrink(img);
+      URL.revokeObjectURL(url);
+      $("hero-url").value = "";
+      e.target.value = "";
+      showHero(heroData);
+      heroSay("Picture added (" + Math.round(heroData.length * 0.75 / 1024) + " KB). It is saved inside the download.");
+      render();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); heroSay("Could not open that picture. Try a JPG or PNG.", true); };
+    img.src = url;
+  });
+  function onHeroUrl() {
+    const v = $("hero-url").value.trim();
+    if (!v) { if (!heroData) { showHero(""); heroSay(""); } return; }
+    heroData = "";
+    if (!/^https:\/\/\S+$/.test(v)) { showHero(""); heroSay("A picture link starts with https://", true); return; }
+    showHero("");
+    heroSay("Link added. It may not show in this preview, but it shows in the downloaded site when online. Upload the file instead to keep the picture inside the download.");
+  }
+  $("hero-clear").addEventListener("click", () => {
+    heroData = ""; $("hero-url").value = ""; showHero(""); heroSay("Picture removed."); render();
+  });
+  $("higgs-copy").addEventListener("click", () => {
+    const st = $("higgs-status");
+    const fail = () => { $("higgs-prompt").focus(); $("higgs-prompt").select(); st.textContent = "Copy did not work here. The text is selected, copy it yourself."; };
+    try { navigator.clipboard.writeText($("higgs-prompt").value).then(() => { st.textContent = "Copied. Paste it into Higgsfield."; }, fail); } catch (_) { fail(); }
   });
 
   setTrade("roofing");
