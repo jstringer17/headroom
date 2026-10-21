@@ -59,3 +59,10 @@ Order: all 3 start at once against the contract above. Then cine-engine merges c
 7. CEO looks at one demo and says yes. Not met = Step 1b not done.
 
 Risks: placeholder art makes it look cheap (bar 6 is judged twice for this reason); file size with many pictures (shrink to 1600px JPEG, budget in criterion 3); scroll jank on phones (transform/opacity only, no scroll-jacking); story frames that do not line up (art kit asks for one base picture edited step by step); Higgsfield credits (about 10-12 pictures per trade; CEO picks trades); motionsites.ai terms (study public pages only).
+
+## CEO answers (2026-10-21) for Step 1b
+- Priority trades for real pictures: roofing, fencing, pressure washing, HVAC, restoration, home builder, framing.
+- Restoration, home builder and framing are NEW trades: add them to the maker (trade list, services, Higgsfield prompts, placeholder art) as trades 17-19. Total 19 trades.
+- Order the picture kit by priority: roofing and fencing first, then pressure washing, HVAC, restoration, home builder, framing, so the CEO can make pictures in stages and spend credits slowly. Keep the picture count per trade as low as the design allows; list the exact count per trade at the top of the kit.
+- Defaults (CEO did not say, safe and easy to change): still pictures only (no video); price estimator uses the CEO's typed ranges, shown per job; stay off the motionsites.ai paid plan and do not sign up anywhere.
+- The qa rubric ($10k bar) runs on fencing, roofing and pressure washing first.
