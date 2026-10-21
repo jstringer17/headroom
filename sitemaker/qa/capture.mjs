@@ -9,7 +9,8 @@ import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell, fullTable,
 const args = process.argv.slice(2);
 const look = (args.find((a) => a.startsWith("--look=")) || "--look=cinematic").split("=")[1];
 const trades = args.filter((a) => !a.startsWith("--")).length ? args.filter((a) => !a.startsWith("--")) : ["fencing", "roofing", "pressure"];
-const out = join(here, look === "cinematic" ? "out" : `out-${look}`);
+const outName = (args.find((a) => a.startsWith("--out=")) || "").split("=")[1];
+const out = join(here, outName || (look === "cinematic" ? "out" : `out-${look}`));
 try { rmSync(out, { recursive: true, force: true }); } catch { /* stuck empty dir: reuse it */ } mkdirSync(out, { recursive: true });
 const pw = loadPlaywright();
 const browser = await pw.chromium.launch(launchOpts());
