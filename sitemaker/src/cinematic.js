@@ -432,7 +432,7 @@ export function generateCinematic(form, d, deps) {
   const { CINE_KIT, cineLook, placeholderArt } = deps;
   const kit = CINE_KIT[d.tradeKey];
   const th = THEMES[d.themeKey];
-  const look = cineLook(d.themeKey);
+  const look = cineLook(d.themeKey, d.tradeKey);
   const t = d.trade;
   const cine = (form && form.cine) || {};
   const images = cine.images || {};
