@@ -2509,7 +2509,7 @@ var ba=document.getElementById("ba");
 if(ba){
   var h=ba.querySelector("[role=slider]");
   var tl=ba.querySelector(".ba-tag.l"),tr=ba.querySelector(".ba-tag.r");
-  var set=function(v){v=clamp(Math.round(v),0,100);var w=ba.offsetWidth,x=v/100*w;tl.style.visibility=x<tl.offsetWidth+36?"hidden":"visible";tr.style.visibility=w-x<tr.offsetWidth+36?"hidden":"visible";ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
+  var set=function(v){v=clamp(Math.round(v),0,100);var w=ba.offsetWidth,x=v/100*w;tl.style.visibility=x<tl.offsetWidth+52?"hidden":"visible";tr.style.visibility=w-x<tr.offsetWidth+52?"hidden":"visible";ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
   var fromX=function(x){var r=ba.getBoundingClientRect();set((x-r.left)/r.width*100)};
   var drag=false;
   ba.addEventListener("pointerdown",function(e){if(e.pointerType==="mouse"&&e.button!==0)return;drag=true;try{ba.setPointerCapture(e.pointerId)}catch(_){}fromX(e.clientX);h.focus({preventScroll:true})});
