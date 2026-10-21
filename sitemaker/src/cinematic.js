@@ -82,6 +82,12 @@ const BA_TAGS = {
 };
 const baTags = (k) => BA_TAGS[k] || ["Before", "After", "Drag the line"];
 
+// Accent the last word of a title like "Grime, then clean."
+function accentLast(text) {
+  const m = /^(.*?)(\S+?)([.!?]*)$/.exec(String(text).trim());
+  return m ? `${esc(m[1])}<em>${esc(m[2])}</em>${esc(m[3])}` : esc(text);
+}
+
 function accentHtml(text, accent) {
   const i = accent ? text.indexOf(accent) : -1;
   if (i < 0) return esc(text);
@@ -157,10 +163,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .tab{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--cream2);color:var(--ink);font:600 15px/1 var(--sans);cursor:pointer;transition:background-color .25s,color .25s}
 .tab[aria-selected=true]{background:var(--ink);color:var(--cream)}
 .cine-no-js .tabs{display:none}
-.panel{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:4/5;background:var(--dark);color:#fff}
+.panel{position:relative;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;background:var(--dark);color:#fff}
 .panel[hidden]{display:none}
+.pic{position:relative;aspect-ratio:4/3}
 .panel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 4%}
-.panel .glass{position:absolute;left:14px;right:14px;bottom:14px;padding:20px;border-radius:14px;background:var(--card);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);display:grid;gap:10px;justify-items:start}
+.panel .glass{position:relative;padding:20px;background:rgba(0,0,0,.25);display:grid;gap:10px;justify-items:start}
 .glass h3{font:500 28px/1.1 var(--serif)}
 .glass p{color:rgba(255,255,255,.92);font-size:16px;line-height:1.45;max-width:40ch}
 .glass::before{content:"";position:absolute;inset:0;border-radius:inherit;background:rgba(0,0,0,.34);z-index:-1}
@@ -174,9 +181,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .ba,.ba-handle{scroll-margin-top:240px}
 .ba{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:4/3;background:var(--dark2);touch-action:pan-y;user-select:none;-webkit-user-select:none;--pos:50}
 .ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 4%;pointer-events:none;-webkit-user-drag:none}
-.ba .before{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
+.ba .before{clip-path:inset(0 calc(100% - 22px - (100% - 44px) * var(--pos) / 100) 0 0)}
 .ba-cap{display:flex;justify-content:space-between;margin-top:12px;font:600 13px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.ba-handle{position:absolute;top:0;bottom:0;left:calc(var(--pos) * 1%);width:44px;margin-left:-22px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
+.ba-handle{position:absolute;top:0;bottom:0;left:calc(22px + (100% - 44px) * var(--pos) / 100);width:44px;margin-left:-22px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
 .ba-handle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
 .ba-knob{position:relative;width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .ba-knob svg{width:22px;height:22px}
@@ -261,8 +268,10 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
 @media (min-width:760px){
   .sec{padding-block:112px}
   .svcs{grid-template-columns:1fr 1fr}
-  .panel{aspect-ratio:auto;height:clamp(380px,calc(100vh - 340px),620px)}
-  .panel .glass{left:28px;top:28px;bottom:auto;right:auto;width:min(420px,calc(100% - 56px));padding:26px}
+  #styles,#before-after,#price,#comfort{padding-top:72px}
+  .panel{aspect-ratio:auto;height:clamp(360px,calc(100vh - 430px),600px)}
+  .pic{position:absolute;inset:0;aspect-ratio:auto}
+  .panel .glass{position:absolute;left:28px;bottom:28px;right:auto;width:min(420px,calc(100% - 56px));padding:26px;border-radius:14px;background:var(--card);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
   .ba{aspect-ratio:auto;height:clamp(300px,calc(100vh - 380px),600px)}
   .est{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
   .tools{grid-template-columns:1fr 1fr;gap:56px;align-items:center}
@@ -313,7 +322,7 @@ if(story&&!reduce){
       frames[i].style.opacity=i===0?1:clamp((pos-(i-0.62))/0.24,0,1);
       frames[i].style.visibility=i<cover?"hidden":"visible";
       imgs[i].style.transform=zoom;
-      var d=Math.abs(pos-i),o=clamp((0.5-d)/0.05,0,1);
+      var d=Math.abs(pos-i),o=d<0.5?1:0;
       lines[i].style.opacity=o;
       lines[i].style.transform="translateY("+((pos-i)*-36).toFixed(1)+"px)";
       lines[i].style.visibility=o<0.02?"hidden":"visible";
@@ -361,7 +370,7 @@ var ba=document.getElementById("ba");
 if(ba){
   var h=ba.querySelector("[role=slider]");
     var set=function(v){v=clamp(Math.round(v),0,100);ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
-  var fromX=function(x){var r=ba.getBoundingClientRect();set((x-r.left)/r.width*100)};
+  var fromX=function(x){var r=ba.getBoundingClientRect();set((x-r.left-22)/(r.width-44)*100)};
   var drag=false;
   ba.addEventListener("pointerdown",function(e){if(e.pointerType==="mouse"&&e.button!==0)return;drag=true;try{ba.setPointerCapture(e.pointerId)}catch(_){}fromX(e.clientX);h.focus({preventScroll:true})});
   ba.addEventListener("pointermove",function(e){if(drag)fromX(e.clientX)});
@@ -482,12 +491,12 @@ export function generateCinematic(form, d, deps) {
   const stylesSec = styles.length ? `<section class="sec" id="styles"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Pick your <em>style</em>.</h2></div>
   <div class="tabs" role="tablist" aria-label="Styles">${styles.map((s, i) => `<button class="tab" role="tab" type="button" id="tab-${i}" aria-controls="panel-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(s.name)}</button>`).join("")}</div>
-  ${styles.map((s, i) => `<div class="panel rv" role="tabpanel" id="panel-${i}" aria-labelledby="tab-${i}"${i ? " hidden" : ""}>${pic(s.id, '')}<div class="glass"><h3>${esc(s.name)}</h3><p>${esc(s.note)}</p><a class="btn btn-accent btn-sm" href="#contact">Ask about this style</a></div></div>`).join("")}
+  ${styles.map((s, i) => `<div class="panel rv" role="tabpanel" id="panel-${i}" aria-labelledby="tab-${i}"${i ? " hidden" : ""}><div class="pic">${pic(s.id)}</div><div class="glass"><h3>${esc(s.name)}</h3><p>${esc(s.note)}</p><a class="btn btn-accent btn-sm" href="#contact">Ask about this style</a></div></div>`).join("")}
 </div></section>` : "";
 
   // 3. Drag the line
   const baSec = ba ? `<section class="sec dark-sec" id="before-after"><div class="wrap">
-  <div class="sec-head rv"><span class="kicker">${esc(baTags(d.tradeKey)[0])} to ${esc(baTags(d.tradeKey)[1]).toLowerCase()}</span><h2>${esc(ba.title || "Drag the line.")}</h2><p class="lede">${baTags(d.tradeKey)[2]}.</p></div>
+  <div class="sec-head rv"><span class="kicker">${esc(baTags(d.tradeKey)[0])} to ${esc(baTags(d.tradeKey)[1]).toLowerCase()}</span><h2>${accentLast(ba.title || "Drag the line.")}</h2><p class="lede">${baTags(d.tradeKey)[2]}.</p></div>
   <div class="ba rv" id="ba">
     <img class="after" src="${esc(slotSrc("after", slotLabel("after")))}" alt="${esc(baTags(d.tradeKey)[1])}">
     <img class="before" src="${esc(slotSrc("before", slotLabel("before")))}" alt="${esc(baTags(d.tradeKey)[0])}">
