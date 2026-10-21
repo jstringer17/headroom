@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, isEditorial, ED, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
 import { TRADE_ORDER, TRADES } from "./src/trades.js";
 const ALL = [...TRADE_ORDER, ...NEW_TRADES.filter((k) => !TRADE_ORDER.includes(k))]; // 19 trades
 
@@ -155,6 +155,58 @@ for (const { name, html } of targets.slice(0, 1)) {
   await ctx.close();
 }
 await real(5, "classic mode unchanged", () => {}); // classic byte-identity is test.mjs + cine-engine's diff; not duplicated here
+
+// ---- Editorial look (Step 1c): SKIPPED until the build says data-look="editorial" ----
+{
+  const edTrades = ["roofing", "fencing", "pressure"];
+  const probeEd = buildCine({ company: "Probe Co", trade: "roofing", year: 2026 }, "editorial");
+  if (!(probeEd.real && isEditorial(probeEd.html))) {
+    rec("E", "editorial look checks", "skip", "needs the editorial build (data-look=\"editorial\")");
+  } else for (const trade of edTrades) {
+    const [sz, op] = await firstCell(trade);
+    const b = buildCine({ company: "Sample Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, cine: { prices: { [sz]: { [op]: { low: "100", high: "200" } } } } }, "editorial");
+    for (const width of [375, 1280]) {
+      const tag = `${trade}@${width}`;
+      const { page, ctx } = await open(b.html, `ed-${trade}`, { width, tag: `-${width}` });
+      await page.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 300) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 40)); } scrollTo(0, 0); });
+      const r = await page.evaluate((ED) => {
+        const q = (s) => [...document.querySelectorAll(s)];
+        const hero = document.querySelector(ED.hero);
+        const heroEls = hero ? [hero, ...hero.querySelectorAll("*")] : [];
+        const clip = heroEls.some((e) => { const c = getComputedStyle(e); return (c.clipPath && c.clipPath !== "none") || (c.webkitMaskImage && c.webkitMaskImage !== "none") || (c.maskImage && c.maskImage !== "none"); });
+        const cards = q(ED.work);
+        const radii = cards.map((c) => parseFloat(getComputedStyle(c).borderTopLeftRadius) || 0);
+        const rows = q(ED.rows);
+        const nums = rows.filter((r) => /^\s*0?\d/.test(r.innerText)).length;
+        const trust = document.querySelector(ED.trust);
+        const cells = q(ED.trustCell).length;
+        const nav = q(ED.nav).find((n) => ["sticky", "fixed"].includes(getComputedStyle(n).position));
+        const body = document.body.innerText;
+        return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, hero: !!hero, clip, cards: cards.length, minRadius: radii.length ? Math.min(...radii) : 0, rows: rows.length, nums, trust: !!trust, cells, nav: !!nav, sample: /sample projects|fictional|sample picture/i.test(body) };
+      }, ED);
+      check("E", `${tag}: no sideways scroll`, r.sw <= r.cw, `${r.sw}>${r.cw}`);
+      check("E", `${tag}: hero picture is cut to a silhouette (clip-path/mask)`, r.hero && r.clip, "no clip-path or mask in hero");
+      check("E", `${tag}: work cards are rounded (>=16px) and labeled as sample`, r.cards > 0 && r.minRadius >= 16 && r.sample, `${r.cards} cards, min radius ${r.minRadius}, sample label ${r.sample}`);
+      check("E", `${tag}: numbered service rows (3+)`, r.rows >= 3 && r.nums >= 3, `${r.rows} rows, ${r.nums} numbered`);
+      check("E", `${tag}: trust strip has 4 cells`, r.trust && r.cells === 4, `${r.cells} cells`);
+      check("E", `${tag}: sticky nav`, r.nav, "no sticky/fixed nav");
+      // service rows: pick the 2nd row (pointer) and a key press; the picture must change
+      const rows = await page.$$(ED.rows);
+      if (rows.length >= 3) {
+        const img = async () => page.$eval(ED.rowImg, (e) => e.getAttribute("src") || e.getAttribute("data-src") || e.innerHTML).catch(() => "");
+        const before = await img();
+        await rows[1].scrollIntoViewIfNeeded(); await rows[1].click(); await page.waitForTimeout(400);
+        const after = await img();
+        check("E", `${tag}: clicking a service row swaps the picture`, before !== after && after !== "", "picture did not change");
+        await rows[2].focus(); await page.keyboard.press("Enter"); await page.waitForTimeout(300);
+        const third = await img();
+        check("E", `${tag}: a service row works by keyboard`, third !== after, "no change on Enter");
+      }
+      check("E", `${tag}: no "$" unless typed`, !/\$/.test((await page.evaluate(() => document.body.innerText)).replace(/\$\d[\d,]*/g, "")), "stray $");
+      await ctx.close();
+    }
+  }
+}
 
 await browser.close();
 

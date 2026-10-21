@@ -3,10 +3,13 @@
 import { mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell, fullTable } from "./lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell, fullTable, isEditorial, ED } from "./lib.mjs";
 
-const trades = process.argv.slice(2).length ? process.argv.slice(2) : ["fencing", "roofing", "pressure"];
-const out = join(here, "out");
+// node sitemaker/qa/capture.mjs [--look=editorial] [trade ...]   (default look: cinematic)
+const args = process.argv.slice(2);
+const look = (args.find((a) => a.startsWith("--look=")) || "--look=cinematic").split("=")[1];
+const trades = args.filter((a) => !a.startsWith("--")).length ? args.filter((a) => !a.startsWith("--")) : ["fencing", "roofing", "pressure"];
+const out = join(here, look === "cinematic" ? "out" : `out-${look}`);
 rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
 const pw = loadPlaywright();
 const browser = await pw.chromium.launch(launchOpts());
@@ -19,7 +22,8 @@ for (const trade of trades) {
   const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, rating: "4.8", reviews: "112", years: "12", insured: true, // test facts typed in so trust line can be judged
    
     cine: { prices: await fullTable(trade) } };
-  const b = buildCine(form); realBuild ||= b.real;
+  const b = buildCine(form, look); realBuild ||= b.real;
+  if (look === "editorial" && !isEditorial(b.html)) { console.log(`NOTE ${trade}: build is not editorial yet, shots would be the cinematic look`); }
   writeFileSync(join(out, `${trade}.html`), b.html);
   sheet[trade] = [];
   for (const width of [375, 1280]) {
@@ -59,17 +63,30 @@ for (const trade of trades) {
       const est = await page.$(SEL.estimator);
       if (est) { await toSection(page, SEL.estimator); await page.waitForTimeout(400); await shot(page, "estimator", "Estimator (test price table typed in, not real prices)"); }
       else sheet[trade].push({ w: width, file: "", label: "Estimator not found (hidden or not built)" });
+      if (look === "editorial") {
+        const el = async (sel, name, label) => { const h = await page.$(sel); if (!h) { sheet[trade].push({ w: width, file: "", label: `${label}: NOT FOUND (${sel})` }); return; } await toSection(page, sel); await page.waitForTimeout(500); await shot(page, name, label); };
+        await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(300);
+        await shot(page, "ed-hero", "Editorial: hero silhouette");
+        await el(ED.work, "ed-work", "Editorial: work cards");
+        const rows = await page.$$(ED.rows);
+        for (let i = 0; i < Math.min(rows.length, 3); i++) { if (i === 0) await toSection(page, ED.rows); await rows[i].click().catch(() => {}); await page.waitForTimeout(500); await shot(page, `ed-row${i + 1}`, `Editorial: service row ${i + 1} (picture swap)`); }
+        await el(ED.trust, "ed-trust", "Editorial: trust strip");
+        await page.evaluate(() => scrollTo(0, 600)); await page.waitForTimeout(300); await shot(page, "ed-nav", "Editorial: sticky nav while scrolled");
+      }
       await ctx.close();
     }
   }
 }
 await browser.close();
 
-const reel = readFileSync(join(here, "..", "..", "org", "inspiration", "lynam_up-reels.md"), "utf8").split("## Update:")[1] || "";
+const insp = (f) => readFileSync(join(here, "..", "..", "org", "inspiration", f), "utf8");
+const reel = look === "editorial" ? insp("northpeak-editorial.md") : insp("lynam_up-reels.md").split("## Update:")[1] || "";
+const cover = (t, w) => { const f = sheet[t].filter((x) => x.w === w && x.file); const n = (k) => f.filter((x) => x.file.includes(k)).length; return `<tr><td>${t}</td><td>${w}</td><td>${n("-frame")}/10</td><td>${n("-tab")}</td><td>${n("-slider")}/3</td><td>${n("-estimator")}/1</td><td>${n("-full")}/1</td><td>${n("-reduced")}/1</td>${look === "editorial" ? `<td>${n("-ed-")}</td>` : ""}</tr>`; };
 const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Cine QA pack</title>
+const html = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Cine QA pack (${look})</title>
 <style>body{font:14px system-ui;margin:0;padding:16px;background:#111;color:#eee}h2{margin-top:32px}.g{display:flex;flex-wrap:wrap;gap:10px}figure{margin:0}img{display:block;border:1px solid #444;max-height:420px}.w375 img{max-width:200px}.w1280 img{max-width:420px}figcaption{font-size:12px;color:#aaa;margin-top:4px}pre{white-space:pre-wrap;background:#222;padding:12px;max-width:900px}</style>
-<h1>Cine QA pack</h1><p>${realBuild ? "Real cinematic build." : "NOT the real build: hand-made sample page. Do not score."} Rubric: sitemaker/qa/RUBRIC.md</p>
+<h1>Cine QA pack: ${look} look</h1><p>${realBuild ? "Real cinematic build." : "NOT the real build: hand-made sample page. Do not score."} Rubric: sitemaker/qa/RUBRIC.md</p>
+<h2>Review coverage (open every listed file; a missing count means a defect in the pack)</h2><table border="1" cellpadding="4" style="border-collapse:collapse"><tr><th>trade</th><th>width</th><th>frames</th><th>tabs</th><th>sliders</th><th>estimator</th><th>full</th><th>reduced</th>${look === "editorial" ? "<th>editorial shots</th>" : ""}</tr>${trades.flatMap((t) => [375, 1280].map((w) => cover(t, w))).join("")}</table>
 <h2>Reel notes (the bar)</h2><pre>${esc(reel.trim())}</pre>
 ${trades.map((t) => `<h2>${t}</h2><p><a href="${t}.html">${t}.html</a></p><div class="g">${sheet[t].map((s) => `<figure class="w${s.w}">${s.file ? `<img loading="lazy" src="${s.file}">` : ""}<figcaption>${s.w}px · ${esc(s.label)}</figcaption></figure>`).join("")}</div>`).join("")}`;
 writeFileSync(join(out, "index.html"), html);
