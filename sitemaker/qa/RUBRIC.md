@@ -19,6 +19,7 @@ Score the 7 lines above too (line 2 judges the photo cards and the hero silhouet
 | # | Line | A 3 looks like | A 5 looks like |
 |---|------|----------------|----------------|
 | 8 | Editorial craft | Serif and sans both used, but sizes feel arbitrary; cards rounded in places; extra colours or icons creep in. | A tight display serif paired with one quiet sans; big hero silhouette; numbered service rows whose picture swaps; 4-cell trust strip; rounded (about 24px) photo cards with honest "sample" labels; one accent colour, lots of space, nothing decorative. Restraint everywhere. |
+The Editorial look has NO tabs or before/after slider by design. Line 5 (tools) judges the numbered service rows with their picture swap (`ed-row1-3`, at both widths: the swap must be visible on a phone) and the estimator. Do not cap line 5 for missing tabs/sliders.
 For this look also look at: hero silhouette (`ed-hero`), work cards (`ed-work`), service rows 1-3 (`ed-row1-3`), trust strip (`ed-trust`), nav while scrolled (`ed-nav`), at 375 and 1280.
 
 Rules for the reviewer: score only what is on screen; placeholder art is judged as placeholder (label visible), not as a photo; any invented price, review or claim is an automatic 1 on line 6.
