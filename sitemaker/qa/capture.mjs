@@ -15,7 +15,8 @@ let realBuild = false;
 
 for (const trade of trades) {
   const [sz, op] = await firstCell(trade);
-  const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026,
+  const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, rating: "4.8", reviews: "112", years: "12", insured: true, // test facts typed in so trust line can be judged
+   
     cine: { prices: await fullTable(trade) } };
   const b = buildCine(form); realBuild ||= b.real;
   writeFileSync(join(out, `${trade}.html`), b.html);

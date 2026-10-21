@@ -41,8 +41,10 @@ export const placeholderText = (src) => { try { return decodeURIComponent(src.re
 
 // First (size, option) of the trade's kit, for filling one price cell. Falls back to placeholders if the kit is missing.
 // Every size x option of the kit as a typed price table (test data, clearly not real prices).
+// Test-only sample ranges so the pack looks sane for each unit. Typed data, not real prices.
+const SAMPLE_RANGE = { "per linear foot": [22, 34, 4], "per sq ft": [6, 11, 2], "per job": [900, 1600, 250] };
 export async function fullTable(trade) {
-  try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; const t = {}; k.sizes.forEach((sz, i) => { t[sz] = {}; k.options.forEach((op, j) => { t[sz][op] = { low: String(1000 + i * 500 + j * 250), high: String(1800 + i * 500 + j * 250) }; }); }); return t; } catch { return {}; }
+  try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; const base = SAMPLE_RANGE[unitFor(trade)] || SAMPLE_RANGE["per job"]; const t = {}; k.sizes.forEach((sz, i) => { t[sz] = {}; k.options.forEach((op, j) => { t[sz][op] = { low: String(base[0] + (i * 3 + j) * base[2]), high: String(base[1] + (i * 3 + j) * base[2]) }; }); }); return t; } catch { return {}; }
 }
 export async function firstCell(trade) {
   try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; return [k.sizes[0], k.options[0]]; } catch { return ["__first", "__first"]; }
