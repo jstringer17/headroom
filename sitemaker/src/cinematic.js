@@ -6,6 +6,7 @@
 // form.cine = {
 //   images: { [slotId]: data URI or https URL },   slotId = a story step id,
 //                                                   a style id, "before" or "after"
+//   unit: "per job" | "per sq ft" | "per linear foot" | "per hour" (default depends on the trade)
 //   prices: { [size]: { [option]: { low, high } } } typed by the owner
 // }
 //
@@ -27,6 +28,16 @@ export function cineSlots(kit) {
     out.push({ id: "after", group: "Before and after", label: "After picture", prompt: kit.beforeAfter.after && kit.beforeAfter.after.prompt });
   }
   return out;
+}
+
+// The estimator's unit is a setting. Default per trade (CEO list), switchable in the form.
+export const CINE_UNITS = ["per job", "per sq ft", "per linear foot", "per hour"];
+const DEFAULT_UNITS = {
+  roofing: "per sq ft", fencing: "per linear foot", pressure: "per sq ft", hvac: "per job",
+  restoration: "per job", homebuilder: "per sq ft", builder: "per sq ft", homebuilding: "per sq ft", framing: "per sq ft",
+};
+export function cineUnit(tradeKey, chosen) {
+  return CINE_UNITS.includes(chosen) ? chosen : DEFAULT_UNITS[tradeKey] || "per job";
 }
 
 // "$2,750" from whatever the owner typed; null if it is not a real number.
@@ -427,7 +438,7 @@ export function generateCinematic(form, d, deps) {
       <fieldset><legend>${esc(est.optionLabel || "Option")}</legend><div class="opts">${prices.options.map((o) => radio("est-opt", o, o === firstOpt)).join("")}</div></fieldset>
     </div>
     <div>
-      <div class="est-out" aria-live="polite"><p class="est-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p>${est.unit ? `<p class="est-unit">${esc(est.unit)}</p>` : ""}<p class="est-note">An estimate, not a final price. The exact price comes after we look at the job.</p><a class="btn btn-accent" href="#contact" style="justify-self:start;margin-top:8px">${askLabel}</a></div>
+      <div class="est-out" aria-live="polite"><p class="est-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p><p class="est-unit">${esc(cineUnit(d.tradeKey, cine.unit))}</p><p class="est-note">An estimate, not a final price. The exact price comes after we look at the job.</p><a class="btn btn-accent" href="#contact" style="justify-self:start;margin-top:8px">${askLabel}</a></div>
       <ul class="est-list">${list}</ul>
     </div>
   </div>

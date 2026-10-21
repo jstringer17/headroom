@@ -11,6 +11,7 @@
   let heroData = "";
   const hasCine = typeof CINE_KIT !== "undefined";
   const cineImages = {}; // trade -> slotId -> picture
+  const cineUnits = {}; // trade -> chosen unit
   const cinePrices = {}; // trade -> size -> option -> { low, high }
 
   TRADE_ORDER.forEach((k) => {
@@ -62,7 +63,9 @@
       '<p class="status" aria-live="polite"></p></div>').join("");
     const pr = cinePrices[key] = cinePrices[key] || {};
     const est = kit.estimator || { sizes: [], options: [] };
-    $("cine-prices").innerHTML = est.sizes.map((sz) => '<div class="price-row"><b>' + esc(sz) + "</b>" + est.options.map((op) => {
+    const unit = cineUnit(key, cineUnits[key]);
+    $("cine-prices").innerHTML = '<label class="field" for="cine-unit"><span>Price is</span><select id="cine-unit">' +
+      CINE_UNITS.map((u) => '<option' + (u === unit ? " selected" : "") + ">" + u + "</option>").join("") + "</select></label>" + est.sizes.map((sz) => '<div class="price-row"><b>' + esc(sz) + "</b>" + est.options.map((op) => {
       const c = (pr[sz] || {})[op] || {};
       return '<div class="price-cell"><span>' + esc(op) + '</span><input type="number" min="0" step="1" inputmode="numeric" placeholder="Low" data-size="' + esc(sz) + '" data-opt="' + esc(op) + '" data-end="low" aria-label="' + esc(sz + ", " + op + ", low price") + '" value="' + esc(c.low || "") + '">' +
         '<input type="number" min="0" step="1" inputmode="numeric" placeholder="High" data-size="' + esc(sz) + '" data-opt="' + esc(op) + '" data-end="high" aria-label="' + esc(sz + ", " + op + ", high price") + '" value="' + esc(c.high || "") + '"></div>';
@@ -86,7 +89,7 @@
       theme,
       heroImage: heroData || $("hero-url").value.trim(),
       cinematic: hasCine && $("cinematic").checked,
-      cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {} } : undefined,
+      cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]) } : undefined,
     };
   }
 
@@ -120,6 +123,7 @@
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "cinematic") buildCine();
+    if (e.target.id === "cine-unit") cineUnits[tradeSel.value] = e.target.value;
     const dp = e.target.dataset || {};
     if (dp.end) {
       const pr = cinePrices[tradeSel.value];
