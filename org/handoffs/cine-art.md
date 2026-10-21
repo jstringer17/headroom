@@ -34,3 +34,4 @@ End with a handoff of at most 10 lines: done, evidence, left, decision needed.
 - Merged with the engine: slot ids = bare kit ids (same as cinematic.js); renamed my cineSlots to kitSlots and .cine-reveal to .cine-rise (they clashed in the one-file build).
 - Left for others: trades.js entries for restoration, builder, framing (trades.js owner); test-cine.mjs real-build checks still skip because qa/lib.mjs never calls useCine (cine-qa/cine-engine).
 - Decision needed (CEO): which 3 trades get real pictures first (plan says roofing, fencing, pressure washing); confirm stills only.
+- Round 2 (same day, from chief of staff): trade palettes (cineLook(theme, trade)), CSS bridge to the engine's variables, a featured tool per trade, HVAC story cold to warm, a drag-to-clean pair, blueprintArt. test-cine.mjs now passes all 5 criteria on the real build. Open: engine passes trade to cineLook (one line).
