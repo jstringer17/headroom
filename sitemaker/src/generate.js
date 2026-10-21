@@ -87,6 +87,7 @@ const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 // Section order and style per layout, so trades do not look like clones.
 const LAYOUTS = {
   band: { order: ["services", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
+  ledger: { order: ["services", "process", "area", "faq"], services: "numbered", trust: null },
   split: { order: ["process", "services", "reviews", "faq", "area"], services: "columns", trust: "paper" },
   stat: { order: ["services", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
 };
@@ -129,18 +130,16 @@ export function generateSite(form) {
     ["Pricing", d.freeEstimates ? "Free estimates" : "Ask for a price"],
     ["Emergencies", d.emergency ? "Open 24/7" : "Call to ask"],
   ];
-  if (d.rating) cells.push(["Google rating", `${d.rating.toFixed(1)} ${stars(d.rating, 16)}`, true]);
-  else if (d.years) cells.push(["In business", `${d.years} year${d.years === 1 ? "" : "s"}`]);
+  if (d.years) cells.push(["In business", `${d.years} year${d.years === 1 ? "" : "s"}`]);
   else if (d.insured) cells.push(["Coverage", "Licensed and insured"]);
   else cells.push(["Phone", d.phone ? phoneShow : "Call us"]);
-  const trust = `<section class="trust trust-${L.trust}" aria-label="At a glance"><div class="wrap"><dl>${cells.map(([k, v, raw]) => `<div class="cell rv"><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("")}</dl></div></section>`;
+  const trust = !L.trust ? "" : `<section class="trust trust-${L.trust}" aria-label="At a glance"><div class="wrap"><dl>${cells.map(([k, v, raw]) => `<div class="cell rv"><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("")}</dl></div></section>`;
 
   // Hero
   let stat;
-  if (d.rating) stat = [d.rating.toFixed(1), stars(d.rating, 22) + `<span>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google reviews` : "Google rating"}</span>`];
-  else if (d.emergency) stat = ["24/7", "<span>Open for emergencies</span>"];
+  if (d.emergency) stat = ["24/7", "<span>Open for emergencies</span>"];
   else if (d.years) stat = [String(d.years), `<span>Year${d.years === 1 ? "" : "s"} in business</span>`];
-  else if (d.freeEstimates) stat = ["Free", "<span>Estimates on every job</span>"];
+  else if (d.freeEstimates) stat = ["Free", "<span>Estimates</span>"];
   else stat = [area || "Local", `<span>${area ? "Our home base" : "Serving your area"}</span>`];
   const statBig = stat[0].length > 6 ? " long" : "";
 
@@ -157,6 +156,16 @@ export function generateSite(form) {
       <div class="panel-art">${shape("art").replace('xMidYMax meet', 'xMidYMax slice')}</div>
       <div class="panel-body"><p class="panel-k">${d.freeEstimates ? "Free estimates" : "Prices before work starts"}</p><p class="panel-v">${d.phone ? phoneShow : "Phone number here"}</p><p class="panel-n">${d.emergency ? "Open 24 hours" : area ? `Serving ${area}` : "Serving your area"}</p></div>
     </aside></div>`;
+  } else if (lay === "ledger") {
+    const figs = [];
+    if (d.rating) figs.push([d.rating.toFixed(1), `${stars(d.rating, 18)}<span>${d.reviews ? `Google rating, ${d.reviews.toLocaleString("en-US")} reviews` : "Google rating"}</span>`]);
+    if (d.emergency) figs.push(["24/7", "<span>Open for emergencies</span>"]);
+    if (d.years) figs.push([String(d.years), `<span>Year${d.years === 1 ? "" : "s"} in business</span>`]);
+    if (d.freeEstimates) figs.push(["Free", "<span>Estimates</span>"]);
+    if (figs.length < 3) figs.push([area || "Your town", "<span>And nearby towns</span>"]);
+    if (figs.length < 3) figs.push([d.phone ? phoneShow : "Call", `<span>${d.phone ? "Call any time we are open" : "Call to ask"}</span>`]);
+    heroInner = `<div class="wrap ledger-top">${heroText}</div>${shape("ledger-art").replace("xMidYMax meet", "none")}
+    <div class="wrap"><dl class="figures">${figs.slice(0, 3).map(([v, k]) => `<div class="fig rv"><dt${v.length > 5 ? ' class="long"' : ""}>${esc(v)}</dt><dd>${k}</dd></div>`).join("")}</dl>${d.rating ? `<p class="fig-note">Real reviews go here. Customer reviews from ${name}'s Google profile get added when the site goes live.</p>` : ""}</div>`;
   } else if (lay === "stat") {
     heroInner = `<div class="wrap hero-grid">${heroText}<aside class="stat" aria-label="At a glance">
       <p class="stat-v${statBig}">${esc(stat[0])}</p><div class="stat-k">${stat[1]}</div>
@@ -168,7 +177,9 @@ export function generateSite(form) {
   const heroSec = `<section class="hero hero-${hero ? "photo" : lay}" aria-label="Intro">${heroInner}</section>`;
 
   // Sections
-  const services = L.services === "list"
+  const services = L.services === "numbered"
+    ? `<ol class="svcs-num">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i % 3}"><span class="num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ol>`
+    : L.services === "list"
     ? `<ul class="svcs-list">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i}"><a href="#contact"><span class="svc-name">${esc(n)}</span><span class="svc-desc">${esc(desc)}</span><span class="svc-go">${svg(ICON_ARROW, 20)}</span></a></li>`).join("")}</ul>`
     : `<ul class="svcs-cols">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i % 3}"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>`;
   const steps = [
@@ -305,6 +316,24 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .hero-photo img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
 .hero-photo::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 55%,rgba(0,0,0,.38) 100%),linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,0) 70%)}
 .hero-photo .hero-sub{color:rgba(255,255,255,.9)}
+.ledger-top{display:grid;gap:0}
+.ledger-art{display:block;width:100%;height:clamp(110px,15vw,200px)}
+.ledger-art path{vector-effect:non-scaling-stroke;stroke-width:6}
+.figures{display:grid;grid-template-columns:1fr;border-top:1px solid var(--rule-dark)}
+.fig{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 18px;padding:18px 0;border-bottom:1px solid var(--rule-dark)}
+.fig dt{font:900 clamp(56px,9vw,112px)/.85 var(--display);text-transform:uppercase;color:var(--on-dark);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.fig dt.long{font-size:clamp(40px,5vw,64px);line-height:.95}
+.fig dd{display:grid;gap:6px;color:var(--on-dark-2);font-weight:600;font-size:16px}
+.fig .stars{color:var(--hi)}
+.fig .stars-row.off{color:var(--rule-dark)}
+.fig-note{padding:18px 0 40px;color:var(--on-dark-2);font-size:15px;max-width:60ch}
+.hero-ledger .wrap:last-child{padding-bottom:0}
+.svcs-num{list-style:none;margin:0;padding:0;counter-reset:n}
+.svcs-num li{display:grid;grid-template-columns:56px 1fr;gap:2px 16px;padding:22px 0;border-top:1px solid var(--line)}
+.svcs-num li:last-child{border-bottom:1px solid var(--line)}
+.svcs-num .num{grid-row:1/3;font:900 40px/.9 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.svcs-num h3{font-size:22px}
+.svcs-num p{color:var(--muted)}
 /* trust bar */
 .trust dl{display:grid;grid-template-columns:1fr 1fr}
 .cell{padding:22px 16px 24px 0}
@@ -395,7 +424,8 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 .foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:22px;border-top:1px solid var(--rule-dark);font-size:14px}
 .mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.16);transition:transform .45s var(--ease)}
 .mobile-call .btn{width:100%}
-.js:not(.past) .mobile-call{transform:translateY(110%)}
+.mobile-call{transform:translateY(110%);visibility:hidden}
+.past .mobile-call{transform:none;visibility:visible}
 /* motion: only when allowed; everything is visible without it */
 @media (prefers-reduced-motion:no-preference){
   .motion .rv{transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
@@ -412,6 +442,9 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
   .grid>.head{grid-column:1/span 5}
   .grid>.body{grid-column:6/span 7}
   .svcs-cols{grid-template-columns:1fr 1fr}
+  .figures{grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--rule-dark)}
+  .fig{grid-template-columns:1fr;align-items:start;padding:28px 24px 32px;border-bottom:0;border-left:1px solid var(--rule-dark)}
+  .fig:first-child{padding-left:0;border-left:0}
   .steps{grid-template-columns:repeat(3,1fr);gap:32px}
   .area{grid-template-columns:5fr 7fr;gap:48px}
   .foot-cols{grid-template-columns:repeat(3,1fr)}
@@ -436,6 +469,9 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
   .hero-photo .wrap{padding-top:260px}
   .hero-photo .hero-text{max-width:820px}
   .svcs-cols{grid-template-columns:repeat(3,1fr)}
+  .ledger-top .hero-text{padding-bottom:48px}
+  .svcs-num li{grid-template-columns:72px 1fr 1.3fr;align-items:baseline}
+  .svcs-num .num{grid-row:auto}
   .grid>.head .sticky{position:sticky;top:120px}
   footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
   .foot-base{grid-column:1/-1}

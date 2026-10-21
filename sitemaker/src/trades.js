@@ -2,7 +2,7 @@
 // Each trade: label, noun (what the business is called), icon (inline SVG
 // inner markup, 24x24, stroke-based), headline + sub copy, default theme,
 // line (the trade's signature line drawing for the hero, viewBox 0 0 1200 300),
-// layout (hero and section layout: band, split or stat), fill (draw the line
+// layout (hero and section layout: band, split, stat or ledger), fill (draw the line
 // as a solid shape), prompt (a Higgsfield prompt for a hero picture: no people, no text),
 // optional freeEstimates: false (turns that default off; 24/7 is off for
 // every trade), words to match a lead's category, and
@@ -315,7 +315,7 @@ export const TRADES = {
     sub: "Junk, furniture, and debris removal for homes and businesses.",
     theme: "navy",
     line: "M300 270 H700 V170 H300 Z M380 170 V90 H620 V170 M760 270 H1000 V200 H760 Z",
-    layout: "stat",
+    layout: "ledger",
     prompt: "An empty, clean, swept garage with a bare concrete floor and the door open, bright daylight. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     freeEstimates: false,
@@ -364,7 +364,7 @@ export const TRADES = {
     sub: "Towing and roadside help for cars, trucks, and more.",
     theme: "steel",
     line: "M80 300 L520 40 M1120 300 L680 40 M600 300 V250 M600 200 V165 M600 125 V100 M600 72 V60",
-    layout: "stat",
+    layout: "ledger",
     prompt: "An empty two-lane highway at dusk with soft road lights, a long straight road toward the horizon, no vehicles. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     freeEstimates: false,

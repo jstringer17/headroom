@@ -137,6 +137,12 @@ for (const { key, form } of sets) {
     await page.goto(pathToFileURL(file).href, { waitUntil: "load" });
     await page.evaluate(() => document.fonts.ready);
     await checkPage(page, `${key}@${width}`);
+    if (form.rating) {
+      const txt = await page.evaluate(() => document.body.innerText);
+      const times = txt.split(form.rating).length - 1;
+      ok(times === 1, `${key}@${width}: rating ${form.rating} shown ${times} times`);
+      ok(txt.includes("Real reviews go here"), `${key}@${width}: reviews placeholder line missing`);
+    }
     // Full page for the two lead trades; first screen for the rest keeps the folder small.
     const full = /^(roofing|hvac|towing)$/.test(key);
     await page.screenshot({ path: join(shotDir, `${key}-${width}.jpg`), type: "jpeg", quality: full ? 45 : 40, fullPage: full });
@@ -144,6 +150,22 @@ for (const { key, form } of sets) {
   }
 }
 ok(offsite.length === 0, `sites asked the network for: ${offsite.slice(0, 5).join(" | ")}`);
+
+// phone, first screen, viewport only: one call button, call bar off screen, with and without JavaScript
+for (const js of [true, false]) {
+  const c = await browser.newContext({ ...ctxOpts, javaScriptEnabled: js, viewport: { width: 375, height: 667 } });
+  for (const key of ["roofing", "hvac", "towing"]) {
+    const page = await c.newPage();
+    await page.goto(pathToFileURL(join(outDir, `${key}.html`)).href, { waitUntil: "load" });
+    await page.waitForTimeout(300);
+    const r = await checkPage(page, `${key}@375x667${js ? "" : "-nojs"}`);
+    const bar = await page.evaluate(() => { const b = document.querySelector(".mobile-call"); return { top: b.getBoundingClientRect().top, vis: getComputedStyle(b).visibility }; });
+    ok(bar.top >= 667 || bar.vis === "hidden", `${key}@375x667${js ? "" : "-nojs"}: call bar visible in first screen`);
+    if (js) await page.screenshot({ path: join(shotDir, `${key}-375x667-first-screen.jpg`), type: "jpeg", quality: 50 });
+    await page.close();
+  }
+  await c.close();
+}
 
 // phone: at the very bottom, the call bar must not cover the footer
 {
