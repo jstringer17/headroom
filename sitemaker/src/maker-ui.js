@@ -34,7 +34,10 @@
       lab.innerHTML = '<input type="checkbox" id="' + id + '" value="' + esc(n) + '"' + (i < t.pick ? " checked" : "") + "> " + esc(n);
       svcBox.appendChild(lab);
     });
-    if (!keepChecks) $("emergency").checked = t.emergency;
+    if (!keepChecks) {
+      $("emergency").checked = false;
+      $("freeEstimates").checked = t.freeEstimates !== false;
+    }
     if (!themeTouched) $("theme-" + t.theme).checked = true;
   }
 

@@ -27,7 +27,7 @@ mkdirSync(shotDir, { recursive: true });
 
 const fails = [];
 const ok = (cond, msg) => { if (!cond) fails.push(msg); };
-const BANNED = /award[- ]winning|best in (town|the)|#1|number one|trusted by|5-star service|guaranteed|top[- ]rated/i;
+const BANNED = /award[- ]winning|best in (town|the)|#1|number one|trusted by|5-star service|guaranteed|top[- ]rated|same day|cleans? up after|fixed fast|fix it fast|done right|built to last/i;
 
 // ---- 1. pure function checks ----
 for (const key of TRADE_ORDER) {
@@ -42,8 +42,13 @@ for (const key of TRADE_ORDER) {
 // no rating typed -> no stars, only the placeholder line
 {
   const html = generateSite({ company: "Test Co", trade: "roofing" });
-  ok(!html.includes('class="rating"'), "no-rating: rating block shown");
-  ok(html.includes("Real reviews go here"), "no-rating: placeholder missing");
+  ok(!html.includes('id="reviews"'), "no-rating: reviews section shown");
+  ok(!html.includes("24/7") && !html.includes("Open 24 hours"), "default: 24/7 claim shown");
+  ok(html.includes("Ask about emergency service"), "default: emergency line missing");
+  ok(html.includes("Free estimates"), "default: roofing free estimates missing");
+  for (const k of ["towing", "junk", "hvac"]) ok(!generateSite({ company: "T", trade: k }).includes("Free estimates"), `default: ${k} shows free estimates`);
+  const e = generateSite({ company: "T", trade: "plumbing", emergency: true, rating: "4.2" });
+  ok(e.includes("Open 24 hours") && !e.includes("Ask about emergency service") && e.includes('id="reviews"') && e.includes("Real reviews go here"), "ticked: 24/7 or reviews wrong");
   const h2 = generateSite({ company: "<b>x</b>", trade: "hvac", rating: "4.6", reviews: "38" });
   ok(h2.includes("4.6") && h2.includes("From 38 Google reviews"), "rating: typed numbers not shown");
   ok(!h2.includes("<b>x</b>"), "escape: company name not escaped");
@@ -88,7 +93,7 @@ const sets = TRADE_ORDER.map((key, i) => ({
   key,
   form: {
     company: `Sample ${TRADES[key].label.replace(/ \(.*\)/, "")} Co`, trade: key, city: "Tulsa, OK", phone: "918-555-01" + String(i).padStart(2, "0"),
-    rating: (4 + (i % 10) / 10).toFixed(1), reviews: String(20 + i * 7), years: String(3 + i), insured: i % 2 === 0, year: 2026,
+    rating: (4 + (i % 10) / 10).toFixed(1), reviews: String(20 + i * 7), years: String(3 + i), insured: i % 2 === 0, emergency: i % 3 === 0, year: 2026,
   },
 }));
 // bare minimum (name + trade only) for the two lead trades
@@ -137,7 +142,7 @@ for (const width of [375, 1280]) {
   await page.fill("#company", "North Wind Heating and Air");
   await page.waitForTimeout(400);
   doc = await page.frameLocator("#frame").locator("h1").innerText();
-  ok(/cool|warm/i.test(doc), `maker@${width}: HVAC preview missing (${doc})`);
+  ok(/heating/i.test(doc), `maker@${width}: HVAC preview missing (${doc})`);
   // lead paste
   await page.click("#lead-box summary");
   await page.fill("#lead-paste", "Cool Breeze Heating & Air\n4.8 (112)\n(918) 555-0199\nBroken Arrow, OK");

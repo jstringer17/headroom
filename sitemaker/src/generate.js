@@ -6,7 +6,8 @@
 // form = {
 //   company*, trade* (key of TRADES), city, phone, rating, reviews, years,
 //   services: [names] (default: the trade's first `pick`),
-//   emergency (default: trade default), freeEstimates (default true),
+//   emergency (default false), freeEstimates (default true, false for
+//   towing, junk removal and HVAC),
 //   insured (default false), theme (default: trade default), year
 // }
 import { TRADES, TRADE_ORDER } from "./trades.js";
@@ -49,8 +50,8 @@ export function normalize(form) {
     reviews: reviews > 0 ? reviews : null,
     years: years > 0 && years < 200 ? years : null,
     services: trade.services.filter((s) => picked.includes(s[0])),
-    emergency: f.emergency === undefined ? trade.emergency : !!f.emergency,
-    freeEstimates: f.freeEstimates === undefined ? true : !!f.freeEstimates,
+    emergency: !!f.emergency,
+    freeEstimates: f.freeEstimates === undefined ? trade.freeEstimates !== false : !!f.freeEstimates,
     insured: !!f.insured,
     themeKey: THEMES[f.theme] ? f.theme : trade.theme,
     year: f.year || new Date().getFullYear(),
@@ -104,14 +105,12 @@ export function generateSite(form) {
   const steps = [
     ["Call or send a request", d.phone ? `Call ${phoneShow} or fill out the form below.` : "Call us or fill out the form below."],
     [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
-    ["We get it done", `Our crew does the work and cleans up after.`],
+    ["The work gets done", "We do the job you agreed to."],
   ].map(([h, p], i) => `<li class="step"><span class="step-n">${i + 1}</span><div><h3>${esc(h)}</h3><p>${p}</p></div></li>`).join("");
 
   let ratingBlock;
   if (d.rating) {
     ratingBlock = `<div class="rating"><div class="rating-num">${d.rating.toFixed(1)}</div><div>${stars(d.rating, 26)}<p class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div></div>`;
-  } else if (d.reviews) {
-    ratingBlock = `<div class="rating"><div class="rating-num">${d.reviews.toLocaleString("en-US")}</div><div><p class="rating-sub">Google reviews</p></div></div>`;
   } else {
     ratingBlock = "";
   }
@@ -262,16 +261,16 @@ ${d.emergency ? `<section class="urgent" aria-label="Emergency service"><div cla
   <div class="sec-head"><h2>How it works</h2></div>
   <ol class="steps">${steps}</ol>
 </div></section>
-<section class="sec" id="reviews"><div class="wrap">
-  <div class="sec-head"><h2>What customers say</h2>${ratingBlock ? "" : `<p>Our Google reviews will show here.</p>`}</div>
+${ratingBlock ? `<section class="sec" id="reviews"><div class="wrap">
+  <div class="sec-head"><h2>What customers say</h2></div>
   <div class="reviews">${ratingBlock}<div class="review-slot"><strong>Real reviews go here</strong>Customer reviews from ${name}'s Google profile get added when the site goes live.</div></div>
-</div></section>
+</div></section>` : ""}
 <section class="sec sec-alt" id="contact"><div class="wrap contact">
   <div class="contact-info">
     <div class="sec-head" style="margin-bottom:4px"><h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2><p>Call us, or send the form and we will call you back.</p></div>
     <div class="contact-line">${svg(ICON_PHONE, 22)}<div><b>Phone</b><span>${d.phone ? phoneShow : "Phone number here"}</span></div></div>
     <div class="contact-line">${svg(ICON_PIN, 22)}<div><b>Service area</b><span>${area ? `${area} and nearby towns` : "Your town and nearby towns"}</span></div></div>
-    ${d.emergency ? `<div class="contact-line">${svg(ICON_CLOCK, 22)}<div><b>Hours</b><span>Open 24 hours, 7 days a week</span></div></div>` : ""}
+    <div class="contact-line">${svg(ICON_CLOCK, 22)}<div><b>${d.emergency ? "Hours" : "Emergencies"}</b><span>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</span></div></div>
   </div>
   <form id="ask" novalidate>
     <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name"></label>
