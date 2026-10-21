@@ -635,3 +635,22 @@ export function kitSlots(trade) {
     { slotId: "after", kind: "after", index: 0, label: `After: ${k.beforeAfter.title}`, prompt: k.beforeAfter.after.prompt },
   ];
 }
+
+// Editorial look: one short hero line per trade with its italic accent word,
+// said plainly (no promises the owner did not make). kit.editorial also takes
+// optional slot picks (hero, beat, work, services) read by editorial.js.
+const ED_LINES = {
+  roofing: ["A new roof, edge to edge.", "edge"], fencing: ["Fences that frame the yard.", "frame"],
+  pressure: ["Grime off. Color back.", "Color"], hvac: ["Warm winters, cool summers.", "cool"],
+  restoration: ["From damage back to home.", "home"], builder: ["Homes built from the plan up.", "plan"],
+  framing: ["Straight walls, square corners.", "square"], remodeling: ["The rooms you wanted, built.", "wanted"],
+  painting: ["One clean color, start to finish.", "clean"], concrete: ["Driveways and patios, poured smooth.", "smooth"],
+  landscaping: ["A yard worth coming home to.", "home"], tree: ["Trees trimmed with care.", "care"],
+  garage: ["A new face for the house.", "face"], plumbing: ["Pipes, drains and water heaters.", "water"],
+  electrical: ["Power, wired neatly.", "neatly"], pest: ["Pests out, gaps sealed.", "sealed"],
+  junk: ["Room to breathe again.", "breathe"], cleaning: ["Come home to clean.", "clean"],
+  towing: ["Stuck? Help on the road.", "road"],
+};
+for (const [t, [headline, accent]] of Object.entries(ED_LINES)) {
+  if (CINE_KIT[t]) CINE_KIT[t].editorial = { ...(CINE_KIT[t].editorial || {}), headline, accent };
+}

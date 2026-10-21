@@ -75,3 +75,61 @@ Taken (ideas, my words; no names or text copied):
 Rejected: neon and 360 spins from the car reel (off-brand for trades, needs 3D); the reels' exact headlines (we write our own).
 
 Engine notes: pass the trade to `cineLook(theme, trade)` (and `{ tradeLook: false }` if the owner turns trade colors off); read `kit.tool.kind` to pick the featured tool; the CSS bridge maps the engine's own variables (`--serif`, `--sans`, `--cream`, `--ink`, `--accent`, `--dark`...) to the look, so no markup change is needed.
+
+## Round 3 (2026-10-21): the Editorial look
+Brief: a second premium look beside Cinematic, after the Northpeak concept notes (org/inspiration/northpeak-editorial.md), in our own words. The world: a printed architecture magazine about one local tradesperson. Visitor mode is persuade: a homeowner deciding whom to call.
+
+How it is built: cine-engine wrote `sitemaker/src/editorial.js` (markup, tests, data hooks). cine-art layered the craft on top through its seams:
+- `editorialLook(theme, trade)` in cine-look.js: tokens, trade palettes, type, motion and browser surfaces.
+- `editorialShape(trade)`: a clean house silhouette.
+- `kit.editorial.headline/accent`: one hero line per trade, in cine-kit.js.
+- Small copy and markup edits in editorial.js: an accent-word hero, accent headings, and no eyebrows above section headings.
+No new pictures: it reuses the cinematic slots, with labeled placeholder art until the CEO makes real ones.
+
+What came from each skill:
+- **impeccable shape**: a short brief before building: job, proof (only typed facts), one focal moment, anti-goals (no fake projects, no invented claims).
+- **impeccable craft floor**:
+  - Display type capped at 6rem.
+  - Body measure about 38ch for the hero lede.
+  - Labels at least 12px.
+  - Browser surfaces themed: text selection, caret, scrollbar, focus ring.
+  - Eyebrows removed above section headings, because the floor bans them. One eyebrow stays in the hero, where it carries real facts (trade and town).
+  - Section numbers only where the sequence is real: the service rows (part of the brief) and the process steps.
+- **impeccable typeset**: two families, each with one job.
+  - Bodoni Moda, a true Didone with optical sizes: capitals for headlines, with one italic lowercase accent word.
+  - Manrope for everything else.
+  - `text-wrap: balance` on headings; tabular and lining numerals on the phone number, prices and the rating.
+- **impeccable layout**:
+  - Tight groups inside generous section spacing.
+  - The squint test passes: headline, then picture, then trust strip, then work.
+  - The services picture is sticky beside the rows on desktop and moves above them on phones.
+- **impeccable colorize**: color by role, not swatches.
+  - Cream paper and near-black ink, with one accent used only on the italic word, the hero rule and small marks.
+  - The accent is darkened where the second paper would drop it under 4.5:1.
+  - Pressure washing and HVAC keep their carbon night sections. On their light paper the accent word sits on a true yellow or orange highlighter stripe, so it passes AA.
+  - Builders get blueprint blue night sections.
+- **impeccable animate**: one authored moment, nothing scattered.
+  - The hero picture rises out of a roofline into its house shape (clip-path, 1.1s, exponential ease-out) while the picture settles from 1.08 scale.
+  - Everything else is state feedback.
+  - The rise is off under reduced motion.
+- **impeccable polish / audit (the detector)**: ran `impeccable detect` on built pages and fixed:
+  - labels under 12px;
+  - one 4.3:1 accent pair, darkened;
+  - light card words with no dark fallback behind them.
+
+  Kept on purpose, because the brief asks for them: the italic display accent, the hero eyebrow and the cream page. "Cramped padding" on full-width sections is a false positive: `.wrap` insets them.
+- **ui-ux-pro-max** (typography, style and landing searches):
+  - Typography and style searches: a Didone heading over a clean sans for "editorial, luxury, high contrast". I chose Bodoni Moda over the suggested Playfair (overused, softer contrast).
+  - Landing search: the portfolio-grid order (visuals first) and the trust-and-authority pattern (proof right after the hero).
+  - Pre-delivery checklist followed: SVG icons only, 44px targets, visible focus, reduced motion, 375/768/1024/1440.
+  - Its design-system pick (Liquid Glass) was rejected as off-brand for trades.
+- **design-system skill**: three token layers. Primitives come from the trade palette (`--ed-cream`, `--ed-accent`...); the semantic roles are ink, muted, line, dark and hi; the components are cards, rows and pills.
+- **ui-styling skill**: no framework in a one-file offline page. Taken: accessible states on every control, 44px hit areas, and labels visible above inputs.
+
+Honesty rules held:
+- Sample projects use place names (Maple Lane, Cedar Court, Ridge Road), are marked "Sample project", and the page says "Sample projects: names and homes are fictional."
+- The trust strip shows only ticked or typed facts.
+- Prices appear only when the owner typed them.
+- The "Sample site" pill stays in the nav.
+
+Rejected: Northpeak's crew photo in the process section (a person; our prompts say no people); its icon-heavy tiles; gradients on type; any surname as a card title.

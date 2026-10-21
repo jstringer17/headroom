@@ -14,6 +14,7 @@
 import { esc, safeImage } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
+import { editorialLook, editorialShape } from "./cine-look.js";
 
 // Simple silhouettes for the hero picture, as CSS polygon() points in percent.
 const ED_SHAPES = {
@@ -47,6 +48,12 @@ const edIcon = (inner, size = 22) =>
 
 const ED_NAMES = ["Maple Lane", "Cedar Court", "Ridge Road"];
 const edPad = (n) => String(n).padStart(2, "0");
+// Headline with its one italic accent word (cine-art copy rule).
+const edAccent = (text, accent) => {
+  const i = accent ? String(text).indexOf(accent) : -1;
+  if (i < 0) return esc(text);
+  return `${esc(text.slice(0, i))}<em>${esc(accent)}</em>${esc(text.slice(i + accent.length))}`;
+};
 
 const ED_CSS = `
 :root{--ed-serif:"Bodoni Moda","Playfair Display","Didot",Georgia,serif;--ed-sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ed-cream:#ece5dc;--ed-cream2:#e2d9cd;--ed-paper:#f5f0e8;--ed-ink:#161412;--ed-muted:#5d564d;--ed-line:rgba(22,20,18,.2);--ed-card:24px;--ed-dark:#14110f;--ed-ease:cubic-bezier(.16,1,.3,1);--ed-max:1240px;--ed-nav:64px;color-scheme:light}
@@ -318,8 +325,9 @@ export function generateEditorial(form, d, deps) {
   const svcPool = e.services && e.services.length ? e.services.filter(exists) : [...story.map((s) => s.id), ...styles.map((s) => s.id)];
   const svcIds = rows.map((_, i) => svcPool[i % svcPool.length]);
 
-  const fam = (deps.editorialShape && deps.editorialShape(d.tradeKey)) || ED_SHAPES[ED_SHAPE_FOR[d.tradeKey] || "house"];
-  const lookExtra = deps.editorialLook ? deps.editorialLook(d.themeKey, d.tradeKey) || {} : {};
+  const fam = (deps.editorialShape || editorialShape)(d.tradeKey) || ED_SHAPES[ED_SHAPE_FOR[d.tradeKey] || "house"];
+  const shapeName = /50% 0%, 100% 40%/.test(fam) ? "house" : "other";
+  const lookExtra = (deps.editorialLook || editorialLook)(d.themeKey, d.tradeKey) || {};
   const fontsHref = lookExtra.fontsHref || "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Manrope:wght@400;500;600;700&display=swap";
 
   const heroWords = story.length ? story[story.length - 1] : { headline: t.headline, accent: "" };
@@ -327,10 +335,10 @@ export function generateEditorial(form, d, deps) {
 
   // Hero
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
-  <div><p class="ed-eyebrow">${eyebrow}</p><h1>${esc(t.headline)}</h1>
+  <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${callHref}">${edIcon(ED_PHONE, 18)}<span>${callText}</span></a><a class="ed-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div></div>
-  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"')}</div>
+  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"')}</div>
 </div></section>`;
 
   // Trust strip: only facts the owner ticked or typed
@@ -346,7 +354,7 @@ export function generateEditorial(form, d, deps) {
 
   // Second beat
   const beat = `<section class="ed-beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
-  <p class="ed-big">${esc(story.length > 1 ? story[0].headline : t.headline)}</p>
+  <p class="ed-big">${story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
   <p>${esc(t.sub)}</p>
 </div></section>`;
 
@@ -365,7 +373,7 @@ export function generateEditorial(form, d, deps) {
     <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${v === "&mdash;" ? v : esc(v)}</dd></div>`).join("")}</dl></article></li>`;
   }).join("");
   const work = `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">Our work</p><h2>Recent jobs</h2></div>
+  <div class="ed-head ed-rv"><h2>The <em>work</em></h2></div>
   <ul class="ed-cards">${cards}</ul>
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
 </div></section>`;
@@ -373,7 +381,7 @@ export function generateEditorial(form, d, deps) {
   // Services: large numbered rows, the open row swaps the picture
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we do</h2></div>
+  <div class="ed-head ed-rv"><h2>What we <em>do</em></h2></div>
   <div class="ed-svc"><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div>
   <div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}</div></div>
   <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
@@ -388,7 +396,7 @@ export function generateEditorial(form, d, deps) {
     const radio = (g, label, on) => `<label class="ed-opt"><input type="radio" name="${g}" value="${esc(label)}"${on ? " checked" : ""}><span>${esc(label)}</span></label>`;
     const list = prices.sizes.map((s) => prices.options.filter((o) => prices.cells[s][o]).map((o) => `<li><span>${esc(s)}, ${esc(o)}</span><strong>${esc(prices.cells[s][o])}</strong></li>`).join("")).join("");
     est = `<section class="ed-sec" id="price"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">Estimate</p><h2>Price it in seconds</h2><p class="ed-note">Pick the size and the kind of job. These ranges come from ${name}.</p></div>
+  <div class="ed-head ed-rv"><h2>Price it in <em>seconds</em></h2><p class="ed-note">Pick the size and the kind of job. These ranges come from ${name}.</p></div>
   <div class="ed-est ed-rv">
     <div class="ed-est-ui">
       <fieldset><legend>${esc(e2.sizeLabel || "Size")}</legend><div class="ed-opts">${prices.sizes.map((s) => radio("est-size", s, s === first)).join("")}</div></fieldset>
@@ -408,7 +416,7 @@ export function generateEditorial(form, d, deps) {
     ["The work gets done", "We do the job you agreed to."],
   ];
   const process = `<section class="ed-sec" id="how"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">How it goes</p><h2>Three steps</h2></div>
+  <div class="ed-head ed-rv"><h2>How it <em>goes</em></h2></div>
   <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${i + 1}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
 </div></section>`;
   const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
@@ -417,7 +425,7 @@ export function generateEditorial(form, d, deps) {
 </div></section>` : "";
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
-  <div class="ed-rv"><p class="ed-eyebrow" style="color:var(--ed-hi,var(--ed-cream))">Contact</p><h2 style="margin-top:18px">${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
+  <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="ed-note">Call now, or send the form and we will call you back.</p>
     ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-phone">Phone number here</p>`}</div>
   <form id="ask" class="ed-form ed-rv" novalidate>

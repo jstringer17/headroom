@@ -816,3 +816,60 @@ export function blueprintSvg(trade) {
 export function blueprintArt(trade) {
   return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(blueprintSvg(trade));
 }
+
+/* ---------- Editorial look (round 3) ---------- */
+// editorialLook(themeKey, tradeKey) -> { css, fontsHref } layered on top of
+// editorial.js's base CSS. Same trade palettes as the cinematic look: cream +
+// serif trades get warm paper and an AA accent; pressure washing and HVAC keep
+// carbon night sections with a true yellow / orange; builders get blueprint blue.
+// editorialShape(tradeKey) -> clip-path for the hero picture.
+export const ED_LOOK_FONTS =
+  "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..700&family=Manrope:wght@400;500;600;700;800&display=swap";
+
+const ED_HOUSE = "polygon(0% 100%, 0% 40%, 50% 0%, 100% 40%, 100% 100%)";
+export function editorialShape(tradeKey) {
+  if (tradeKey === "fencing") return null; // the picket line in editorial.js suits it
+  if (tradeKey === "tree" || tradeKey === "landscaping") return null; // tree silhouette
+  return ED_HOUSE;
+}
+
+export function editorialLook(themeKey, tradeKey) {
+  const v = cineVars(themeKey, tradeKey);
+  const carbon = v.display === "grotesk";
+  const darker = { "#a94a0b": "#8f3d08", "#b0261f": "#9a1f19", "#855a00": "#7a5300", "#7a5710": "#6f4f0e" };
+  const p = carbon
+    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: v.ink, hi: v.accentHi, dark: v.night, mark: v.accent }
+    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: darker[v.accentText] || v.accentText, hi: v.accentHi, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
+  const css = `
+:root{--ed-cream:${p.cream};--ed-cream2:${p.cream2};--ed-paper:${p.paper};--ed-line:${p.line};--ed-accent:${p.accent};--ed-hi:${p.hi};--ed-dark:${p.dark};--ed-muted:${carbon ? v.muted : "#5a5249"}}
+::selection{background:${v.accent};color:${v.accentInk}}
+body{caret-color:var(--ed-accent);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
+.ed-nav{background:color-mix(in srgb,var(--ed-cream) 80%,transparent)}
+.ed-logo{color:var(--ed-ink)}
+.ed-eyebrow::before{background:${carbon ? "var(--ed-hi)" : "currentColor"};height:2px}
+/* Type: Didone capitals with one italic lowercase accent word; display capped at 6rem */
+.ed h1,.ed h2,.ed .ed-big{font-weight:500;letter-spacing:.002em;font-optical-sizing:auto}
+.ed-hero h1{font-size:clamp(44px,7.4vw,96px);line-height:.93}
+.ed-sec h2{font-size:clamp(38px,6.2vw,84px);line-height:.95}
+.ed-final h2{font-size:clamp(42px,6.8vw,92px)}
+.ed-beat .ed-big{font-size:clamp(40px,7.6vw,96px);text-transform:uppercase;line-height:.94;max-width:12ch}
+.ed h1 em,.ed h2 em,.ed .ed-big em{font-style:italic;font-weight:400;text-transform:none;letter-spacing:-.01em;color:var(--ed-accent);padding-right:.04em${carbon ? `;background:linear-gradient(transparent 60%,${p.mark} 60%,${p.mark} 90%,transparent 90%)` : ""}}
+.ed-dark h2 em,.ed-final h2 em,.ed-beat .ed-big em{color:var(--ed-hi);background:none}
+.ed-card h3{font-size:clamp(40px,6vw,76px);text-shadow:0 2px 30px rgba(0,0,0,.35)}
+.ed-meta dt,.ed-pill{font-size:12px}
+.ed-row-name{text-transform:uppercase;letter-spacing:.004em;font-size:clamp(28px,4.4vw,48px)}
+.ed-num{font-variant-numeric:lining-nums}
+/* One authored moment: the hero picture rises into its house shape */
+@media (prefers-reduced-motion:no-preference){
+.ed-sil[data-shape=house]{animation:ed-rise 1.1s var(--ed-ease) both}
+.ed-sil img{animation:ed-settle 1.6s var(--ed-ease) both}
+@keyframes ed-rise{from{clip-path:polygon(14% 100%,14% 58%,50% 34%,86% 58%,86% 100%)}to{clip-path:${ED_HOUSE}}}
+@keyframes ed-settle{from{transform:scale(1.08)}to{transform:none}}
+}
+.ed-sil{border-radius:0 0 24px 24px}
+.ed-sil.ph img{inset:0;height:100%;object-position:50% 0}
+.ed-final{background:var(--ed-dark)}
+`;
+  return { css, fontsHref: ED_LOOK_FONTS };
+}
