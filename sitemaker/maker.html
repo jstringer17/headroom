@@ -1439,7 +1439,7 @@ function rng(seed) {
 }
 
 // Sky, sun, far trees and ground. mood: day | gold | dusk
-function backdrop(mood = "day", ground = C.sage) {
+function backdrop(mood = "day", ground = C.sage, sunX = 1250) {
   const sky = mood === "dusk" ? [C.night, C.night2] : mood === "gold" ? ["#ead9bd", "#f7ecdb"] : [C.sky1, C.sky2];
   const sunY = mood === "gold" ? 420 : mood === "dusk" ? 520 : 250;
   const sun = mood === "dusk" ? "#e9a86a" : mood === "gold" ? C.gold : "#f1d9a6";
@@ -1831,7 +1831,7 @@ const SCENES = {
     return { art: a, mood: "day" };
   },
   towing(st, last, v) {
-    let a = backdrop("dusk", "#3d4756") + drive("#545d6b", 60, 1500, G, 800) + range(6).map((i) => rect(796, G + 10 + i * 34, 8, 18, "#e9d9a8", "none", 0)).join("");
+    let a = backdrop("dusk", "#3d4756", 330) + drive("#545d6b", 60, 1500, G, 800) + range(6).map((i) => rect(796, G + 10 + i * 34, 8, 18, "#e9d9a8", "none", 0)).join("");
     a += line(800 - 30, G, 800 - 750, H, 3, "#d9d2c0") + line(800 + 30, G, 800 + 750, H, 3, "#d9d2c0");
     const car = (x, y, s = 1, haz = false, hood = false) => path(`M${x - 150 * s} ${y} V${y - 50 * s} Q ${x - 140 * s} ${y - 70 * s} ${x - 100 * s} ${y - 74 * s} L ${x - 70 * s} ${y - 120 * s} H ${x + 70 * s} L ${x + 100 * s} ${y - 74 * s} Q ${x + 140 * s} ${y - 70 * s} ${x + 150 * s} ${y - 50 * s} V ${y} Z`, "#2a2d33", "#11141a", 3)
       + rect(x - 60 * s, y - 112 * s, 120 * s, 34 * s, "#4c5566", "none", 0)

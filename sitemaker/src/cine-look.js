@@ -174,7 +174,7 @@ function rng(seed) {
 }
 
 // Sky, sun, far trees and ground. mood: day | gold | dusk
-function backdrop(mood = "day", ground = C.sage) {
+function backdrop(mood = "day", ground = C.sage, sunX = 1250) {
   const sky = mood === "dusk" ? [C.night, C.night2] : mood === "gold" ? ["#ead9bd", "#f7ecdb"] : [C.sky1, C.sky2];
   const sunY = mood === "gold" ? 420 : mood === "dusk" ? 520 : 250;
   const sun = mood === "dusk" ? "#e9a86a" : mood === "gold" ? C.gold : "#f1d9a6";
@@ -183,7 +183,7 @@ function backdrop(mood = "day", ground = C.sage) {
   const hills = `M0 ${G - 90} C 180 ${G - 150} 330 ${G - 120} 470 ${G - 140} S 760 ${G - 190} 930 ${G - 150} S 1260 ${G - 110} 1400 ${G - 160} S 1560 ${G - 140} 1600 ${G - 130} V ${G} H 0 Z`;
   return `<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient></defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>${dots}
-${circle(1250, sunY, 92, sun, "none", 0, ' opacity=".9"')}${circle(1250, sunY, 128, "none", sun, 2, ' opacity=".5"')}
+${circle(sunX, sunY, 92, sun, "none", 0, ' opacity=".9"')}${circle(sunX, sunY, 128, "none", sun, 2, ' opacity=".5"')}
 ${path(hills, mood === "dusk" ? "#3d4a5c" : "#c9cdb5", "none", 0, ' opacity=".8"')}
 ${rect(0, G, W, H - G, ground, "none", 0)}${line(0, G, W, G, 3)}`;
 }
@@ -566,7 +566,7 @@ const SCENES = {
     return { art: a, mood: "day" };
   },
   towing(st, last, v) {
-    let a = backdrop("dusk", "#3d4756") + drive("#545d6b", 60, 1500, G, 800) + range(6).map((i) => rect(796, G + 10 + i * 34, 8, 18, "#e9d9a8", "none", 0)).join("");
+    let a = backdrop("dusk", "#3d4756", 330) + drive("#545d6b", 60, 1500, G, 800) + range(6).map((i) => rect(796, G + 10 + i * 34, 8, 18, "#e9d9a8", "none", 0)).join("");
     a += line(800 - 30, G, 800 - 750, H, 3, "#d9d2c0") + line(800 + 30, G, 800 + 750, H, 3, "#d9d2c0");
     const car = (x, y, s = 1, haz = false, hood = false) => path(`M${x - 150 * s} ${y} V${y - 50 * s} Q ${x - 140 * s} ${y - 70 * s} ${x - 100 * s} ${y - 74 * s} L ${x - 70 * s} ${y - 120 * s} H ${x + 70 * s} L ${x + 100 * s} ${y - 74 * s} Q ${x + 140 * s} ${y - 70 * s} ${x + 150 * s} ${y - 50 * s} V ${y} Z`, "#2a2d33", "#11141a", 3)
       + rect(x - 60 * s, y - 112 * s, 120 * s, 34 * s, "#4c5566", "none", 0)

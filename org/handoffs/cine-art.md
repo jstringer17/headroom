@@ -27,3 +27,10 @@ Done (pass/fail): all 16 trades in CINE_KIT with every field filled; every promp
 Depends on: nothing. Answers to: chief of staff. cine-engine depends on you.
 CEO-only questions (via chief of staff): which 3 trades get real pictures first; stills only or also Higgsfield video; ok to view motionsites.ai paid tier (default: no).
 End with a handoff of at most 10 lines: done, evidence, left, decision needed.
+
+## Result (2026-10-21, cine-art)
+- Done: sitemaker/src/cine-look.js (look, 4 themes on cream, placeholder art), sitemaker/src/cine-kit.js (CINE_KIT, CINE_ORDER, kitSlots; 19 trades incl. restoration, builder, framing), org/art/direction.md, org/art/higgsfield-kit.md (158 pictures; first 7 priority trades = 60), org/art/kit-doc.mjs.
+- Evidence: org:qa-reviewer PASS on all 7 criteria; build.mjs + test.mjs PASS; all 158 placeholders render with the label; real cinematic build checked at 1280 and 375 (story frames build step by step, no sideways scroll).
+- Merged with the engine: slot ids = bare kit ids (same as cinematic.js); renamed my cineSlots to kitSlots and .cine-reveal to .cine-rise (they clashed in the one-file build).
+- Left for others: trades.js entries for restoration, builder, framing (trades.js owner); test-cine.mjs real-build checks still skip because qa/lib.mjs never calls useCine (cine-qa/cine-engine).
+- Decision needed (CEO): which 3 trades get real pictures first (plan says roofing, fencing, pressure washing); confirm stills only.
