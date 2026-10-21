@@ -4,8 +4,9 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage } from "./qa/lib.mjs";
-import { TRADE_ORDER } from "./src/trades.js";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
+import { TRADE_ORDER, TRADES } from "./src/trades.js";
+const ALL = [...TRADE_ORDER, ...NEW_TRADES.filter((k) => !TRADE_ORDER.includes(k))]; // 19 trades
 
 const outDir = join(here, "test-out-cine");
 rmSync(outDir, { recursive: true, force: true }); mkdirSync(outDir, { recursive: true });
@@ -30,7 +31,8 @@ const open = async (html, name, { width = 1280, reduced = false, tag = "" } = {}
 };
 
 // ---- Crit 1: 16 trades build, no empty sections, no stray "$", placeholders labeled ----
-for (const key of TRADE_ORDER) {
+for (const key of ALL) {
+  if (!TRADES[key]) { rec(1, `${key}: trade exists in trades.js (17-19 are new)`, "skip", "not added yet (cine-art)"); continue; }
   const b = buildCine({ company: "Sample Co", trade: key, year: 2026 });
   if (!b.real) { rec(1, `${key}: builds cinematic, no empty sections`, "skip", "needs real cinematic build"); continue; }
   const { page, ctx } = await open(b.html, key);
@@ -44,9 +46,23 @@ for (const key of TRADE_ORDER) {
   });
   check(1, `${key}: no empty sections`, r.empty.length === 0, r.empty.join(","));
   check(1, `${key}: no "$" unless typed`, !/\$/.test(b.html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "")), "found $");
-  const ph = await page.$$eval(SEL.placeholder, (els) => els.map((e) => e.textContent + (e.getAttribute("aria-label") || "")));
-  check(1, `${key}: every placeholder shows its label`, ph.every((t) => /sample picture/i.test(t)), "unlabeled placeholder");
+  const ph = await page.$$eval(SEL.placeholder, (els) => els.map((e) => e.getAttribute("src") || e.textContent));
+  check(1, `${key}: placeholders exist and each shows its label`, ph.length > 0 && ph.every((t) => /sample picture/i.test(placeholderText(t))), `${ph.length} placeholders, one unlabeled`);
   await ctx.close();
+  if (key === ALL[0] || ["roofing", "fencing", "pressure", "hvac", ...NEW_TRADES].includes(key)) {
+    const [sz, op] = await firstCell(key);
+    const f = buildCine({ company: "T", trade: key, year: 2026, cine: { prices: { [sz]: { [op]: { low: "2750", high: "4550" } } } } });
+    const { page: p2, ctx: c2 } = await open(f.html, key, { tag: "-priced" });
+    const unit = await p2.$eval(SEL.unit, (e) => e.textContent.trim()).catch(() => "");
+    check(4, `${key}: estimator unit is "${unitFor(key)}" by default`, unit === unitFor(key), `got "${unit}"`);
+    await c2.close();
+    const u = buildCine({ company: "T", trade: key, year: 2026, cine: { unit: "per hour", prices: { [sz]: { [op]: { low: "2750", high: "4550" } } } } });
+    const { page: p3, ctx: c3 } = await open(u.html, key, { tag: "-unit" });
+    const unit2 = await p3.$eval(SEL.unit, (e) => e.textContent.trim()).catch(() => "");
+    check(4, `${key}: chosen unit "per hour" overrides default`, unit2 === "per hour", `got "${unit2}"`);
+    await c3.close();
+  }
+  continue;
 }
 // Contract-level checks on the hand-made sample (always run, proves the harness itself works).
 {
@@ -119,12 +135,12 @@ await real(4, "estimator hidden when prices blank", async () => {
   const vis = await page.$$eval(SEL.estimator, (els) => els.filter((e) => e.offsetHeight > 0).length);
   check(4, "estimator hidden when prices blank", vis === 0, `${vis} visible`);
   await ctx.close();
-  const filled = buildCine({ company: "T", trade: "fencing", year: 2026, cine: { prices: { __first: { __first: { low: "2750", high: "4550" } } } } });
+  const [sz, op] = await firstCell("fencing");
+  const filled = buildCine({ company: "T", trade: "fencing", year: 2026, cine: { prices: { [sz]: { [op]: { low: "2750", high: "4550" } } } } });
   const text = filled.html.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "");
   const dollars = [...text.matchAll(/\$[\d,]+/g)].map((m) => m[0]);
   check(4, "estimator shows only typed numbers", dollars.every((d) => ["$2,750", "$4,550", "$2750", "$4550"].includes(d)), dollars.join(","));
 });
-rec(4, "price table keys use real kit sizes/options", "skip", "needs cine-kit.js (cine-art) to pick keys; run capture.mjs to exercise");
 
 // ---- Crit 5: CLS ~0 while scrolling, only transform/opacity animate ----
 for (const { name, html } of targets.slice(0, 1)) {
