@@ -40,6 +40,10 @@ export const unitFor = (t) => UNIT_BY_TRADE[t] || "per job";
 export const placeholderText = (src) => { try { return decodeURIComponent(src.replace(/^data:image\/svg\+xml[^,]*,/, "")); } catch { return src; } };
 
 // First (size, option) of the trade's kit, for filling one price cell. Falls back to placeholders if the kit is missing.
+// Every size x option of the kit as a typed price table (test data, clearly not real prices).
+export async function fullTable(trade) {
+  try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; const t = {}; k.sizes.forEach((sz, i) => { t[sz] = {}; k.options.forEach((op, j) => { t[sz][op] = { low: String(1000 + i * 500 + j * 250), high: String(1800 + i * 500 + j * 250) }; }); }); return t; } catch { return {}; }
+}
 export async function firstCell(trade) {
   try { const k = (await import("./../src/cine-kit.js")).CINE_KIT[trade].estimator; return [k.sizes[0], k.options[0]]; } catch { return ["__first", "__first"]; }
 }
