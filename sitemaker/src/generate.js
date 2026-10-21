@@ -10,10 +10,18 @@
 //   emergency (default false), freeEstimates (default true, false for
 //   towing, junk removal and HVAC),
 //   insured (default false), theme (default: trade default), year,
-//   heroImage (optional)
+//   heroImage (optional),
+//   cinematic (default false: the scroll-story site, see cinematic.js), cine
 // }
 import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
+import { generateCinematic } from "./cinematic.js";
+
+// Cinematic mode needs the art files' CINE_KIT, cineLook and placeholderArt.
+// Until src/cine-kit.js and src/cine-look.js are merged, nothing is set and
+// form.cinematic falls back to the classic site.
+let CINE = null;
+export function useCine(deps) { CINE = deps; }
 
 export function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -104,6 +112,7 @@ function h1Sizes(text, layout) {
 
 export function generateSite(form) {
   const d = normalize(form);
+  if (form && form.cinematic && CINE && CINE.CINE_KIT[d.tradeKey]) return generateCinematic(form, d, CINE);
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
