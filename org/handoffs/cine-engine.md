@@ -27,3 +27,10 @@ Done (pass/fail): plan.md Step 1b criteria 1-5 pass on your side (cine-qa's test
 Depends on: cine-art (kit + look files, contract owner). Answers to: chief of staff; cine-qa reports bugs to you.
 CEO-only questions: none for you; route any through the chief of staff.
 End with a handoff of at most 10 lines: done, evidence, left, decision needed.
+
+## Status (cine-engine, 2026-10-21)
+Done: sitemaker/src/cinematic.js (story, tabs, slider, estimator, reduced motion, slots); generate.js wired (`form.cinematic`, `useCine`); maker form (switch, picture slot per kit slot, price table); build.mjs adds cine files when present. Classic output identical for 16 trades; build + test.mjs pass. Checked with a stub kit in scratch at 375 and 1280: no sideways scroll, tabs/slider/estimator work, reduced motion stacks the frames.
+Left at merge (cine-art not delivered; files absent here): add src/cine-kit.js and src/cine-look.js, rebuild (build.mjs then calls useCine itself), run test-cine.mjs. For ESM tests add `import * as K` + `useCine` call, or import both in generate.js.
+Assumptions to confirm with cine-art: slotId = story step id, style id, "before", "after"; estimator may add optional `sizeLabel`/`optionLabel`; cineLook.css loads after engine CSS so it can override tokens.
+Update: estimator unit is a per-trade setting (form.cine.unit; defaults roofing sq ft, fencing linear foot, pressure sq ft, HVAC job, restoration job, builder and framing sq ft; form select switches job / sq ft / linear foot / hour). New trade keys assumed: restoration, homebuilder, framing. plan.md and test-cine.mjs not mine: chief of staff and cine-qa to update.
+Decision needed: none.

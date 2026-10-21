@@ -3,3 +3,5 @@ data/*.json
 !data/.gitkeep
 data/*.log
 sitemaker/test-out/
+sitemaker/qa/test-out-cine/
+sitemaker/qa/out/

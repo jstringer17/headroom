@@ -73,6 +73,14 @@ details.lead[open]{display:grid;gap:10px}
 .hero-pick img{width:120px;height:68px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
 .note{font-weight:600;color:var(--ink)}
 #higgs-prompt{min-height:120px}
+.slot{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px}
+.slot-head{font-weight:700;font-size:14px}
+.slot .hero-pick img{width:96px;height:56px}
+.prices{display:grid;gap:12px}
+.price-row{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.price-row>b{font-size:14px}
+.price-cell{display:grid;grid-template-columns:minmax(0,1fr) 84px 84px;gap:6px;align-items:center;font-size:14px}
+.price-cell input{min-height:40px;padding:6px 8px;font-size:15px}
 .code-box textarea{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;min-height:120px}
 @media (min-width:960px){
   .app{grid-template-columns:minmax(340px,420px) minmax(0,1fr);align-items:start}
@@ -119,6 +127,11 @@ details.lead[open]{display:grid;gap:10px}
     </div>
     <p class="hint">Only type real numbers from their Google page. Leave blank if you do not know.</p>
 
+    <fieldset class="group" id="cine-switch" hidden>
+      <legend>Style of site</legend>
+      <label class="check" for="cinematic"><input type="checkbox" id="cinematic"> Cinematic: scroll story with style tabs, before and after, and a price estimator</label>
+    </fieldset>
+
     <fieldset class="group">
       <legend>They offer</legend>
       <div class="checks">
@@ -145,6 +158,19 @@ details.lead[open]{display:grid;gap:10px}
       </div>
       <p class="status" id="hero-status" aria-live="polite"></p>
     </fieldset>
+
+    <div class="group" id="cine-fields" hidden>
+      <fieldset class="group">
+        <legend>Cinematic pictures</legend>
+        <p class="hint">One picture per spot. Empty spots show a labeled sample picture. Never use fake work photos.</p>
+        <div id="cine-slots" class="slots"></div>
+      </fieldset>
+      <fieldset class="group">
+        <legend>Price ranges for the estimator</legend>
+        <p class="hint">Type the owner's real prices. Leave a box empty and that choice is not offered. All empty hides the estimator.</p>
+        <div id="cine-prices" class="prices"></div>
+      </fieldset>
+    </div>
 
     <fieldset class="group">
       <legend>Picture idea for Higgsfield</legend>

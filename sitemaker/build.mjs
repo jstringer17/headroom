@@ -2,7 +2,7 @@
 // source the tests use: src/trades.js, src/themes.js, src/generate.js and
 // the page shell in src/maker-ui.html + src/maker-ui.js.
 //   node sitemaker/build.mjs
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -11,7 +11,9 @@ const read = (p) => readFileSync(join(here, p), "utf8");
 // Turn the ES modules into plain script: drop import lines and `export`.
 const plain = (src) => src.replace(/^import .*$/gm, "").replace(/^export /gm, "");
 
-const generator = ["src/trades.js", "src/themes.js", "src/generate.js"].map((p) => plain(read(p))).join("\n");
+// Cinematic mode: the art files are optional until they are merged.
+const cine = ["src/cine-kit.js", "src/cine-look.js"].filter((p) => existsSync(join(here, p)));
+const generator = ["src/trades.js", "src/themes.js", ...cine, "src/cinematic.js", "src/generate.js"].map((p) => plain(read(p))).join("\n") + (cine.length === 2 ? "\nuseCine({ CINE_KIT, cineLook, placeholderArt });\n" : "");
 // Keep "</script" sequences from closing the inline script early.
 const safe = (s) => s.replace(/<\/script/gi, "<\\/script");
 const out = read("src/maker-ui.html")
