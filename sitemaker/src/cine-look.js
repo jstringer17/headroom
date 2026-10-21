@@ -417,9 +417,6 @@ const SCENES = {
       a += range(46).map(() => { const t = r(), y = B + 10 + t * (H - B - 10), rad = 4 + t * 22 * r(); return circle(760 + (r() - 0.5) * (14 + t * 60), y, rad, "#ffffff", "none", 0, ` opacity="${(0.35 + r() * 0.5).toFixed(2)}"`); }).join("");
       a += range(14).map((i) => line(722 + (i % 7) * 12, B + 40 + Math.floor(i / 7) * 120, 726 + (i % 7) * 12, B + 62 + Math.floor(i / 7) * 120, 3, "#dbe6ee", ` class="fall" style="animation-delay:${(i * 0.11).toFixed(2)}s"`)).join("");
     }
-    const blades = (x0, dir) => range(14).map((i) => path(`M${x0 + i * 16 * dir} ${H} q ${dir * 6} -${50 + (i % 4) * 26} ${dir * (18 + (i % 3) * 8)} -${80 + (i % 5) * 22}`, "none", "#0f1410", 7)).join("");
-    a += `<g class="sway">${blades(0, 1)}</g><g class="sway" style="animation-delay:-2s">${blades(W, -1)}</g>`;
-    if (story && st === last) a += range(5).map((i) => path(`M${520 + i * 140} ${560 + (i % 2) * 90} l 8 18 l 18 8 l -18 8 l -8 18 l -8 -18 l -18 -8 l 18 -8 Z`, "#ffd23f", "none", 0, ' class="glow"')).join("");
     return { art: a, mood: "day", gy: B };
   },
   hvac(st, last, v) {
@@ -758,7 +755,7 @@ export function placeholderSvg(trade, slotId, labelText) {
       mood = isStory ? scene(last, last, -1).mood || "day" : out.mood || "day";
       const exterior = !out.raw && !INTERIOR.has(trade);
       const isStyle = !!(k && k.styles.some((s) => s.id === slotId));
-      const art = isStyle && exterior ? `<g transform="translate(220 0)">${out.art}</g>` : out.art;
+      const art = isStyle && exterior && trade !== "pressure" ? `<g transform="translate(220 0)">${out.art}</g>` : out.art;
       body = (exterior ? backdrop(mood, out.ground, isStyle ? 1060 : 1250, out.gy || G) : "") + art;
     } else {
       body = backdrop("gold") + house({});
@@ -828,18 +825,19 @@ export const ED_LOOK_FONTS =
 
 const ED_HOUSE = "polygon(0% 100%, 0% 40%, 50% 0%, 100% 40%, 100% 100%)";
 export function editorialShape(tradeKey) {
-  if (tradeKey === "fencing") return null; // the picket line in editorial.js suits it
-  if (tradeKey === "tree" || tradeKey === "landscaping") return null; // tree silhouette
-  return ED_HOUSE;
+  return ED_HOUSE; // one shape for every trade: it keeps the picture's label readable
 }
 
 export function editorialLook(themeKey, tradeKey) {
   const v = cineVars(themeKey, tradeKey);
   const carbon = v.display === "grotesk";
-  const darker = { "#a94a0b": "#8f3d08", "#b0261f": "#9a1f19", "#855a00": "#7a5300", "#7a5710": "#6f4f0e" };
+  // One accent per trade for display words, icons and rules: at least 3:1 on the paper and on the night.
+  const ONE = { carbonYellow: "#a37800", carbonOrange: "#c25a12", woodBlueprint: "#4572c4", creamSerif: "#b5551a" };
+  const BY_THEME = { navy: "#b5551a", forest: "#8f6b12", steel: "#c0392b", sky: "#3f6fb5" };
+  const one = ONE[CINE_TRADE_LOOK[tradeKey]] || BY_THEME[themeKey] || "#b5551a";
   const p = carbon
-    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: v.ink, hi: v.accentHi, dark: v.night, mark: v.accent }
-    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: darker[v.accentText] || v.accentText, hi: v.accentHi, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
+    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: one, dark: v.night, mark: null }
+    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: one, hi: one, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
   const css = `
 :root{--ed-sky:${carbon ? "#121417" : "#dccdb5"};--ed-cream:${p.cream};--ed-cream2:${p.cream2};--ed-paper:${p.paper};--ed-line:${p.line};--ed-accent:${p.accent};--ed-hi:${p.hi};--ed-dark:${p.dark};--ed-muted:${carbon ? v.muted : "#5a5249"}}
 ::selection{background:${v.accent};color:${v.accentInk}}
@@ -847,14 +845,14 @@ body{caret-color:var(--ed-accent);-webkit-font-smoothing:antialiased;text-render
 html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-nav{background:color-mix(in srgb,var(--ed-cream) 80%,transparent)}
 .ed-logo{color:var(--ed-ink)}
-.ed-eyebrow::before{background:${carbon ? "var(--ed-hi)" : "currentColor"};height:2px}
+.ed-eyebrow::before{height:2px}
 /* Type: Didone capitals with one italic lowercase accent word; display capped at 6rem */
 .ed h1,.ed h2,.ed .ed-big{font-weight:500;letter-spacing:.002em;font-optical-sizing:auto}
 .ed-hero h1{font-size:clamp(44px,7.4vw,96px);line-height:.93}
 .ed-sec h2{font-size:clamp(38px,6.2vw,84px);line-height:.95}
 .ed-final h2{font-size:clamp(42px,6.8vw,92px)}
 .ed-beat .ed-big{font-size:clamp(40px,7.6vw,96px);text-transform:uppercase;line-height:.94;max-width:12ch}
-.ed h1 em,.ed h2 em,.ed .ed-big em{font-style:italic;font-weight:400;text-transform:none;letter-spacing:-.01em;color:var(--ed-accent);padding-right:.04em${carbon ? `;background:linear-gradient(transparent 60%,${p.mark} 60%,${p.mark} 90%,transparent 90%)` : ""}}
+.ed h1 em,.ed h2 em,.ed .ed-big em{font-style:italic;font-weight:400;text-transform:none;letter-spacing:-.01em;color:var(--ed-accent);padding-right:.04em}
 .ed-dark h2 em,.ed-final h2 em,.ed-beat .ed-big em{color:var(--ed-hi);background:none}
 .ed-card h3{font-size:clamp(40px,6vw,76px);text-shadow:0 2px 30px rgba(0,0,0,.35)}
 .ed-meta dt,.ed-pill{font-size:12px}
@@ -876,7 +874,15 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-logo{display:inline-flex;align-items:center;gap:10px;font-size:23px;color:var(--ed-ink)}
 .ed-mark{flex:none;color:var(--ed-ink)}
 .ed-btn.ghost{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ed-ink) 35%,transparent)}
-.ed-eyebrow{font-size:12px;letter-spacing:.22em}
+.ed-eyebrow{font-size:12px;letter-spacing:.22em;color:var(--ed-muted)!important}
+.ed-dark .ed-eyebrow,.ed-final .ed-eyebrow{color:rgba(236,229,220,.72)!important}
+.ed-eyebrow::before{background:var(--ed-accent)!important}
+.ed-steps b{color:var(--ed-muted)!important}
+/* rating: one compact row, no empty half */
+#reviews{padding-block:0 72px!important}
+.ed-rev{grid-template-columns:auto minmax(0,1fr);column-gap:40px;align-items:end;border-top:1px solid var(--ed-line);padding-top:40px}
+.ed-rev .ed-eyebrow{grid-column:1/-1}
+.ed-rev b{grid-row:span 2}
 .ed-head{gap:22px}
 /* hero */
 .ed-hero h1{font-size:clamp(46px,8.4vw,108px);line-height:.9;letter-spacing:-.005em}

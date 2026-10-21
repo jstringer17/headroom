@@ -353,7 +353,7 @@ export function generateEditorial(form, d, deps) {
   if (d.freeEstimates) facts.push(["estimate", "Free estimates", "We look at the job and tell you the price first."]);
   if (d.emergency) facts.push(["hours", "Open 24/7", "Call any hour for emergencies."]);
   if (d.years) facts.push(["years", `${d.years} year${d.years === 1 ? "" : "s"}`, "In business."]);
-  if (d.rating) facts.push(["rating", `${d.rating.toFixed(1)} on Google`, d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}.` : "Google rating."]);
+  // The rating has its own block below, so it is not repeated here.
   if (area) facts.push(["area", "Service area", `${area} and nearby towns.`]);
   const cells = facts.slice(0, 4);
   const trust = cells.length ? `<section class="ed-trust" aria-label="At a glance"><div class="ed-wrap"><ul data-ed="trust" style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
