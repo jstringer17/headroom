@@ -52,7 +52,7 @@ for (const trade of TRADE_ORDER) {
         key("Home");
         for (let n = 0; n < 40 && +sl.getAttribute("aria-valuenow") < v; n++) key(v === 100 ? "End" : "ArrowRight");
         const hb = sl.querySelector(".ba-knob").getBoundingClientRect(), line = sl.getBoundingClientRect();
-        for (const t of ba.querySelectorAll(".ba-tag")) {
+        for (const t of ba.querySelectorAll(".ba-cap span")) {
           if (getComputedStyle(t).visibility === "hidden") continue;
           const b = t.getBoundingClientRect();
           if (b.right > line.left - 4 && b.left < line.right + 4) out.push(`${v}: ${t.textContent} touches the handle`);
