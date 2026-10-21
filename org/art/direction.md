@@ -133,3 +133,15 @@ Honesty rules held:
 - The "Sample site" pill stays in the nav.
 
 Rejected: Northpeak's crew photo in the process section (a person; our prompts say no people); its icon-heavy tiles; gradients on type; any surname as a card title.
+
+### Round 3b: tailored closer to the reference (CEO publish ask)
+Compared side by side at 1280 with northpeak-s0/s2/s4/s7. Changes, in our own design and words:
+- **Hero:** two columns. Left: eyebrow with rule, Didone caps at weight 600 up to 108px, a short paragraph, a dark estimate pill and an outlined phone pill. Right: a tall house silhouette with no rounding. The placeholder sits under a warm "sky" so the roof shape reads.
+- **Second beat:** full-bleed picture with the place line ("Tulsa / Roofing") as giant cream caps bottom-left and one small note bottom-right. Fixed a bug where the picture painted over the line.
+- **Trust strip:** one outlined box with four equal cells and thin dividers, the icon above a bold title, and one grey line.
+- **Work:** full-width wide cards, the giant place name across the picture, a counter pill top-left, "Sample project" top-right, and a 4-column meta row under thin rules.
+- **Services:** dark section with mixed-case serif rows up to 60px, dimmed until open, and the picture on the right swapping.
+- **Process:** a picture beside an eyebrow and a serif headline, then four short steps in two columns.
+- **Nav:** our own drawn roofline mark before the serif name, the "Sample site" pill, links centered, phone and dark pill.
+- **Eyebrows:** short spaced-caps eyebrows are back over the work, services and process heads, because the CEO's brief asks for them (the brief wins over the craft-floor default).
+Not copied: their words, logo, mark, photos and code.

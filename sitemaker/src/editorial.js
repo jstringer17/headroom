@@ -337,7 +337,7 @@ export function generateEditorial(form, d, deps) {
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${callHref}">${edIcon(ED_PHONE, 18)}<span>${callText}</span></a><a class="ed-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div></div>
+    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a><a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${d.phone ? phoneShow : "Call us"}</a></div></div>
   <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"')}</div>
 </div></section>`;
 
@@ -354,8 +354,8 @@ export function generateEditorial(form, d, deps) {
 
   // Second beat
   const beat = `<section class="ed-beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
-  <p class="ed-big">${story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
-  <p>${esc(t.sub)}</p>
+  <p class="ed-big">${d.city ? `${esc(d.city.split(",")[0].trim())}<br>${esc(tradeName)}` : story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
+  <p class="ed-beat-note">${esc(t.sub)} ${name} works across ${areaPhrase}.</p>
 </div></section>`;
 
   // Work: three sample project cards
@@ -373,7 +373,7 @@ export function generateEditorial(form, d, deps) {
     <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${v === "&mdash;" ? v : esc(v)}</dd></div>`).join("")}</dl></article></li>`;
   }).join("");
   const work = `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><h2>The <em>work</em></h2></div>
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Sample projects</p><h2>The <em>work</em></h2></div>
   <ul class="ed-cards">${cards}</ul>
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
 </div></section>`;
@@ -381,7 +381,7 @@ export function generateEditorial(form, d, deps) {
   // Services: large numbered rows, the open row swaps the picture
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><h2>What we <em>do</em></h2></div>
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we <em>do</em></h2></div>
   <div class="ed-svc"><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div>
   <div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}</div></div>
   <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
@@ -412,12 +412,14 @@ export function generateEditorial(form, d, deps) {
   // Process, reviews note, contact
   const steps = [
     ["Call or send a request", d.phone ? `Call ${phoneShow}, or fill out the form on this page.` : "Call us, or fill out the form on this page."],
-    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
-    ["The work gets done", "We do the job you agreed to."],
+    ["We come and look", "We see the job in person, measure and listen."],
+    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "You get the price before any work starts."],
+    ["The work, then the clean-up", "We do the job you agreed to and leave the place tidy."],
   ];
-  const process = `<section class="ed-sec" id="how"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><h2>How it <em>goes</em></h2></div>
-  <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${i + 1}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
+  const process = `<section class="ed-sec" id="how"><div class="ed-wrap ed-how">
+  <div class="ed-how-pic ed-rv">${pic(story.length ? story[0].id : pool[0])}</div>
+  <div><div class="ed-head ed-rv"><p class="ed-eyebrow">How it goes</p><h2>Four steps, <em>plainly</em></h2></div>
+  <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${edPad(i + 1)}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol></div>
 </div></section>`;
   const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
   <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>
@@ -460,7 +462,7 @@ ${lookExtra.css || ""}
 </head>
 <body class="ed">
 <header class="ed-nav" data-ed="nav"><div class="ed-wrap">
-  <a class="ed-logo" href="#top">${name}</a><span class="ed-pill">Sample site</span>
+  <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg>${name}</a><span class="ed-pill">Sample site</span>
   <nav class="ed-links" aria-label="Sections">${links}</nav>
   <a class="ed-tel" href="${callHref}">${d.phone ? phoneShow : "Call us"}</a><a class="ed-btn sm" href="#contact">${askLabel}</a>
   <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(ED_PHONE, 20)}</a>
