@@ -3,7 +3,7 @@
 import { mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine } from "./lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell } from "./lib.mjs";
 
 const trades = process.argv.slice(2).length ? process.argv.slice(2) : ["fencing", "roofing", "pressure"];
 const out = join(here, "out");
@@ -14,8 +14,9 @@ const sheet = {}; // trade -> list of {w, kind, file, label}
 let realBuild = false;
 
 for (const trade of trades) {
+  const [sz, op] = await firstCell(trade);
   const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026,
-    cine: { prices: { [process.env.CINE_SIZE || "__first"]: { [process.env.CINE_OPT || "__first"]: { low: "2750", high: "4550" } } } } };
+    cine: { prices: { [sz]: { [op]: { low: "2750", high: "4550" } } } } };
   const b = buildCine(form); realBuild ||= b.real;
   writeFileSync(join(out, `${trade}.html`), b.html);
   sheet[trade] = [];

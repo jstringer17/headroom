@@ -3,7 +3,10 @@ import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { generateSite } from "../src/generate.js";
+import { generateSite, useCine } from "../src/generate.js";
+import { CINE_KIT } from "../src/cine-kit.js";
+import { cineLook, placeholderArt } from "../src/cine-look.js";
+useCine({ CINE_KIT, cineLook, placeholderArt }); // same wiring build.mjs appends to maker.html
 
 export const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
