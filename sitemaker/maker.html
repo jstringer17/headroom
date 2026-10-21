@@ -2287,6 +2287,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
 .btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}
 .btn-glass{color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ask-link{color:#fff;font-weight:600;font-size:15px;text-underline-offset:5px;padding:12px 4px}
+.top-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
 .btn-sm{min-height:40px;padding:0 18px;font-size:15px}
 /* header */
 .top{position:sticky;top:0;z-index:40;background:var(--dark);color:#fff;height:var(--hh)}
@@ -2333,7 +2335,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-no-js .tabs{display:none}
 .panel{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:4/5;background:var(--dark);color:#fff}
 .panel[hidden]{display:none}
-.panel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.panel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 4%}
 .panel .glass{position:absolute;left:14px;right:14px;bottom:14px;padding:20px;border-radius:14px;background:var(--card);-webkit-backdrop-filter:blur(14px) saturate(140%);backdrop-filter:blur(14px) saturate(140%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28);display:grid;gap:10px;justify-items:start}
 .glass h3{font:500 28px/1.1 var(--serif)}
 .glass p{color:rgba(255,255,255,.92);font-size:16px;line-height:1.45;max-width:40ch}
@@ -2345,11 +2347,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 /* before / after */
 .dark-sec{background:var(--dark);color:#fff}
 .dark-sec .kicker,.dark-sec .lede{color:rgba(255,255,255,.7)}
-.ba{scroll-margin-top:96px;position:relative;border-radius:18px;overflow:hidden;aspect-ratio:4/3;background:var(--dark2);touch-action:pan-y;user-select:none;-webkit-user-select:none;--pos:50}
-.ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;-webkit-user-drag:none}
+.ba,.ba-handle{scroll-margin-top:240px}
+.ba{position:relative;border-radius:18px;overflow:hidden;aspect-ratio:4/3;background:var(--dark2);touch-action:pan-y;user-select:none;-webkit-user-select:none;--pos:50}
+.ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 4%;pointer-events:none;-webkit-user-drag:none}
 .ba .before{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
-.ba-tag{position:absolute;top:14px;z-index:2;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.55);color:#fff;font:600 13px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;pointer-events:none}
-.ba-tag.l{left:14px}.ba-tag.r{right:14px}
+.ba-cap{display:flex;justify-content:space-between;margin-top:12px;font:600 13px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .ba-handle{position:absolute;top:0;bottom:0;left:calc(var(--pos) * 1%);width:44px;margin-left:-22px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
 .ba-handle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
 .ba-knob{position:relative;width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
@@ -2437,7 +2439,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
   .svcs{grid-template-columns:1fr 1fr}
   .panel{aspect-ratio:auto;height:clamp(380px,calc(100vh - 340px),620px)}
   .panel .glass{left:28px;top:28px;bottom:auto;right:auto;width:min(420px,calc(100% - 56px));padding:26px}
-  .ba{aspect-ratio:16/9}
+  .ba{aspect-ratio:auto;height:clamp(300px,calc(100vh - 380px),600px)}
   .est{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
   .tools{grid-template-columns:1fr 1fr;gap:56px;align-items:center}
   .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:24px}
@@ -2447,7 +2449,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
 }
 @media (min-width:1024px){
   body{padding-bottom:0}
-  .mobile-call{display:none}
+  .mobile-call,.top-call{display:none}
   .nav{display:flex}
   .top .btn{display:inline-flex}
   .line .h{max-width:16ch}
@@ -2487,7 +2489,7 @@ if(story&&!reduce){
       frames[i].style.opacity=i===0?1:clamp((pos-(i-0.62))/0.24,0,1);
       frames[i].style.visibility=i<cover?"hidden":"visible";
       imgs[i].style.transform=zoom;
-      var d=Math.abs(pos-i),o=clamp((0.5-d)/0.14,0,1);
+      var d=Math.abs(pos-i),o=clamp((0.5-d)/0.05,0,1);
       lines[i].style.opacity=o;
       lines[i].style.transform="translateY("+((pos-i)*-36).toFixed(1)+"px)";
       lines[i].style.visibility=o<0.02?"hidden":"visible";
@@ -2534,8 +2536,7 @@ if(tabs.length){
 var ba=document.getElementById("ba");
 if(ba){
   var h=ba.querySelector("[role=slider]");
-  var tl=ba.querySelector(".ba-tag.l"),tr=ba.querySelector(".ba-tag.r");
-  var set=function(v){v=clamp(Math.round(v),0,100);var w=ba.offsetWidth,x=v/100*w;tl.style.visibility=x<tl.offsetWidth+52?"hidden":"visible";tr.style.visibility=w-x<tr.offsetWidth+52?"hidden":"visible";ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
+    var set=function(v){v=clamp(Math.round(v),0,100);ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);h.setAttribute("aria-valuetext",v+" percent")};
   var fromX=function(x){var r=ba.getBoundingClientRect();set((x-r.left)/r.width*100)};
   var drag=false;
   ba.addEventListener("pointerdown",function(e){if(e.pointerType==="mouse"&&e.button!==0)return;drag=true;try{ba.setPointerCapture(e.pointerId)}catch(_){}fromX(e.clientX);h.focus({preventScroll:true})});
@@ -2644,11 +2645,11 @@ function generateCinematic(form, d, deps) {
   // 1. Scroll story
   const steps = story.map((s, i) => {
     const tag = i === 0 ? "h1" : "p";
-    return `<div class="step" data-step="${i}"><div class="frame">${pic(s.id, i === 0 ? 'fetchpriority="high"' : 'loading="lazy"')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
+    return `<div class="step" data-step="${i}"><div class="frame">${pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}
-    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="btn btn-glass" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div>
+    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div>
     <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${story.length}</span>
   </div>
 </section>`;
@@ -2657,18 +2658,18 @@ function generateCinematic(form, d, deps) {
   const stylesSec = styles.length ? `<section class="sec" id="styles"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Pick your <em>style</em>.</h2></div>
   <div class="tabs" role="tablist" aria-label="Styles">${styles.map((s, i) => `<button class="tab" role="tab" type="button" id="tab-${i}" aria-controls="panel-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(s.name)}</button>`).join("")}</div>
-  ${styles.map((s, i) => `<div class="panel rv" role="tabpanel" id="panel-${i}" aria-labelledby="tab-${i}"${i ? " hidden" : ""}>${pic(s.id, 'loading="lazy"')}<div class="glass"><h3>${esc(s.name)}</h3><p>${esc(s.note)}</p><a class="btn btn-accent btn-sm" href="#contact">Ask about this style</a></div></div>`).join("")}
+  ${styles.map((s, i) => `<div class="panel rv" role="tabpanel" id="panel-${i}" aria-labelledby="tab-${i}"${i ? " hidden" : ""}>${pic(s.id, '')}<div class="glass"><h3>${esc(s.name)}</h3><p>${esc(s.note)}</p><a class="btn btn-accent btn-sm" href="#contact">Ask about this style</a></div></div>`).join("")}
 </div></section>` : "";
 
   // 3. Drag the line
   const baSec = ba ? `<section class="sec dark-sec" id="before-after"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(baTags(d.tradeKey)[0])} to ${esc(baTags(d.tradeKey)[1]).toLowerCase()}</span><h2>${esc(ba.title || "Drag the line.")}</h2><p class="lede">${baTags(d.tradeKey)[2]}.</p></div>
   <div class="ba rv" id="ba">
-    <img class="after" src="${esc(slotSrc("after", slotLabel("after")))}" alt="${esc(baTags(d.tradeKey)[1])}" loading="lazy">
-    <img class="before" src="${esc(slotSrc("before", slotLabel("before")))}" alt="${esc(baTags(d.tradeKey)[0])}" loading="lazy">
-    <span class="ba-tag l">${esc(baTags(d.tradeKey)[0])}</span><span class="ba-tag r">${esc(baTags(d.tradeKey)[1])}</span>
-    <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(baTags(d.tradeKey)[0])} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div>
+    <img class="after" src="${esc(slotSrc("after", slotLabel("after")))}" alt="${esc(baTags(d.tradeKey)[1])}">
+    <img class="before" src="${esc(slotSrc("before", slotLabel("before")))}" alt="${esc(baTags(d.tradeKey)[0])}">
+        <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(baTags(d.tradeKey)[0])} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div>
   </div>
+  <p class="ba-cap" aria-hidden="true"><span>${esc(baTags(d.tradeKey)[0])}</span><span>${esc(baTags(d.tradeKey)[1])}</span></p>
 </div></section>` : "";
 
   // 4. Price estimator: typed ranges only, hidden when there are none
@@ -2773,6 +2774,7 @@ ${look && look.css ? look.css : ""}
   <a class="brand" href="#top">${name}</a>
   <nav class="nav" aria-label="Sections">${nav}</nav>
   ${callBtn("btn btn-accent btn-sm")}
+  <a class="top-call" href="${callHref}" aria-label="${callText}">${svgIcon(CINE_PHONE, 22)}</a>
 </div></header>
 <main id="top">
 ${storySec}
