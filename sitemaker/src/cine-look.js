@@ -681,13 +681,19 @@ function hvacUnit(old, wide) {
 const PAIRS = {
   hvac: (after) => hvacUnit(!after, false),
   pressure(after) {
-    let a = rect(0, 0, W, H, C.sage, "none", 0) + blotches("lawn", 40, [0, 0, W, H], C.sageD, 0.5);
-    a += rect(470, -10, 660, H + 20, after ? C.stone : "#4a4439");
-    a += range(4).map((i) => line(470, 225 * (i + 1) - 20, 1130, 225 * (i + 1) - 20, 3, after ? "#a9a59c" : "#4b473f")).join("") + line(800, 0, 800, H, 3, after ? "#a9a59c" : "#4b473f");
+    // Straight-down view, concrete edge to edge: slabs with saw-cut joints.
+    let a = rect(0, 0, W, H, after ? C.stone : "#4a4439", "none", 0);
+    const joints = after ? "#a9a59c" : "#2b271f";
+    a += range(3).map((i) => line(0, 225 * (i + 1), W, 225 * (i + 1), 4, joints)).join("") + range(3).map((i) => line(400 * (i + 1), 0, 400 * (i + 1), H, 4, joints)).join("");
     if (!after) {
-      a += blotches("pw-grime", 18, [480, 0, 640, H], "#3f3b33", 0.45) + blotches("pw-moss", 12, [470, 0, 60, H], "#4f6a3f", 0.6) + blotches("pw-moss2", 12, [1070, 0, 60, H], "#4f6a3f", 0.6);
-      a += path(`M600 0 C 590 300 640 600 620 900 M980 0 C 990 300 950 600 970 900`, "none", "#2f2c26", 26, ' opacity=".35"');
-      a += `<ellipse cx="760" cy="520" rx="70" ry="44" fill="#26241f" opacity=".6"/>`;
+      a += blotches("pw-grime", 34, [0, 0, W, H], "#2a261f", 0.5) + blotches("pw-oil", 3, [500, 300, 600, 300], "#15130f", 0.7);
+      // moss and mildew along every joint
+      const r = rng("pw-joint");
+      a += range(70).map(() => { const v = r() < 0.5, k = 1 + Math.floor(r() * 3); const x = v ? 400 * k + (r() - 0.5) * 16 : r() * W, y = v ? r() * H : 225 * k + (r() - 0.5) * 12;
+        return `<ellipse cx="${f(x)}" cy="${f(y)}" rx="${f(v ? 8 + r() * 8 : 20 + r() * 40)}" ry="${f(v ? 20 + r() * 40 : 8 + r() * 8)}" fill="#4f6a3f" opacity=".75"/>`; }).join("");
+      a += path(`M300 0 C 290 300 340 600 320 900 M1180 0 C 1190 300 1150 600 1170 900`, "none", "#16140f", 70, ' opacity=".35"');
+    } else {
+      a += `<g opacity=".35">${range(6).map((i) => path(`M${i * 300 - 100} ${H} L${i * 300 + 200} 0 L${i * 300 + 240} 0 L${i * 300 - 60} ${H} Z`, "#ffffff")).join("")}</g>`;
     }
     return a;
   },
