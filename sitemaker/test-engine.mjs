@@ -16,7 +16,6 @@ try { pw = require("playwright"); } catch { pw = require(join(execSync("npm root
 const fails = [];
 const ok = (c, m) => { if (!c) fails.push(m); };
 const browser = await pw.chromium.launch();
-const prices = { "x": {} };
 
 for (const trade of TRADE_ORDER) {
   const html = generateSite({ company: "Test Co", trade, year: 2026, phone: "9185550100", cinematic: true });
@@ -33,7 +32,7 @@ for (const trade of TRADE_ORDER) {
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
         const lines = [...story.querySelectorAll(".line")].filter((l) => +l.style.opacity > 0.05);
         maxLines = Math.max(maxLines, lines.length);
-        const mid = [...story.querySelectorAll(".frame")].filter((f) => +f.style.opacity > 0.05).length;
+        const mid = [...story.querySelectorAll(".frame")].filter((f) => +f.style.opacity > 0.05 && f.style.visibility !== "hidden").length;
         if (mid > 2) overlapSamples += 10; else if (mid === 2) overlapSamples++;
         const cta = story.querySelector(".story-cta").getBoundingClientRect();
         for (const l of lines) { const h = l.querySelector(".h").getBoundingClientRect(); if (h.bottom > cta.top + 1 && h.top < cta.bottom) ctaHits++; }
@@ -48,11 +47,10 @@ for (const trade of TRADE_ORDER) {
       const ba = document.getElementById("ba"); if (!ba) return null;
       const sl = ba.querySelector("[role=slider]"), out = [];
       sl.focus();
+      const key = (k) => sl.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
       for (const v of [0, 10, 20, 50, 80, 90, 100]) {
-        ba.style.setProperty("--pos", v);
-        sl.setAttribute("aria-valuenow", v);
-        sl.dispatchEvent(new KeyboardEvent("keydown", { key: v === 0 ? "Home" : v === 100 ? "End" : "x", bubbles: true }));
-        if (v !== 0 && v !== 100) { for (let n = 0; n < 40; n++) { const cur = +sl.getAttribute("aria-valuenow"); if (cur === v) break; sl.dispatchEvent(new KeyboardEvent("keydown", { key: cur < v ? "ArrowRight" : "ArrowLeft", bubbles: true })); } }
+        key("Home");
+        for (let n = 0; n < 40 && +sl.getAttribute("aria-valuenow") < v; n++) key(v === 100 ? "End" : "ArrowRight");
         const hb = sl.querySelector(".ba-knob").getBoundingClientRect(), line = sl.getBoundingClientRect();
         for (const t of ba.querySelectorAll(".ba-tag")) {
           if (getComputedStyle(t).visibility === "hidden") continue;
