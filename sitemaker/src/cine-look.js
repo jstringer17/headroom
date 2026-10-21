@@ -183,7 +183,7 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 --dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);--accent-text:var(--c-accent-text);--dark2:color-mix(in srgb,var(--c-night) 90%,#ffffff);color-scheme:light}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 h1,h2{font-weight:${grotesk ? "800" : "400"};letter-spacing:${grotesk ? "-.035em" : "-.012em"}}
-${grotesk ? "h1 em,h2 em,.line em{font-style:normal}" : ""}
+${grotesk ? `h1 em,h2 em,.line em,.sec h2 em,.est-num em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;letter-spacing:-.01em;padding-right:.04em}` : ""}
 h1 em,h2 em,.line em,.sec h2 em{color:var(--c-accent-text)${marker ? ";background:linear-gradient(transparent 58%,var(--c-accent) 58%,var(--c-accent) 90%,transparent 90%);padding:0 .06em" : ""}}
 html body :is(.story,.dark-sec,.final,.panel,.est-out,.top) em{color:var(--c-accent-hi);background:none;padding:0}
 .est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
@@ -365,8 +365,11 @@ const SCENES = {
     return { art: art + bundles, mood: st === last || v >= 0 ? "gold" : "day" };
   },
   fencing(st, last, v) {
-    const y0 = 600, x0 = 110, x1 = 1490, n = 12, step = (x1 - x0) / n;
-    let a = house({ x: 800, w: 420, wallH: 200, roof: "new" });
+    // Story frames keep the fence on the right, clear of the bottom-left headline;
+    // style pictures (shifted right for the glass card) use the full width.
+    const story = v < 0;
+    const y0 = 600, x0 = story ? 660 : 110, x1 = story ? 1520 : 1490, n = story ? 8 : 12, step = (x1 - x0) / n;
+    let a = house({ x: story ? 1040 : 800, w: 420, wallH: 200, roof: "new" });
     a += rect(0, G - 2, W, H - G, C.sage, "none", 0) + shrub(1350, G - 40, 0.8);
     const stage = v >= 0 ? 3 : st;
     const kind = v === 1 ? "vinyl" : v === 2 ? "rail" : "cedar";
@@ -756,7 +759,7 @@ export function placeholderSvg(trade, slotId, labelText) {
       const exterior = !out.raw && !INTERIOR.has(trade);
       const isStyle = !!(k && k.styles.some((s) => s.id === slotId));
       const art = isStyle && exterior ? `<g transform="translate(220 0)">${out.art}</g>` : out.art;
-      body = (exterior ? backdrop(mood, out.ground, isStyle ? 1380 : 1250, out.gy || G) : "") + art;
+      body = (exterior ? backdrop(mood, out.ground, isStyle ? 1060 : 1250, out.gy || G) : "") + art;
     } else {
       body = backdrop("gold") + house({});
     }
