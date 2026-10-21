@@ -1546,7 +1546,7 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 }
 /* Bridge: the engine's markup (cinematic.js) reads these, so the look applies there too */
 :root{--serif:var(--f-display);--sans:var(--f-body);--cream:var(--c-paper);--cream2:var(--c-paper-2);--ink:var(--c-ink);--muted:var(--c-muted);
---dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);--accent-text:var(--c-accent-text);color-scheme:light}
+--dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);--accent-text:var(--c-accent-text);--dark2:color-mix(in srgb,var(--c-night) 90%,#ffffff);color-scheme:light}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 h1,h2{font-weight:${grotesk ? "800" : "400"};letter-spacing:${grotesk ? "-.035em" : "-.012em"}}
 ${grotesk ? "h1 em,h2 em,.line em{font-style:normal}" : ""}
@@ -1684,13 +1684,13 @@ function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, wo
 // Label on the art: always visible. Top center and narrow (440 of 1600), so
 // it survives object-fit: cover on a phone (about 450 wide stays in view)
 // and stays clear of headlines and buttons, which sit at the bottom.
-function label(text, dark) {
+function label(text, dark, y = 96) {
   const t1 = "Sample picture: make in Higgsfield";
   const t2 = text.length > 40 ? text.slice(0, 39) + "\u2026" : text;
   return `<g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
-<rect x="600" y="96" width="400" height="74" rx="12" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
-<text x="800" y="128" font-size="20" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
-<text x="800" y="155" font-size="17" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
+<rect x="600" y="${y}" width="400" height="74" rx="12" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
+<text x="800" y="${y + 32}" font-size="20" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
+<text x="800" y="${y + 59}" font-size="17" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
 }
 
 // Viewfinder corner marks and a small "16:9 sketch" tag: reads as a shot to be made.
@@ -1767,6 +1767,21 @@ const SCENES = {
         a += blotches("mist", 9, [700, 470, 130, 400], "#ffffff", 0.25, 18);
       }
     }
+    // depth: haze at the horizon, wet sheen on clean concrete, foam and falling spray at the edge, grass in front
+    const driveClip = `<clipPath id="dc"><path d="M${765 - 115} ${B} L${765 + 115} ${B} L${765 + 850} ${H} L${765 - 850} ${H} Z"/></clipPath>`;
+    a = `<defs>${driveClip}<linearGradient id="haze" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9aa3ad" stop-opacity="0"/><stop offset="1" stop-color="#9aa3ad" stop-opacity=".22"/></linearGradient><linearGradient id="wet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>` + a;
+    a += `<rect x="0" y="${B - 160}" width="${W}" height="160" fill="url(#haze)"/>`;
+    if (story && st >= 1) {
+      const wetW = st === last ? 1600 : 760;
+      a += `<g clip-path="url(#dc)"><g clip-path="url(#wetside)"><g class="shimmer"><path d="M300 ${H} L560 ${B} L640 ${B} L420 ${H} Z" fill="url(#wet)" opacity=".7"/><path d="M820 ${H} L740 ${B} L780 ${B} L900 ${H} Z" fill="url(#wet)" opacity=".45"/></g></g></g><defs><clipPath id="wetside"><rect x="0" y="0" width="${wetW}" height="${H}"/></clipPath></defs>`;
+    }
+    if (story && st > 0 && st < last) {
+      const r = rng("foam");
+      a += range(46).map(() => { const t = r(), y = B + 10 + t * (H - B - 10), rad = 4 + t * 22 * r(); return circle(760 + (r() - 0.5) * (14 + t * 60), y, rad, "#ffffff", "none", 0, ` opacity="${(0.35 + r() * 0.5).toFixed(2)}"`); }).join("");
+      a += range(14).map((i) => line(722 + (i % 7) * 12, B + 40 + Math.floor(i / 7) * 120, 726 + (i % 7) * 12, B + 62 + Math.floor(i / 7) * 120, 3, "#dbe6ee", ` class="fall" style="animation-delay:${(i * 0.11).toFixed(2)}s"`)).join("");
+    }
+    const blades = (x0, dir) => range(14).map((i) => path(`M${x0 + i * 16 * dir} ${H} q ${dir * 6} -${50 + (i % 4) * 26} ${dir * (18 + (i % 3) * 8)} -${80 + (i % 5) * 22}`, "none", "#0f1410", 7)).join("");
+    a += `<g class="sway">${blades(0, 1)}</g><g class="sway" style="animation-delay:-2s">${blades(W, -1)}</g>`;
     if (story && st === last) a += range(5).map((i) => path(`M${520 + i * 140} ${560 + (i % 2) * 90} l 8 18 l 18 8 l -18 8 l -8 18 l -8 -18 l -18 -8 l 18 -8 Z`, "#ffd23f", "none", 0, ' class="glow"')).join("");
     return { art: a, mood: "day", gy: B };
   },
@@ -2075,8 +2090,12 @@ const INTERIOR = new Set(["restoration", "remodeling", "plumbing", "electrical",
 // off for people who ask for reduced motion.
 const MOTION = `<style>.drift{animation:dr 38s ease-in-out infinite alternate}.drift2{animation:dr 56s ease-in-out infinite alternate-reverse}
 .glow{animation:gl 5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+.sway{animation:sw 4s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:bottom}
+.shimmer{animation:sh 7s ease-in-out infinite alternate}.fall{animation:fa 1.6s linear infinite}
+@keyframes sw{from{transform:skewX(-4deg)}to{transform:skewX(4deg)}}@keyframes sh{from{transform:translateX(-220px)}to{transform:translateX(220px)}}
+@keyframes fa{from{transform:translateY(-30px);opacity:0}30%{opacity:.8}to{transform:translateY(60px);opacity:0}}
 @keyframes dr{from{transform:translateX(-60px)}to{transform:translateX(60px)}}@keyframes gl{from{opacity:.25}to{opacity:.75}}
-@media (prefers-reduced-motion:reduce){.drift,.drift2,.glow{animation:none}}</style>`;
+@media (prefers-reduced-motion:reduce){.drift,.drift2,.glow,.sway,.shimmer,.fall{animation:none}}</style>`;
 
 function placeholderSvg(trade, slotId, labelText) {
   const carbon = CARBON_TRADES.has(trade);
@@ -2095,7 +2114,9 @@ function placeholderSvg(trade, slotId, labelText) {
       // so nothing but the work changes when frames crossfade.
       mood = isStory ? scene(last, last, -1).mood || "day" : out.mood || "day";
       const exterior = !out.raw && !INTERIOR.has(trade);
-      body = (exterior ? backdrop(mood, out.ground, 1250, out.gy || G) : "") + out.art;
+      const isStyle = !!(k && k.styles.some((s) => s.id === slotId));
+      const art = isStyle && exterior ? `<g transform="translate(220 0)">${out.art}</g>` : out.art;
+      body = (exterior ? backdrop(mood, out.ground, isStyle ? 1380 : 1250, out.gy || G) : "") + art;
     } else {
       body = backdrop("gold") + house({});
     }
@@ -2103,7 +2124,7 @@ function placeholderSvg(trade, slotId, labelText) {
     // Story frames share one label so it does not ghost during the crossfade.
     const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
     const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark)}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, k && k.styles.some((s) => s.id === slotId) ? 140 : 96)}</svg>`;
   } finally {
     Object.assign(C, LIGHT);
   }
