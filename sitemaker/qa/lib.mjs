@@ -31,6 +31,17 @@ export const SEL = {
 
 // A tiny hand-made page that follows the contract. Used until the real build lands.
 // 19 trades: the 16 classic ones plus the three new ones (CEO 2026-10-21).
+// Editorial look (org/inspiration/northpeak-editorial.md). The build is "editorial" when its output says so.
+export const isEditorial = (html) => /data-look="editorial"|class="[^"]*\beditorial\b/.test(html);
+export const ED = {
+  hero: '[data-ed="hero"], .ed-hero',
+  work: '[data-ed="work"] [data-ed="card"], .ed-work .ed-card',
+  rows: '[data-ed="row"], .ed-row',
+  rowImg: '[data-ed="row-img"], .ed-row-img img, .ed-service-img img',
+  trust: '[data-ed="trust"], .ed-trust',
+  trustCell: '[data-ed="trust"] > *, .ed-trust > *',
+  nav: "nav, header",
+};
 export const NEW_TRADES = ["restoration", "homebuilder", "framing"];
 // Expected estimator unit text per trade (engine default; everything else is "per job").
 export const UNIT_BY_TRADE = { roofing: "per sq ft", fencing: "per linear foot", pressure: "per sq ft", hvac: "per job", restoration: "per job", homebuilder: "per sq ft", framing: "per sq ft" };
@@ -72,9 +83,10 @@ k.parentElement.addEventListener('pointerdown',function(e){var r=k.parentElement
 }
 
 // Builds a cinematic site. real=true only when the engine output has the scroll story; without the cine-art files generateSite quietly returns the classic site.
-export function buildCine(form) {
+// look: "cinematic" (default) or "editorial". Passed both as form.look and form.cine.look until the engine fixes its name.
+export function buildCine(form, look = "cinematic") {
   let html = "";
-  try { html = generateSite({ ...form, cinematic: true }); } catch { /* engine not merged yet */ }
+  try { html = generateSite({ ...form, cinematic: true, look, cine: { ...(form.cine || {}), look } }); } catch { /* engine not merged yet */ }
   const real = /id="story"/.test(html) && /id="contact"/.test(html);
   return real ? { html, real } : { html: samplePage({ prices: !!form.cine?.prices }), real: false };
 }
