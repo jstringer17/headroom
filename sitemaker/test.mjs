@@ -35,7 +35,7 @@ for (const key of TRADE_ORDER) {
   ok(html === generateSite({ company: "Test Co", trade: key, year: 2026 }), `${key}: generator is not deterministic`);
   ok(!/<img\b/i.test(html), `${key}: has <img> without a hero picture`);
   ok(/no people/i.test(TRADES[key].prompt) && /no text/i.test(TRADES[key].prompt), `${key}: Higgsfield prompt must say no people and no text`);
-  ok(TRADES[key].line && html.includes('class="sig"'), `${key}: signature line missing`);
+  ok(TRADES[key].line && /class="[a-z-]*art (solid|strokes)"/.test(html), `${key}: trade drawing missing`);
   ok(!BANNED.test(html.replace(/<style[\s\S]*?<\/style>/, "")), `${key}: banned claim in copy`);
   ok(!/<script[^>]+src=/i.test(html), `${key}: loads an outside script`);
   const ext = [...html.matchAll(/(?:href|src)="(https?:[^"]+)"/g)].map((m) => m[1]).filter((u) => !/fonts\.(googleapis|gstatic)\.com/.test(u));
@@ -59,7 +59,7 @@ for (const key of TRADE_ORDER) {
 {
   const px = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
   const h = generateSite({ company: "T", trade: "roofing", heroImage: px });
-  ok((h.match(/<img\b/g) || []).length === 1 && h.includes("has-img") && !h.includes('class="sig"'), "hero: data picture not used");
+  ok((h.match(/<img\b/g) || []).length === 1 && h.includes("hero-img") && !/art (solid|strokes)/.test(h), "hero: data picture not used");
   ok(generateSite({ company: "T", trade: "roofing", heroImage: "https://example.com/a.jpg" }).includes('src="https://example.com/a.jpg"'), "hero: https link not used");
   for (const bad of ["javascript:alert(1)", 'https://x.com/a.jpg" onerror="x', "data:text/html;base64,AAAA"]) ok(!/<img\b/.test(generateSite({ company: "T", trade: "roofing", heroImage: bad })), "hero: unsafe picture accepted: " + bad);
 }
@@ -77,7 +77,7 @@ const browser = await playwright.chromium.launch(process.env.HTTPS_PROXY ? { pro
 const ctxOpts = { ignoreHTTPSErrors: true, reducedMotion: "reduce" }; // only fonts go out, through the sandbox proxy
 const offsite = [];
 
-async function checkPage(page, label, imgCount = 0) {
+async function checkPage(page, label, imgCount = 0, fontsLoaded = true) {
   const r = await page.evaluate(() => {
     const doc = document.documentElement;
     const empty = [];
@@ -91,11 +91,22 @@ async function checkPage(page, label, imgCount = 0) {
       const b = el.getBoundingClientRect();
       return b.width > 0 && (b.right > doc.clientWidth + 1 || b.left < -1) && getComputedStyle(el).position !== "absolute";
     }).slice(0, 3).map((el) => el.tagName + "." + el.className);
-    return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: document.images.length };
+    const h1 = document.querySelector("h1");
+    const h1Lines = Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight));
+    const calls = [...document.querySelectorAll('a[href^="tel:"].btn, a[href="#contact"].btn')].filter((a) => {
+      const b = a.getBoundingClientRect(); const cs = getComputedStyle(a);
+      let vis = b.width > 0 && b.bottom > 0 && b.top < innerHeight && cs.visibility !== "hidden" && cs.opacity !== "0";
+      for (let el = a; el && vis; el = el.parentElement) { const c = getComputedStyle(el); if (c.opacity === "0" || c.display === "none") vis = false; if (el.classList.contains("mobile-call") && c.transform !== "none" && el.getBoundingClientRect().top >= innerHeight - 1) vis = false; }
+      return vis && /Call/.test(a.textContent);
+    }).length;
+    return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: document.images.length, h1Lines, calls };
   });
   ok(r.sw <= r.cw, `${label}: sideways scroll (${r.sw} > ${r.cw}) ${r.wide.join(" ")}`);
   ok(r.empty.length === 0, `${label}: empty sections ${r.empty.join(",")}`);
   ok(r.imgs === imgCount, `${label}: ${r.imgs} images, expected ${imgCount}`);
+  // Line count is set for the web font; offline the fallback font is wider.
+  if (fontsLoaded) ok(r.h1Lines <= 3, `${label}: headline is ${r.h1Lines} lines`);
+  ok(r.calls === 1, `${label}: ${r.calls} call buttons in the first screen`);
   return r;
 }
 
@@ -127,12 +138,28 @@ for (const { key, form } of sets) {
     await page.evaluate(() => document.fonts.ready);
     await checkPage(page, `${key}@${width}`);
     // Full page for the two lead trades; first screen for the rest keeps the folder small.
-    const full = /^(roofing|hvac)$/.test(key);
+    const full = /^(roofing|hvac|towing)$/.test(key);
     await page.screenshot({ path: join(shotDir, `${key}-${width}.jpg`), type: "jpeg", quality: full ? 45 : 40, fullPage: full });
     await page.close();
   }
 }
 ok(offsite.length === 0, `sites asked the network for: ${offsite.slice(0, 5).join(" | ")}`);
+
+// phone: at the very bottom, the call bar must not cover the footer
+{
+  const page = await ctx.newPage();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto(pathToFileURL(join(outDir, "roofing.html")).href, { waitUntil: "load" });
+  await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(300);
+  const cover = await page.evaluate(() => {
+    const bar = document.querySelector(".mobile-call").getBoundingClientRect();
+    const last = document.querySelector(".foot-base").getBoundingClientRect();
+    return { barTop: bar.top, lastBottom: last.bottom };
+  });
+  ok(cover.lastBottom <= cover.barTop + 1, `call bar covers the footer (${JSON.stringify(cover)})`);
+  await page.close();
+}
 
 // motion on: every section still ends up visible after scrolling through
 {
@@ -202,7 +229,7 @@ for (const width of [375, 1280]) {
   const page = await off.newPage();
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(pathToFileURL(join(outDir, "maker-download-375.html")).href, { waitUntil: "load" });
-  const r = await checkPage(page, "download-offline@375", 1);
+  const r = await checkPage(page, "download-offline@375", 1, false);
   ok((await page.locator(".brand-name").textContent()) === "Cool Breeze Heating & Air", "download-offline: wrong content");
   ok((await page.locator(".hero-img").count()) === 1, "download-offline: hero picture not inside the file");
   await off.close();

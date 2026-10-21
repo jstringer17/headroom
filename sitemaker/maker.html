@@ -185,7 +185,8 @@ details.lead[open]{display:grid;gap:10px}
 // Each trade: label, noun (what the business is called), icon (inline SVG
 // inner markup, 24x24, stroke-based), headline + sub copy, default theme,
 // line (the trade's signature line drawing for the hero, viewBox 0 0 1200 300),
-// prompt (a Higgsfield prompt for a hero picture: no people, no text),
+// layout (hero and section layout: band, split or stat), fill (draw the line
+// as a solid shape), prompt (a Higgsfield prompt for a hero picture: no people, no text),
 // optional freeEstimates: false (turns that default off; 24/7 is off for
 // every trade), words to match a lead's category, and
 // services as [name, one-line description]. The first `pick` services are
@@ -202,6 +203,8 @@ const TRADES = {
     sub: "Repairs, full replacements, and storm damage help for homes and businesses.",
     theme: "navy",
     line: "M0 262 H170 L420 72 L670 262 H760 L905 150 L1050 262 H1200",
+    layout: "band",
+    fill: true,
     prompt: "A newly finished dark asphalt shingle roof on a two-story suburban house, low angle from the yard, golden hour light raking across the shingle rows, clear sky. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["roof", "roofer", "roofing", "shingle", "gutter"],
@@ -225,6 +228,8 @@ const TRADES = {
     sub: "AC and furnace repair, new systems, and tune-ups for your home.",
     theme: "sky",
     line: "M0 160 C150 70 300 250 450 160 S750 70 900 160 S1110 240 1200 190",
+    layout: "split",
+    fill: true,
     prompt: "A clean modern outdoor air conditioner unit beside a light-colored house wall on a neat gravel pad, soft morning light. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     freeEstimates: false,
@@ -249,6 +254,7 @@ const TRADES = {
     sub: "Plumbing repair and installs for homes and businesses.",
     theme: "sky",
     line: "M0 230 H300 Q340 230 340 190 V110 Q340 70 380 70 H760 Q800 70 800 110 V190 Q800 230 840 230 H1200",
+    layout: "split",
     prompt: "Close detail of clean copper pipes and brass valves under a bright sink cabinet, tidy and new, soft side light. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["plumb", "drain", "sewer", "water heater", "rooter"],
@@ -272,6 +278,7 @@ const TRADES = {
     sub: "Repairs, panel upgrades, lighting, and wiring for homes and businesses.",
     theme: "steel",
     line: "M0 210 H260 L320 150 H560 L620 210 H760 V90 H980 L1040 150 H1200",
+    layout: "split",
     prompt: "A neat open home electrical panel with tidy new wiring and breakers, soft cool light, shallow depth of field. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["electric", "electrician", "wiring", "generator"],
@@ -295,6 +302,8 @@ const TRADES = {
     sub: "Lawn care, planting, and yard upgrades for homes and businesses.",
     theme: "forest",
     line: "M0 250 C200 190 320 210 480 180 S820 120 960 160 S1140 210 1200 200",
+    layout: "band",
+    fill: true,
     prompt: "A freshly mowed green lawn with crisp mulch beds and shrubs in front of a home, long shadows at golden hour. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["landscap", "lawn", "yard", "mowing", "garden", "sod", "irrigation", "sprinkler"],
@@ -318,6 +327,8 @@ const TRADES = {
     sub: "Tree work for homes, businesses, and land.",
     theme: "forest",
     line: "M0 262 H360 V205 C280 205 250 130 315 98 C330 40 430 26 470 74 C530 44 612 96 590 156 C630 206 552 216 512 205 V262 H1200",
+    layout: "stat",
+    fill: true,
     prompt: "Tall mature oak trees over a quiet green yard, low sun through the leaves, wide and calm. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["tree", "arborist", "stump"],
@@ -341,6 +352,7 @@ const TRADES = {
     sub: "House washing, driveways, decks, and more for homes and businesses.",
     theme: "sky",
     line: "M60 250 L380 160 M380 160 L1180 40 M380 160 L1180 150 M380 160 L1180 260",
+    layout: "stat",
     prompt: "A half-cleaned concrete driveway showing a sharp line between clean and dirty concrete, bright daylight, top-down angle. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["pressure wash", "power wash", "soft wash", "washing"],
@@ -364,6 +376,7 @@ const TRADES = {
     sub: "Garage door repair, new doors, springs, and openers.",
     theme: "steel",
     line: "M300 280 V60 H900 V280 M300 115 H900 M300 170 H900 M300 225 H900",
+    layout: "split",
     prompt: "A modern carriage-style garage door on a clean suburban home at dusk, warm porch lights on, empty driveway. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["garage door", "garage", "overhead door"],
@@ -387,6 +400,8 @@ const TRADES = {
     sub: "Painting for homes and businesses.",
     theme: "navy",
     line: "M60 230 L260 90 L420 220 L620 80 L780 210 L980 70 L1140 200",
+    layout: "band",
+    fill: true,
     prompt: "A freshly painted living room wall in a calm color with crisp white trim, a closed paint can and roller on a drop cloth, soft window light. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["paint", "painter", "painting", "drywall"],
@@ -410,6 +425,7 @@ const TRADES = {
     sub: "Concrete poured and finished for homes and businesses.",
     theme: "steel",
     line: "M0 270 H1200 M0 180 H1200 M210 180 L130 270 M600 180 V270 M990 180 L1070 270",
+    layout: "band",
     prompt: "A smooth new concrete driveway with clean control joints leading to a home, low angle, late afternoon light. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["concrete", "cement", "paving", "masonry", "flatwork"],
@@ -433,6 +449,7 @@ const TRADES = {
     sub: "Fencing for homes, businesses, and land.",
     theme: "forest",
     line: "M0 140 H1200 M0 230 H1200 M120 280 V100 L150 70 L180 100 V280 M260 280 V100 L290 70 L320 100 V280 M400 280 V100 L430 70 L460 100 V280 M540 280 V100 L570 70 L600 100 V280 M680 280 V100 L710 70 L740 100 V280 M820 280 V100 L850 70 L880 100 V280 M960 280 V100 L990 70 L1020 100 V280",
+    layout: "band",
     prompt: "A new cedar privacy fence along a green backyard, golden hour side light showing the wood grain. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["fence", "fencing", "gate"],
@@ -456,6 +473,8 @@ const TRADES = {
     sub: "Pest control for ants, roaches, rodents, termites, and more.",
     theme: "forest",
     line: "M0 230 C200 230 220 110 400 120 S600 240 780 210 S1000 90 1200 110",
+    layout: "stat",
+    fill: true,
     prompt: "A clean, bright kitchen counter and floor in a calm modern home, morning light, spotless. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["pest", "exterminat", "termite", "bed bug", "rodent", "wildlife", "mosquito"],
@@ -479,6 +498,7 @@ const TRADES = {
     sub: "Junk, furniture, and debris removal for homes and businesses.",
     theme: "navy",
     line: "M300 270 H700 V170 H300 Z M380 170 V90 H620 V170 M760 270 H1000 V200 H760 Z",
+    layout: "stat",
     prompt: "An empty, clean, swept garage with a bare concrete floor and the door open, bright daylight. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     freeEstimates: false,
@@ -503,6 +523,7 @@ const TRADES = {
     sub: "Home and office cleaning on your schedule.",
     theme: "sky",
     line: "M600 40 L630 140 L730 170 L630 200 L600 300 L570 200 L470 170 L570 140 Z M900 70 L912 110 L952 122 L912 134 L900 174 L888 134 L848 122 L888 110 Z",
+    layout: "split",
     prompt: "A spotless bright living room with sunlight across a clean floor and a tidy sofa, calm and airy. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["clean", "maid", "janitor", "housekeep", "carpet"],
@@ -525,7 +546,8 @@ const TRADES = {
     headline: "Towing and roadside help.",
     sub: "Towing and roadside help for cars, trucks, and more.",
     theme: "steel",
-    line: "M0 250 H1200 M0 290 H1200 M780 250 V120 L1010 60 M1010 60 V100",
+    line: "M80 300 L520 40 M1120 300 L680 40 M600 300 V250 M600 200 V165 M600 125 V100 M600 72 V60",
+    layout: "stat",
     prompt: "An empty two-lane highway at dusk with soft road lights, a long straight road toward the horizon, no vehicles. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     freeEstimates: false,
@@ -550,6 +572,7 @@ const TRADES = {
     sub: "Remodels and home updates, planned and built by one crew.",
     theme: "navy",
     line: "M200 270 V50 H1000 V270 H200 M560 50 V170 M560 220 V270 M560 170 H800 M800 170 V270",
+    layout: "split",
     prompt: "A finished modern kitchen with light cabinets, stone counters and warm pendant lights, empty and calm. Wide 16:9 photo, natural light, calm and clean, with open, darker space on the left side for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.",
     emergency: false,
     match: ["remodel", "renovat", "kitchen", "bath", "handyman", "general contractor", "home improvement"],
@@ -686,10 +709,29 @@ function safeImage(src) {
 const ICON_ARROW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
 const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 
+// Section order and style per layout, so trades do not look like clones.
+const LAYOUTS = {
+  band: { order: ["services", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
+  split: { order: ["process", "services", "reviews", "faq", "area"], services: "columns", trust: "paper" },
+  stat: { order: ["services", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
+};
+
+// Font size that keeps the headline to 3 lines (2 on wide band heroes).
+function h1Sizes(text, layout) {
+  const n = text.length;
+  const per = (lines) => n / lines + 2;
+  const mobile = Math.min(76, Math.floor(335 / (per(3) * 0.47)));
+  const wide = layout === "band" ? 1200 : 690;
+  const desk = Math.min(layout === "band" ? 150 : 128, Math.floor(wide / (per(layout === "band" ? 2 : 3) * 0.47)));
+  return `--h1m:${mobile}px;--h1d:${desk}px`;
+}
+
 function generateSite(form) {
   const d = normalize(form);
   const t = d.trade;
   const th = THEMES[d.themeKey];
+  const lay = LAYOUTS[t.layout] ? t.layout : "band";
+  const L = LAYOUTS[lay];
   const tradeName = t.label.replace(/ \(.*\)$/, "");
   const hero = safeImage(form && form.heroImage);
   const name = esc(d.company);
@@ -701,6 +743,11 @@ function generateSite(form) {
   const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svg(ICON_PHONE, 19)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
+  // The trade's drawing: a solid shape or heavy strokes.
+  const shape = (cls) => t.fill
+    ? `<svg class="${cls} solid" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="${t.line} L1200 300 L0 300 Z"/></svg>`
+    : `<svg class="${cls} strokes" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="${t.line}"/></svg>`;
+
   // Trust bar: always four cells, each one a fact the owner typed or ticked.
   const cells = [
     ["Service area", area || "Your town"],
@@ -711,25 +758,49 @@ function generateSite(form) {
   else if (d.years) cells.push(["In business", `${d.years} year${d.years === 1 ? "" : "s"}`]);
   else if (d.insured) cells.push(["Coverage", "Licensed and insured"]);
   else cells.push(["Phone", d.phone ? phoneShow : "Call us"]);
-  const trust = cells.map(([k, v, raw]) => `<div class="cell rv"><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("");
+  const trust = `<section class="trust trust-${L.trust}" aria-label="At a glance"><div class="wrap"><dl>${cells.map(([k, v, raw]) => `<div class="cell rv"><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("")}</dl></div></section>`;
 
-  const services = d.services.map(([n, desc], i) =>
-    `<li class="rv" style="--i:${i}"><a href="#contact"><span class="svc-name">${esc(n)}</span><span class="svc-desc">${esc(desc)}</span><span class="svc-go">${svg(ICON_ARROW, 22)}</span></a></li>`).join("");
+  // Hero
+  let stat;
+  if (d.rating) stat = [d.rating.toFixed(1), stars(d.rating, 22) + `<span>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google reviews` : "Google rating"}</span>`];
+  else if (d.emergency) stat = ["24/7", "<span>Open for emergencies</span>"];
+  else if (d.years) stat = [String(d.years), `<span>Year${d.years === 1 ? "" : "s"} in business</span>`];
+  else if (d.freeEstimates) stat = ["Free", "<span>Estimates on every job</span>"];
+  else stat = [area || "Local", `<span>${area ? "Our home base" : "Serving your area"}</span>`];
+  const statBig = stat[0].length > 6 ? " long" : "";
 
+  const heroText = `<div class="hero-text">
+    <h1 style="${h1Sizes(t.headline, hero ? "split" : lay)}">${esc(t.headline)}</h1>
+    <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
+    <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line" href="#contact">${askLabel}</a></div>
+  </div>`;
+  let heroInner;
+  if (hero) {
+    heroInner = `<img class="hero-img" src="${esc(hero)}" alt="" fetchpriority="high"><div class="wrap">${heroText}</div>`;
+  } else if (lay === "split") {
+    heroInner = `<div class="wrap hero-grid">${heroText}<aside class="panel" aria-label="Call us">
+      <div class="panel-art">${shape("art").replace('xMidYMax meet', 'xMidYMax slice')}</div>
+      <div class="panel-body"><p class="panel-k">${d.freeEstimates ? "Free estimates" : "Prices before work starts"}</p><p class="panel-v">${d.phone ? phoneShow : "Phone number here"}</p><p class="panel-n">${d.emergency ? "Open 24 hours" : area ? `Serving ${area}` : "Serving your area"}</p></div>
+    </aside></div>`;
+  } else if (lay === "stat") {
+    heroInner = `<div class="wrap hero-grid">${heroText}<aside class="stat" aria-label="At a glance">
+      <p class="stat-v${statBig}">${esc(stat[0])}</p><div class="stat-k">${stat[1]}</div>
+      ${shape("stat-art")}
+    </aside></div>`;
+  } else {
+    heroInner = `<div class="wrap">${heroText}</div>${shape("band-art").replace("xMidYMax meet", "xMidYMax slice")}`;
+  }
+  const heroSec = `<section class="hero hero-${hero ? "photo" : lay}" aria-label="Intro">${heroInner}</section>`;
+
+  // Sections
+  const services = L.services === "list"
+    ? `<ul class="svcs-list">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i}"><a href="#contact"><span class="svc-name">${esc(n)}</span><span class="svc-desc">${esc(desc)}</span><span class="svc-go">${svg(ICON_ARROW, 20)}</span></a></li>`).join("")}</ul>`
+    : `<ul class="svcs-cols">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i % 3}"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>`;
   const steps = [
     ["Call or send a request", d.phone ? `Call ${phoneShow}, or fill out the form on this page.` : "Call us, or fill out the form on this page."],
     [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
     ["The work gets done", "We do the job you agreed to."],
   ].map(([h, p], i) => `<li class="rv" style="--i:${i}"><span class="step-n" aria-hidden="true">${i + 1}</span><h3>${esc(h)}</h3><p>${p}</p></li>`).join("");
-
-  const reviews = d.rating ? `<section class="sec" id="reviews"><div class="wrap grid">
-  <div class="head rv"><h2>What customers say</h2></div>
-  <div class="body rev rv">
-    <div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
-    <p class="rev-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
-  </div>
-</div></section>` : "";
-
   const svcList = d.services.map((s) => s[0].toLowerCase());
   const svcSentence = svcList.length > 1 ? `${svcList.slice(0, -1).join(", ")}, and ${svcList[svcList.length - 1]}` : svcList[0];
   const faqs = [
@@ -740,8 +811,50 @@ function generateSite(form) {
     ["How do I get started?", `${d.phone ? `Call ${phoneShow}` : "Call us"} or send the form below. Have the address and a short note about the job ready.`],
   ].map(([q, a]) => `<details class="rv"><summary><span>${esc(q)}</span>${svg(ICON_PLUS, 22)}</summary><p>${a}</p></details>`).join("");
 
+  const sections = {
+    services: (tint) => `<section class="sec${tint}" id="services"><div class="wrap grid">
+  <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
+  <div class="body">${services}</div>
+</div></section>`,
+    process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
+  <h2 class="rv">How it works</h2>
+  <ol class="steps">${steps}</ol>
+</div></section>`,
+    reviews: (tint) => d.rating ? `<section class="sec${tint}" id="reviews"><div class="wrap grid">
+  <div class="head rv"><h2>What customers say</h2></div>
+  <div class="body rev rv">
+    <div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
+    <p class="rev-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
+  </div>
+</div></section>` : "",
+    area: (tint) => `<section class="sec sec-area${tint}" id="area"><div class="wrap area">
+  <div class="area-text rv">
+    <h2>Where we work</h2>
+    <ul class="chips"><li class="chip-main">${area || "Your town"}</li><li>Nearby towns</li><li>Homes and businesses</li></ul>
+    <p class="area-sub">Not sure we come to your street? Call and ask.</p>
+  </div>
+  <svg class="map rv" viewBox="0 0 480 260" aria-hidden="true">
+    <g class="streets"><path d="M0 40H480M0 98H480M0 160H480M0 220H480M56 0V260M138 0V260M226 0V260M318 0V260M404 0V260"/></g>
+    <g class="roads"><path d="M0 248L480 52M0 124C140 104 300 196 480 168"/></g>
+    <circle class="radius" cx="240" cy="132" r="104"/>
+    <circle class="pin-ring" cx="240" cy="132" r="17"/><circle class="pin" cx="240" cy="132" r="8"/>
+  </svg>
+</div></section>`,
+    faq: (tint) => `<section class="sec${tint}" id="faq"><div class="wrap grid">
+  <div class="head"><div class="sticky rv"><h2>Questions</h2><p class="lede">Straight answers before you call.</p></div></div>
+  <div class="body faq">${faqs}</div>
+</div></section>`,
+  };
+  // Alternate paper and tint backgrounds down the page.
+  let alt = 0;
+  const body = L.order.map((k) => {
+    if (k === "reviews" && !d.rating) return "";
+    const out = sections[k](alt % 2 ? " tint" : "");
+    alt++;
+    return out;
+  }).join("\n");
+
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
-  const sig = `<svg class="sig" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="${t.line}" pathLength="1"/></svg>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -753,202 +866,217 @@ function generateSite(form) {
 <meta name="theme-color" content="${th.dark}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <style>
-/* One accent, two neutrals. Big Shoulders (built, signage letters) over Hanken Grotesk. 12-column grid, 8px rhythm. */
+/* One accent, two neutrals. Big Shoulders (built, signage letters) for hero and section titles only; Hanken Grotesk for everything else. 12-column grid, 8px rhythm. */
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--paper:#ffffff;
---on-dark:#ffffff;--on-dark-2:rgba(255,255,255,.74);--rule-dark:rgba(255,255,255,.16);
---display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",Impact,sans-serif;--body:"Hanken Grotesk","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
---ease:cubic-bezier(.16,1,.3,1);--max:1240px;--gut:max(20px,env(safe-area-inset-left,0px));color-scheme:light}
+--on-dark:#ffffff;--on-dark-2:rgba(255,255,255,.76);--rule-dark:rgba(255,255,255,.18);
+--display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",sans-serif;--body:"Hanken Grotesk","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+--ease:cubic-bezier(.16,1,.3,1);--max:1240px;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:80px}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.6 var(--body);padding-bottom:76px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.6 var(--body);padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
 ::selection{background:var(--accent);color:var(--accent-ink)}
-h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;font-weight:800;text-transform:uppercase;letter-spacing:.005em}
+h1,h2{font-family:var(--display);margin:0;text-wrap:balance;font-weight:800;text-transform:uppercase}
+h3{font:700 20px/1.25 var(--body);margin:0;letter-spacing:-.01em}
 p,dl,dd{margin:0}
 a{color:inherit;text-underline-offset:4px}
 img,svg{max-width:100%}
-.wrap{max-width:var(--max);margin:0 auto;padding-left:var(--gut);padding-right:max(20px,env(safe-area-inset-right,0px))}
-a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border:0;border-radius:4px;font:600 17px/1 var(--body);letter-spacing:.01em;text-decoration:none;cursor:pointer;transition:transform .35s var(--ease),background-color .35s var(--ease)}
+.wrap{max-width:var(--max);margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border:0;border-radius:6px;font:600 17px/1 var(--body);text-decoration:none;cursor:pointer;transition:transform .35s var(--ease),box-shadow .35s var(--ease),opacity .35s var(--ease)}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
-.btn-accent:hover{transform:translateY(-2px)}
+.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.2)}
 .btn-line{color:var(--on-dark);box-shadow:inset 0 0 0 1.5px var(--rule-dark)}
 .btn-line:hover{box-shadow:inset 0 0 0 1.5px var(--on-dark)}
 /* header */
 .top{position:sticky;top:0;z-index:20;background:var(--dark);color:var(--on-dark);transition:box-shadow .4s var(--ease)}
-.top.scrolled{box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.past .top{box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .top .wrap{display:flex;align-items:center;gap:28px;min-height:68px}
-.brand-name{font:800 24px/1 var(--display);text-transform:uppercase;letter-spacing:.01em;text-decoration:none;margin-right:auto;overflow-wrap:anywhere;min-width:0}
+.brand-name{font:700 19px/1.15 var(--body);letter-spacing:-.01em;text-decoration:none;margin-right:auto;min-width:0}
 .nav{display:none;gap:28px;font-size:15px;font-weight:500}
 .nav a{text-decoration:none;color:var(--on-dark-2);transition:color .25s}
 .nav a:hover{color:var(--on-dark)}
 .top .btn{display:none;min-height:44px;padding:0 18px;font-size:15px}
 /* hero */
 .hero{position:relative;background:var(--dark);color:var(--on-dark);overflow:hidden;isolation:isolate}
-.hero .wrap{position:relative;padding-block:48px 0}
-.hero h1{font-size:clamp(60px,16.5vw,168px);font-weight:900;line-height:.86;letter-spacing:-.005em;max-width:9.5ch}
-.hero-sub{margin-top:28px;font-size:clamp(18px,2.2vw,22px);line-height:1.5;color:var(--on-dark-2);max-width:34ch}
-.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px}
-.hero-cta .btn{flex:1 1 240px}
-.sig{display:block;width:100%;height:auto;margin-top:40px;overflow:visible}
-.sig path{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.hero-img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
-.has-img::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 55%,rgba(0,0,0,.38) 100%),linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,0) 70%)}
-.has-img .wrap{padding-block:220px 56px}
-.has-img .hero-sub{color:rgba(255,255,255,.88)}
+.hero-text{padding-block:48px 56px}
+.hero h1{font-size:var(--h1m);font-weight:900;line-height:.9}
+.hero-sub{margin-top:24px;font-size:clamp(18px,2vw,21px);line-height:1.5;color:var(--on-dark-2);max-width:36ch}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.hero-cta .btn{flex:1 1 220px}
+.band-art{display:block;width:100%;height:clamp(140px,25vw,300px);margin-top:-8px}
+.solid path{fill:var(--accent)}
+.strokes path{fill:none;stroke:var(--accent);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.hero-band .hero-text{padding-bottom:40px}
+.hero-grid{display:grid;gap:0}
+.panel{background:var(--dark2);border-radius:10px 10px 0 0;overflow:hidden;display:grid}
+.panel-art{padding:32px 24px 0;display:flex;align-items:flex-end;border-bottom:1px solid var(--rule-dark)}
+.panel-art .art{width:100%;height:clamp(120px,16vw,210px);display:block}
+.panel-body{padding:24px}
+.panel-k{font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hi)}
+.panel-v{margin-top:6px;font:900 clamp(40px,5vw,60px)/1 var(--display);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.panel-n{margin-top:8px;color:var(--on-dark-2)}
+.stat{background:var(--accent);color:var(--accent-ink);border-radius:10px 10px 0 0;padding:28px 24px 0;display:grid;align-content:start;overflow:hidden}
+.stat-v{font:900 clamp(88px,14vw,168px)/.85 var(--display);letter-spacing:-.01em;font-variant-numeric:tabular-nums;text-transform:uppercase;overflow-wrap:anywhere}
+.stat-v.long{font-size:clamp(52px,7vw,84px)}
+.stat-k{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:14px;font-weight:600}
+.stat .stars{color:var(--accent-ink)}
+.stat .stars-row.off{color:rgba(0,0,0,.18)}
+.stat-art{display:block;width:100%;height:auto;margin-top:28px}
+.stat .solid path{fill:var(--accent-ink);opacity:.9}
+.stat .strokes path{stroke:var(--accent-ink)}
+.hero-photo .wrap{position:relative;padding-top:200px}
+.hero-photo img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
+.hero-photo::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 55%,rgba(0,0,0,.38) 100%),linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,0) 70%)}
+.hero-photo .hero-sub{color:rgba(255,255,255,.9)}
 /* trust bar */
-.trust{background:var(--dark);color:var(--on-dark)}
-.trust dl{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule-dark)}
-.cell{padding:22px 16px 26px 0}
-.cell:nth-child(even){padding-left:16px;border-left:1px solid var(--rule-dark)}
-.cell:nth-child(n+3){border-top:1px solid var(--rule-dark)}
-.cell dt{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark-2)}
-.cell dd{margin-top:6px;font:800 clamp(24px,3vw,32px)/1.05 var(--display);text-transform:uppercase;display:flex;align-items:center;flex-wrap:wrap;gap:10px;overflow-wrap:anywhere}
-.cell .stars{color:var(--hi)}
+.trust dl{display:grid;grid-template-columns:1fr 1fr}
+.cell{padding:22px 16px 24px 0}
+.cell:nth-child(even){padding-left:16px;border-left:1px solid var(--tr)}
+.cell:nth-child(n+3){border-top:1px solid var(--tr)}
+.cell dt{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tk)}
+.cell dd{margin-top:6px;font:700 clamp(19px,2.2vw,24px)/1.2 var(--body);letter-spacing:-.01em;display:flex;align-items:center;flex-wrap:wrap;gap:8px;overflow-wrap:anywhere}
+.trust-dark{background:var(--dark);color:var(--on-dark);--tr:var(--rule-dark);--tk:var(--on-dark-2)}
+.trust-dark dl{border-top:1px solid var(--rule-dark)}
+.trust-dark .stars{color:var(--hi)}
+.trust-dark .stars-row.off{color:var(--rule-dark)}
+.trust-paper{background:var(--paper);--tr:var(--line);--tk:var(--muted);border-bottom:1px solid var(--line)}
+.trust-tint{background:var(--light);--tr:var(--line);--tk:var(--muted)}
 /* sections */
-.sec{padding-block:88px}
+.sec{padding-block:80px}
 .tint{background:var(--light)}
-.sec h2{font-size:clamp(44px,8vw,84px);line-height:.9}
-.lede{margin-top:20px;color:var(--muted);max-width:36ch}
-.grid{display:grid;gap:40px}
-.svcs{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.svcs a{display:grid;grid-template-columns:1fr auto;gap:6px 20px;padding:24px 0;border-bottom:1px solid var(--line);text-decoration:none;transition:padding .45s var(--ease)}
-.svc-name{font:800 clamp(26px,3.4vw,36px)/1 var(--display);text-transform:uppercase}
+.sec h2{font-size:clamp(44px,7.5vw,80px);line-height:.92}
+.lede{margin-top:18px;color:var(--muted);max-width:36ch}
+.grid{display:grid;gap:36px}
+.svcs-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.svcs-list a{display:grid;grid-template-columns:1fr auto;gap:4px 20px;padding:22px 0;border-bottom:1px solid var(--line);text-decoration:none;transition:padding .45s var(--ease)}
+.svc-name{font:700 22px/1.2 var(--body);letter-spacing:-.01em}
 .svc-desc{grid-column:1;color:var(--muted);font-size:17px;max-width:44ch}
-.svc-go{grid-row:1/3;grid-column:2;align-self:center;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink);transition:background-color .35s var(--ease),color .35s var(--ease),box-shadow .35s var(--ease),transform .45s var(--ease)}
-.svcs a:hover{padding-left:12px}
-.svcs a:hover .svc-go{background:var(--accent);color:var(--accent-ink);box-shadow:none;transform:rotate(-45deg)}
-.steps{list-style:none;margin:56px 0 0;padding:0;display:grid;gap:48px;counter-reset:s}
-.step-n{display:block;font:900 120px/.8 var(--display);color:transparent;-webkit-text-stroke:1.5px var(--ink);margin-bottom:20px}
-.steps h3{font-size:30px;line-height:1}
-.steps p{margin-top:10px;color:var(--muted);max-width:30ch}
+.svc-go{grid-row:1/3;grid-column:2;align-self:center;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line);transition:background-color .35s var(--ease),color .35s var(--ease),box-shadow .35s var(--ease),transform .45s var(--ease)}
+.svcs-list a:hover{padding-left:10px}
+.svcs-list a:hover .svc-go{background:var(--accent);color:var(--accent-ink);box-shadow:none;transform:rotate(-45deg)}
+.svcs-cols{list-style:none;margin:0;padding:0;display:grid;gap:0 32px;grid-template-columns:1fr}
+.svcs-cols li{padding:22px 0 26px;border-top:2px solid var(--ink)}
+.svcs-cols p{margin-top:6px;color:var(--muted);font-size:17px}
+.steps{list-style:none;margin:48px 0 0;padding:0;display:grid;gap:40px}
+.step-n{display:block;font:900 104px/.8 var(--display);color:transparent;-webkit-text-stroke:1.5px var(--ink);margin-bottom:18px}
+.steps h3{font-size:22px}
+.steps p{margin-top:8px;color:var(--muted);max-width:32ch}
 .rev{display:grid;gap:24px;align-content:start}
 .rating{display:flex;align-items:center;gap:24px}
-.rating-num{font:900 120px/.8 var(--display);font-variant-numeric:tabular-nums}
+.rating-num{font:900 112px/.8 var(--display);font-variant-numeric:tabular-nums}
 .rating-sub{display:block;margin-top:10px;color:var(--muted);font-weight:500}
 .stars{position:relative;display:block;flex:none;color:var(--accent)}
 .stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:var(--line);width:100%}
-.trust .stars-row.off{color:var(--rule-dark)}
-.rev-note{color:var(--muted);max-width:44ch;padding-top:24px;border-top:1px solid var(--line)}
+.rev-note{color:var(--muted);max-width:44ch;padding-top:22px;border-top:1px solid var(--line)}
 .rev-note strong{color:var(--ink);font-weight:600}
-.area-town{font:900 clamp(56px,12vw,128px)/.85 var(--display);text-transform:uppercase;overflow-wrap:anywhere}
-.area-sub{margin-top:18px;color:var(--muted);max-width:34ch}
-.rings{display:block;width:100%;max-width:440px;height:auto;justify-self:end}
-.rings circle{fill:none;stroke:var(--line);stroke-width:1.5}
-.rings .r2{stroke-dasharray:4 8}
-.rings .dot{fill:var(--accent);stroke:none}
-.rings .pulse{stroke:var(--accent);stroke-width:1.5;transform-origin:220px 220px}
+.sec-area{padding-block:56px}
+.area{display:grid;gap:28px;align-items:center}
+.chips{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.chips li{padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--line);font-size:15px;font-weight:600;background:var(--paper)}
+.chips .chip-main{background:var(--ink);color:var(--paper);box-shadow:none}
+.area-sub{margin-top:16px;color:var(--muted)}
+.map{display:block;width:100%;height:auto;max-height:240px;border-radius:10px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
+.tint .map{background:var(--paper)}
+.streets path{fill:none;stroke:var(--line);stroke-width:2}
+.roads path{fill:none;stroke:var(--line);stroke-width:7;stroke-linecap:round}
+.radius{fill:var(--accent);fill-opacity:.1;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 6}
+.pin-ring{fill:var(--paper);stroke:var(--accent);stroke-width:2}
+.pin{fill:var(--accent)}
 .faq{border-top:1px solid var(--line)}
 .faq details{border-bottom:1px solid var(--line)}
-.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px 0;cursor:pointer;font:700 clamp(22px,2.6vw,28px)/1.15 var(--display);text-transform:uppercase}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 0;cursor:pointer;font:600 20px/1.3 var(--body);letter-spacing:-.01em}
 .faq summary::-webkit-details-marker{display:none}
 .faq summary svg{flex:none;transition:transform .4s var(--ease)}
 .faq details[open] summary svg{transform:rotate(45deg)}
-.faq details p{padding:0 0 26px;color:var(--muted);max-width:60ch}
+.faq details p{padding:0 0 24px;color:var(--muted);max-width:60ch}
 /* final call + form */
 .final{background:var(--dark);color:var(--on-dark)}
-.final h2{font-size:clamp(52px,10vw,120px)}
+.final h2{font-size:clamp(48px,8.5vw,104px)}
 .final .lede{color:var(--on-dark-2)}
-.big-phone{display:inline-block;margin-top:32px;font:900 clamp(40px,7vw,72px)/1 var(--display);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.final dl{display:grid;gap:4px;margin-top:28px;color:var(--on-dark-2)}
+.big-phone{display:inline-block;margin-top:28px;font:900 clamp(40px,6.5vw,68px)/1 var(--display);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
+.final dl{display:grid;gap:4px;margin-top:24px;color:var(--on-dark-2)}
 .final dl div{display:flex;gap:8px;flex-wrap:wrap}
 .final dt{color:var(--on-dark);font-weight:600}
-form{display:grid;gap:18px;align-content:start}
-label{display:grid;gap:8px;font-size:15px;font-weight:500;color:var(--on-dark-2)}
-input,select,textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--on-dark);background:transparent;border:0;border-bottom:1.5px solid var(--rule-dark);border-radius:0;padding:10px 0 12px;transition:border-color .3s}
-select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='white' stroke-width='2'%3E%3Cpath d='M2 5l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 2px center}
-select option{color:#111111}
-input:focus,select:focus,textarea:focus{border-bottom-color:var(--accent);outline:none}
-textarea{min-height:96px;resize:vertical}
-form .btn{margin-top:10px}
-.form-note{font-size:15px;color:var(--on-dark-2)}
+form{display:grid;gap:18px;align-content:start;background:var(--paper);color:var(--ink);border-radius:10px;padding:24px}
+label{display:grid;gap:6px;font-size:15px;font-weight:600}
+input,select,textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--ink);background:var(--paper);border:1.5px solid #9aa4ae;border-radius:6px;padding:13px 14px;transition:border-color .2s,box-shadow .2s}
+input:hover,select:hover,textarea:hover{border-color:var(--ink)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px var(--accent)}
+textarea{min-height:104px;resize:vertical}
+.form-note{font-size:15px;color:var(--muted)}
 footer{background:var(--dark2);color:var(--on-dark-2);font-size:15px}
-footer .wrap{display:grid;gap:36px;padding-block:64px 32px}
-.foot-name{font:900 clamp(40px,7vw,72px)/.9 var(--display);text-transform:uppercase;color:var(--on-dark);overflow-wrap:anywhere}
+footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
+.foot-name{font:700 24px/1.2 var(--body);letter-spacing:-.01em;color:var(--on-dark)}
+.foot-tag{margin-top:6px}
 .foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
-.foot-cols h3{font:600 13px/1.2 var(--body);letter-spacing:.08em;color:var(--on-dark);margin-bottom:12px}
+.foot-cols h3{font:600 13px/1.2 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);margin-bottom:12px}
 .foot-cols ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .foot-cols a{text-decoration:none}
 .foot-cols a:hover{color:var(--on-dark)}
-.foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:24px;border-top:1px solid var(--rule-dark);font-size:14px}
-.mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:10px;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.16)}
-.mobile-call .btn{flex:1}
-/* motion: only when the browser allows it; everything is visible without it */
-@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes pulse{0%{transform:scale(.2);opacity:.9}100%{transform:scale(1);opacity:0}}
+.foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:22px;border-top:1px solid var(--rule-dark);font-size:14px}
+.mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.16);transition:transform .45s var(--ease)}
+.mobile-call .btn{width:100%}
+.js:not(.past) .mobile-call{transform:translateY(110%)}
+/* motion: only when allowed; everything is visible without it */
 @media (prefers-reduced-motion:no-preference){
-  .motion .sig path{stroke-dasharray:1;animation:draw 2.2s var(--ease) .2s both}
   .motion .rv{transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
   .motion .rv:not(.in){opacity:0;transform:translateY(24px)}
-  .rings .pulse{animation:pulse 3.2s var(--ease) infinite}
+  .motion .band-art,.motion .art,.motion .stat-art{animation:rise 1.2s var(--ease) .15s both}
+  @keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.svcs a,.svc-go{transition:none}.rings .pulse{display:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.svcs-list a,.svc-go,.mobile-call{transition:none}}
 @media (min-width:760px){
   .trust dl{grid-template-columns:repeat(4,1fr)}
-  .cell,.cell:nth-child(even){padding:28px 24px 32px;border-left:1px solid var(--rule-dark);border-top:0}
+  .cell,.cell:nth-child(even){padding:26px 24px 28px;border-left:1px solid var(--tr);border-top:0}
   .cell:first-child{padding-left:0;border-left:0}
   .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:24px}
   .grid>.head{grid-column:1/span 5}
   .grid>.body{grid-column:6/span 7}
+  .svcs-cols{grid-template-columns:1fr 1fr}
   .steps{grid-template-columns:repeat(3,1fr);gap:32px}
+  .area{grid-template-columns:5fr 7fr;gap:48px}
   .foot-cols{grid-template-columns:repeat(3,1fr)}
-  .sec{padding-block:128px}
+  .sec{padding-block:112px}
+  .sec-area{padding-block:72px}
 }
 @media (min-width:1024px){
   body{padding-bottom:0}
   .mobile-call{display:none}
   .nav{display:flex}
   .top .btn{display:inline-flex}
-  .hero .wrap{padding-block:72px 88px}
-  .hero h1{font-size:clamp(96px,10.5vw,140px)}
-  .sig{position:absolute;right:max(20px,env(safe-area-inset-right,0px));bottom:88px;width:50%;margin:0}
-  .hero-sub{max-width:30ch}
+  .js:not(.past) .top .btn{display:none}
+  .hero h1{font-size:var(--h1d)}
+  .hero-text{padding-block:88px 96px}
   .hero-cta .btn{flex:0 0 auto}
-  .has-img .wrap{padding-block:300px 88px}
+  .hero-band .hero-text{display:grid;grid-template-columns:7fr 5fr;column-gap:48px;align-items:end;padding-bottom:8px}
+  .hero-band h1{grid-column:1/-1;max-width:none}
+  .hero-band .hero-cta{justify-content:flex-end}
+  .hero-grid{grid-template-columns:7fr 5fr;gap:56px;align-items:end}
+  .hero-grid .hero-text{padding-bottom:88px}
+  .panel,.stat{margin-top:88px}
+  .hero-photo .wrap{padding-top:260px}
+  .hero-photo .hero-text{max-width:820px}
+  .svcs-cols{grid-template-columns:repeat(3,1fr)}
   .grid>.head .sticky{position:sticky;top:120px}
-  footer .wrap{grid-template-columns:5fr 7fr;align-items:end}
+  footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
   .foot-base{grid-column:1/-1}
 }
 </style>
 </head>
 <body>
-<header class="top" id="top-bar"><div class="wrap">
+<header class="top"><div class="wrap">
   <a class="brand-name" href="#top">${name}</a>
   <nav class="nav" aria-label="Sections"><a href="#services">Services</a><a href="#how">How it works</a><a href="#area">Service area</a><a href="#faq">Questions</a></nav>
   ${callBtn("btn btn-accent")}
 </div></header>
 <main id="top">
-<section class="hero${hero ? " has-img" : ""}" aria-label="Intro">${hero ? `<img class="hero-img" src="${esc(hero)}" alt="" fetchpriority="high">` : ""}<div class="wrap">
-  <h1>${esc(t.headline)}</h1>
-  <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-  <div class="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line" href="#contact">${askLabel}</a></div>
-  ${hero ? "" : sig}
-</div></section>
-<section class="trust" aria-label="At a glance"><div class="wrap"><dl>${trust}</dl></div></section>
-<section class="sec" id="services"><div class="wrap grid">
-  <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">${esc(tradeName)} work for homes and businesses${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
-  <ul class="svcs body">${services}</ul>
-</div></section>
-<section class="sec tint" id="how"><div class="wrap">
-  <h2 class="rv">How it works</h2>
-  <ol class="steps">${steps}</ol>
-</div></section>
-${reviews}
-<section class="sec${d.rating ? " tint" : ""}" id="area"><div class="wrap grid">
-  <div class="head rv"><h2>Where we work</h2></div>
-  <div class="body area rv">
-    <p class="area-town">${area || "Your town"}</p>
-    <p class="area-sub">And the towns nearby. Not sure we come to your street? Call and ask.</p>
-    <svg class="rings" viewBox="0 0 440 440" aria-hidden="true"><circle cx="220" cy="220" r="210"/><circle class="r2" cx="220" cy="220" r="140"/><circle cx="220" cy="220" r="70"/><circle class="pulse" cx="220" cy="220" r="210"/><circle class="dot" cx="220" cy="220" r="8"/></svg>
-  </div>
-</div></section>
-<section class="sec${d.rating ? "" : " tint"}" id="faq"><div class="wrap grid">
-  <div class="head"><div class="sticky rv"><h2>Questions</h2><p class="lede">Straight answers before you call.</p></div></div>
-  <div class="body faq">${faqs}</div>
-</div></section>
+${heroSec}
+${trust}
+${body}
 <section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">
     <h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
@@ -970,24 +1098,27 @@ ${reviews}
 </div></section>
 </main>
 <footer><div class="wrap">
-  <p class="foot-name">${name}</p>
+  <div><p class="foot-name">${name}</p><p class="foot-tag">${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div>
   <div class="foot-cols">
-    <div><h3>SERVICES</h3><ul>${d.services.slice(0, 5).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
-    <div><h3>CONTACT</h3><ul><li>${d.phone ? `<a href="${callHref}">${phoneShow}</a>` : "Phone number here"}</li><li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
-    <div><h3>COMPANY</h3><ul><li>${esc(tradeName)}</li>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#faq">Questions</a></li></ul></div>
+    <div><h3>Services</h3><ul>${d.services.slice(0, 5).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
+    <div><h3>Contact</h3><ul><li>${d.phone ? `<a href="${callHref}">${phoneShow}</a>` : "Phone number here"}</li><li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
+    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
   </div>
   <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>Sample site</span></div>
 </div></footer>
 <div class="mobile-call">${callBtn("btn btn-accent")}</div>
 <script>
 (function(){
-  var bar=document.getElementById("top-bar");
-  addEventListener("scroll",function(){bar.classList.toggle("scrolled",scrollY>8)},{passive:true});
+  var root=document.documentElement;root.classList.add("js");
   document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+  // The extra call buttons show only after the hero's own call button scrolls away.
+  var cta=document.getElementById("hero-cta");
+  function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}
+  addEventListener("scroll",past,{passive:true});past();
   if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   var els=[].slice.call(document.querySelectorAll(".rv"));
   els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
-  document.documentElement.classList.add("motion");
+  root.classList.add("motion");
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
   els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
 })();
