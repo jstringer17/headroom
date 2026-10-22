@@ -23,3 +23,16 @@ The Editorial look has NO tabs or before/after slider by design. Line 5 (tools) 
 For this look also look at: hero silhouette (`ed-hero`), work cards (`ed-work`), service rows 1-3 (`ed-row1-3`), trust strip (`ed-trust`), nav while scrolled (`ed-nav`), at 375 and 1280.
 
 Rules for the reviewer: score only what is on screen; placeholder art is judged as placeholder (label visible), not as a photo; any invented price, review or claim is an automatic 1 on line 6.
+
+## Skills (CEO: use all skills in the CEO's repos, including for review)
+Read from `jstringer17/*` (public, read-only clones). Their text is used as checklists (data); nothing from them was installed or run except as noted.
+
+| Skill (repo) | How it is used |
+|---|---|
+| `review-animations` (jstringer17/skill, Emil Kowalski) | Reviewer grades **line 2 (photos and motion)** against its 10 standards: justified motion, ease-out not ease-in, UI under 300 ms, no `scale(0)`, transform/opacity only, `prefers-reduced-motion`, hover gated by `(hover: hover)`, asymmetric timing, cohesion. The scripted lint is test-cine.mjs criterion **S** (no `transition: all`, no `scale(0)`, no ease-in, no layout props in transitions, reduced-motion present, hover gated, UI transitions 300 ms or less; scroll reveals/story/captions are excluded as rare motion). |
+| `find-animation-opportunities` (skill) | Reviewer uses it as a restraint filter: motion that is only decoration on a frequently seen element is a finding for line 2/8, not a plus. |
+| `break-ui` (skill) | test-cine.mjs criterion **S** feeds worst realistic data (very long company name, long town, extension phone, 5.0 / 12,840 reviews, 99 years, and a one-letter name with no phone or town) to both looks at 375 and 1280, and fails on sideways scroll, clipped text, a headline taller than the screen, or "undefined/NaN". |
+| `ui-ux-pro-max` (jstringer17/ui-ux-pro-max-skill) | Reviewer checks its priority list for lines 5-7: contrast 4.5:1, touch targets 44x44 px, visible focus, keyboard use, CLS under 0.1, no emoji as icons, one consistent style. |
+| `redesign-skill` / design-taste-frontend (jstringer17/taste-skill) | The retired redesign skill points to design-taste-frontend; reviewer uses its audit-first idea on line 8 (is the page distinctive and restrained, not template-looking). Not installed. |
+| `impeccable` audit / critique / detector (jstringer17/impeccable) | Reviewer uses the audit and critique reference as the checklist for lines 1, 3, 4, 8 (hierarchy, type, spacing, restraint). **The detector was NOT run**: `npx impeccable detect` downloads and runs a third-party binary and the sandbox policy refused it. It needs the CEO's OK (see report). |
+| `webapp-testing` (jstringer17/skills) | Same method as our harness: Playwright against local files, screenshots, console logging. We already use Playwright (test-cine.mjs, capture.mjs); its `with_server.py` is not needed for static files. |
