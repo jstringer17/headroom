@@ -137,7 +137,7 @@ border-radius:var(--radius);padding:22px 24px;box-shadow:0 20px 50px -20px rgba(
 .cine-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:11px 20px;border-radius:999px;border:0;cursor:pointer;
 background:var(--c-accent);color:var(--c-accent-ink);font:600 .95rem/1 var(--f-body);text-decoration:none;
 transition:transform var(--t-ui) var(--ease),box-shadow var(--t-ui) var(--ease)}
-.cine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}
+@media (hover:hover){.cine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}}
 .cine-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .cine-btn.ghost{background:transparent;color:inherit;box-shadow:inset 0 0 0 1px currentColor}
 .cine-link{color:var(--c-accent-text);text-underline-offset:3px}
@@ -188,6 +188,8 @@ h1 em,h2 em,.line em,.sec h2 em{color:var(--c-accent-text)${marker ? ";backgroun
 html body :is(.story,.dark-sec,.final,.panel,.est-out,.top) em{color:var(--c-accent-hi);background:none;padding:0}
 .est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
 box-shadow:0 30px 60px -30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
+.big-phone{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+.final .grid>*{min-width:0}
 .est-num{font-family:var(--f-display);font-weight:${grotesk ? "800" : "400"};font-size:clamp(2.6rem,7vw,4.5rem);line-height:1;letter-spacing:-.02em}
 `;
   return { css, fontsHref: CINE_FONTS_HREF, vars: v };
@@ -911,6 +913,8 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-sil.ph{background:var(--ed-sky)}
 .ed-sil.ph img{inset:0;height:100%;object-position:50% 100%}
 .ed-final{background:var(--ed-dark)}
+.ed-phone{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+.ed-final .ed-grid>*{min-width:0}
 /* Proportion pass (reference study, our own design) */
 .ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-weight:600}
 .ed-logo{display:inline-flex;align-items:center;gap:10px;font-size:23px;color:var(--ed-ink)}
@@ -939,7 +943,7 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-beat img{z-index:-2}
 .ed-beat .ed-wrap{position:relative;z-index:1}
 .ed-beat .ed-wrap{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-content:end;align-items:end;gap:32px;padding-block:clamp(56px,7vw,96px) clamp(40px,5vw,64px)}
-.ed-beat .ed-big{justify-self:start;text-align:left;color:#f3eee6;font-size:clamp(52px,9.6vw,124px);line-height:.9;max-width:none}
+.ed-beat .ed-big{justify-self:start;text-align:left;overflow-wrap:anywhere;min-width:0;color:#f3eee6;font-size:clamp(52px,9.6vw,124px);line-height:.9;max-width:none}
 .ed-beat .ed-beat-note{justify-self:end;text-align:right;max-width:34ch;font-size:17px;line-height:1.6;color:rgba(243,238,230,.88)}
 /* trust: one outlined box, four equal cells */
 .ed-trust ul{background:transparent;border:1px solid var(--ed-line)}
