@@ -2381,13 +2381,13 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-final{background:var(--ed-dark)}
 .ed-phone{white-space:normal;overflow-wrap:anywhere;max-width:100%}
 .ed-final .ed-grid>*{min-width:0}
-/* Motion (Emil Kowalski review): strong ease-out, sub-300ms UI, blur bridges the picture swap */
+/* Motion (Emil Kowalski review): strong ease-out, sub-300ms UI, opacity-only picture swap */
 :root{--ed-ease-out:cubic-bezier(.23,1,.32,1)}
-.ed-pic img{transition:opacity 240ms var(--ed-ease-out),filter 240ms var(--ed-ease-out)}
-.ed-pic img.swap{opacity:0;filter:blur(6px)}
+.ed-pic img{transition:opacity 240ms var(--ed-ease-out)}
+.ed-pic img.swap{opacity:0}
 .ed-row-name{transition:opacity 200ms var(--ed-ease-out)}
 .ed-btn:active{transform:scale(.97);transition:transform 160ms var(--ed-ease-out)}
-@media (prefers-reduced-motion:reduce){.ed-pic img{transition:opacity 200ms linear}.ed-pic img.swap{filter:none}.ed-btn:active{transform:none}}
+@media (prefers-reduced-motion:reduce){.ed-pic img{transition:opacity 200ms linear}.ed-btn:active{transform:none}}
 /* Picture titles: smaller optical size + heavier weight so hairlines never break over photos */
 .ed-card h3,.ed-beat .ed-big{font-variation-settings:"opsz" 18;font-weight:700;letter-spacing:.005em}
 .ed-beat::after{background:linear-gradient(0deg,rgba(8,8,10,.78),rgba(8,8,10,.25) 55%,rgba(8,8,10,.35))!important}

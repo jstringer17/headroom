@@ -174,11 +174,11 @@ What was taken and where it shows. Where a skill conflicts with the CEO's pinned
 **Emil Kowalski skills** (jstringer17/skill)
 - **review-animations:** applied its ten standards:
   - strong ease-out `cubic-bezier(.23,1,.32,1)`;
-  - UI motion under 300ms (picture swap 240ms, row dim 200ms);
+  - UI motion under 300ms (picture swap 240ms opacity only, row dim 200ms);
   - hover gated by `(hover:hover) and (pointer:fine)`;
   - press feedback `scale(.97)` over 160ms;
   - reduced motion keeps the fade and drops the blur and scale.
-- **improve-animations:** audited the motion surface. The highest-leverage fix was the hard crossfade on the service pictures, now bridged with a 6px blur.
+- **improve-animations:** audited the motion surface. The highest-leverage fix was the hard crossfade on the service pictures, now a 240ms strong ease-out (a 6px blur bridge was tried, then dropped so the swap stays opacity-only).
 - **animation-vocabulary:** names used in the CSS: settle, rise, crossfade, blur bridge, press.
 - **find-animation-opportunities:** the one rare moment worth delight is the hero rise. Rows, tabs and buttons get feedback only.
 - **animate:** the hero clip-path rise (1.1s, first view only) and the image settle 1.08→1. Both are off under reduced motion.
