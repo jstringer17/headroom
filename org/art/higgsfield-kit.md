@@ -9,8 +9,8 @@ Made from sitemaker/src/cine-kit.js. Run `node org/art/kit-doc.mjs` after any ki
 | 2 | Fencing | 9 |
 | 3 | Pressure Washing | 8 |
 | 4 | Heating & Air (HVAC) | 8 |
-| 5 | Restoration | 8 |
-| 6 | Home builder | 9 |
+| 5 | Water and Fire Restoration | 8 |
+| 6 | Home Builder | 9 |
 | 7 | Framing | 9 |
 | 8 | Remodeling | 9 |
 | 9 | Painting | 8 |
@@ -54,6 +54,14 @@ Made from sitemaker/src/cine-kit.js. Run `node org/art/kit-doc.mjs` after any ki
 - **Slot `after`**: After: Storm damage, then repair. _After picture. Use Edit on the before picture._
   > Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: the same roof section repaired with matching new shingles laid flat in straight rows, new flashing, soft sun. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 
+Optional, for the Editorial look's service rows (3 more; skip them and a drawn sample shows):
+- **Slot `svc-gutters`**: Service: Gutters. _Make it new._
+  > The eave of a suburban house with new seamless dark bronze gutters and a downspout, clean roof edge above, soft afternoon light. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-flat`**: Service: Flat roofs. _Make it new._
+  > A small modern commercial building with a new flat roof, clean parapet edge and light membrane, seen from across a quiet lot, soft daylight. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-skylight`**: Service: Skylights. _Make it new._
+  > A dark shingle roof with two new flush skylights catching the sky, close view from a slight high angle, soft daylight. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+
 ## 2. Fencing (9 pictures)
 
 - **Slot `stakes`**: Story 1 of 4: It starts with a string line. _Make this one new. It is the base picture for the story._
@@ -75,6 +83,16 @@ Made from sitemaker/src/cine-kit.js. Run `node org/art/kit-doc.mjs` after any ki
 - **Slot `after`**: After: Old gate, new gate. _After picture. Use Edit on the before picture._
   > Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: a new cedar gate hangs straight and level in the same spot with new black hinges and latch, fresh boards on both sides. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 
+Optional, for the Editorial look's service rows (4 more; skip them and a drawn sample shows):
+- **Slot `svc-chain`**: Service: Chain link. _Make it new._
+  > A new galvanized chain link fence along a green side yard with a top rail and line posts, golden hour light. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-gate`**: Service: Gates. _Make it new._
+  > A new cedar walk gate set in a cedar privacy fence with black hinges and latch, front-on view, golden hour light. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-repair`**: Service: Fence repair. _Make it new._
+  > A weathered cedar privacy fence with a few fresh new boards replaced in one section, front-on view, soft light. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-farm`**: Service: Farm and ranch. _Make it new._
+  > A long three-rail wooden ranch fence crossing a wide green pasture, low sun, long shadows. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+
 ## 3. Pressure Washing (8 pictures)
 
 - **Slot `dirty`**: Story 1 of 3: Years of grime, one wash. _Make this one new. It is the base picture for the story._
@@ -93,6 +111,16 @@ Made from sitemaker/src/cine-kit.js. Run `node org/art/kit-doc.mjs` after any ki
   > Straight top-down drone view of a concrete driveway, dark gray with grime, green mildew along the edges and joints, tire tracks and an oil spot, a strip of green lawn on both sides, even soft daylight. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 - **Slot `after`**: After: Grime, then clean. _After picture. Use Edit on the before picture._
   > Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: the whole driveway is clean, bright even light gray concrete, crisp joints, the lawn unchanged. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+
+Optional, for the Editorial look's service rows (4 more; skip them and a drawn sample shows):
+- **Slot `svc-roof`**: Service: Roof cleaning. _Make it new._
+  > A suburban house roof where the left half still has dark algae streaks and the right half is soft-washed clean, front view, soft daylight. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-gutter`**: Service: Gutter brightening. _Make it new._
+  > Close view of a white gutter along a roof edge, left half grey with black tiger stripes, right half bright clean white, soft daylight. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-store`**: Service: Commercial washing. _Make it new._
+  > A small storefront with clean glass, a freshly washed light facade and a clean sidewalk, no signs, no lettering, early morning light. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
+- **Slot `svc-window`**: Service: Window washing. _Make it new._
+  > A large house window with spotless clear glass and clean white trim, sky reflected, soft daylight. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 
 ## 4. Heating & Air (HVAC) (8 pictures)
 
@@ -113,7 +141,7 @@ Made from sitemaker/src/cine-kit.js. Run `node org/art/kit-doc.mjs` after any ki
 - **Slot `after`**: After: Old unit, new unit. _After picture. Use Edit on the before picture._
   > Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: a new modern light gray outdoor unit sits on a new level pad with neat insulated lines, weeds cleared. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 
-## 5. Restoration (8 pictures)
+## 5. Water and Fire Restoration (8 pictures)
 
 - **Slot `wet`**: Story 1 of 3: Water damage moves fast. _Make this one new. It is the base picture for the story._
   > An empty finished basement room after a leak: a dark water stain line along the lower drywall, a damp darker carpet, soft window light from the left, eye-level wide view across the room, no furniture. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
@@ -132,7 +160,7 @@ Made from sitemaker/src/cine-kit.js. Run `node org/art/kit-doc.mjs` after any ki
 - **Slot `after`**: After: Stained ceiling, fixed ceiling. _After picture. Use Edit on the before picture._
   > Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: the same ceiling corner smooth, repaired and freshly painted white. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 
-## 6. Home builder (9 pictures)
+## 6. Home Builder (9 pictures)
 
 - **Slot `lot`**: Story 1 of 4: A lot and a plan. _Make this one new. It is the base picture for the story._
   > An empty, graded suburban building lot with string lines and small stakes marking a house footprint, green trees behind, wide eye-level view from the street, golden hour light, clear sky. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.

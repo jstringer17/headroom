@@ -654,3 +654,41 @@ const ED_LINES = {
 for (const [t, [headline, accent]] of Object.entries(ED_LINES)) {
   if (CINE_KIT[t]) CINE_KIT[t].editorial = { ...(CINE_KIT[t].editorial || {}), headline, accent };
 }
+
+// Editorial service rows and sample-project pictures for the three QA trades.
+// rows: service name -> the picture that shows it (an existing slot, or an
+// optional extra service picture below). extra: optional pictures for services no
+// story or style picture shows; each has its own prompt and drawn placeholder.
+const EX = (id, label, mod, scene) => ({ id, label, mod, prompt: P(scene) });
+Object.assign(CINE_KIT.roofing.editorial, {
+  process: "old",
+  rows: { "Roof repair": "after", "Roof replacement": "deck", "Storm damage": "before", "Roof inspections": "wrap",
+    Gutters: "svc-gutters", "Flat roofs": "svc-flat", Skylights: "svc-skylight", "Insurance claims help": "before" },
+  extra: [
+    EX("svc-gutters", "Service: Gutters", "gutters", "The eave of a suburban house with new seamless dark bronze gutters and a downspout, clean roof edge above, soft afternoon light."),
+    EX("svc-flat", "Service: Flat roofs", "flat", "A small modern commercial building with a new flat roof, clean parapet edge and light membrane, seen from across a quiet lot, soft daylight."),
+    EX("svc-skylight", "Service: Skylights", "skylight", "A dark shingle roof with two new flush skylights catching the sky, close view from a slight high angle, soft daylight."),
+  ],
+});
+Object.assign(CINE_KIT.fencing.editorial, {
+  process: "stakes",
+  rows: { "Wood fences": "cedar", "Vinyl fences": "vinyl", "Chain link": "svc-chain", "Aluminum and iron": "rail",
+    Gates: "svc-gate", "Fence repair": "svc-repair", "Pool fences": "rail", "Farm and ranch": "svc-farm" },
+  extra: [
+    EX("svc-chain", "Service: Chain link", "chain", "A new galvanized chain link fence along a green side yard with a top rail and line posts, golden hour light."),
+    EX("svc-gate", "Service: Gates", "gate", "A new cedar walk gate set in a cedar privacy fence with black hinges and latch, front-on view, golden hour light."),
+    EX("svc-repair", "Service: Fence repair", "repair", "A weathered cedar privacy fence with a few fresh new boards replaced in one section, front-on view, soft light."),
+    EX("svc-farm", "Service: Farm and ranch", "farm", "A long three-rail wooden ranch fence crossing a wide green pasture, low sun, long shadows."),
+  ],
+});
+Object.assign(CINE_KIT.pressure.editorial, {
+  process: "dirty",
+  rows: { "House washing": "siding", "Driveways and sidewalks": "drive", "Decks and fences": "deck", "Roof cleaning": "svc-roof",
+    "Gutter brightening": "svc-gutter", "Commercial washing": "svc-store", "Patios and pool decks": "before", "Window washing": "svc-window" },
+  extra: [
+    EX("svc-roof", "Service: Roof cleaning", "roof", "A suburban house roof where the left half still has dark algae streaks and the right half is soft-washed clean, front view, soft daylight."),
+    EX("svc-gutter", "Service: Gutter brightening", "gutter", "Close view of a white gutter along a roof edge, left half grey with black tiger stripes, right half bright clean white, soft daylight."),
+    EX("svc-store", "Service: Commercial washing", "store", "A small storefront with clean glass, a freshly washed light facade and a clean sidewalk, no signs, no lettering, early morning light."),
+    EX("svc-window", "Service: Window washing", "window", "A large house window with spotless clear glass and clean white trim, sky reflected, soft daylight."),
+  ],
+});

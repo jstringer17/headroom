@@ -39,6 +39,11 @@ for (const [i, t] of CINE_ORDER.entries()) {
     const tip = how[s.kind === "story" && s.index === 0 ? "story0" : s.kind];
     md += `- **Slot \`${s.slotId}\`**: ${s.label.replace(/\.$/, "")}. _${tip}_\n  > ${s.prompt}\n`;
   }
+  const extra = (CINE_KIT[t].editorial && CINE_KIT[t].editorial.extra) || [];
+  if (extra.length) {
+    md += `\nOptional, for the Editorial look's service rows (${extra.length} more; skip them and a drawn sample shows):\n`;
+    for (const x of extra) md += `- **Slot \`${x.id}\`**: ${x.label}. _Make it new._\n  > ${x.prompt}\n`;
+  }
   md += "\n";
 }
 writeFileSync(new URL("./higgsfield-kit.md", import.meta.url), md);

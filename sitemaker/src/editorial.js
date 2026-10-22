@@ -307,21 +307,23 @@ export function generateEditorial(form, d, deps) {
   const prices = offeredPrices(kit, cine.prices);
 
   const slots = cineSlots(kit);
-  const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
-  const src = (id) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id));
+  // Optional service pictures (kit.editorial.extra) behave like slots here.
+  const extras = (kit.editorial && kit.editorial.extra) || [];
+  const slotLabel = (id) => (slots.find((s) => s.id === id) || extras.find((x) => x.id === id) || {}).label || id;
+  const src = (id, o) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id), o);
   // An uploaded picture is large, so each one is written into the page once; later uses
   // carry only data-slot and the script copies the picture over (keeps the file small).
   const BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
   const written = new Set();
-  const pic = (id, attrs = "") => {
+  const pic = (id, attrs = "", o) => {
     const big = /^data:image\/(jpeg|png|webp)/.test(src(id));
     const dupe = big && written.has(id);
     written.add(id);
-    return `<img src="${dupe ? BLANK : esc(src(id))}" data-slot="${esc(id)}" alt="" ${attrs}>`;
+    return `<img src="${dupe ? BLANK : esc(src(id, o))}" data-slot="${esc(id)}" alt="" ${attrs}>`;
   };
 
   const story = kit.story || [], styles = kit.styles || [];
-  const exists = (id) => slots.some((s) => s.id === id);
+  const exists = (id) => slots.some((s) => s.id === id) || extras.some((x) => x.id === id);
   const pool = [...styles.map((s) => s.id), ...story.map((s) => s.id)];
   const e = kit.editorial || {};
   const pick = (id, fb) => (id && exists(id) ? id : fb);
@@ -337,6 +339,7 @@ export function generateEditorial(form, d, deps) {
   const toks = (txt) => new Set(String(txt).toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w && !STOP.has(w)).map((w) => w.replace(/(es|s)$/, "")));
   const cand = [...styles.map((x) => ({ id: x.id, t: toks(`${x.name} ${x.note || ""}`) })), ...story.map((x) => ({ id: x.id, t: toks(x.headline) }))];
   const svcIds = rows.map(([n], i) => {
+    if (e.rows && e.rows[n] && exists(e.rows[n])) return e.rows[n];
     if (e.services && e.services.length) return svcPool[i % svcPool.length];
     const want = toks(n);
     let best = null, bestScore = 0;
@@ -367,7 +370,7 @@ export function generateEditorial(form, d, deps) {
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a><a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${d.phone ? phoneShow : "Call us"}</a></div></div>
-  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"')}</div>
+  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"', { labelY: 560 })}</div>
 </div></section>`;
 
   // Trust strip: only facts the owner ticked or typed
@@ -384,7 +387,7 @@ export function generateEditorial(form, d, deps) {
   // Second beat
   const beat = `<section class="ed-beat" data-ed="beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
   <p class="ed-big">${d.city ? `${esc(d.city.split(",")[0].trim())}<br>${esc(tradeName)}` : story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
-  <p class="ed-beat-note">${esc(t.sub)} ${name} works across ${areaPhrase}.</p>
+  <p class="ed-beat-note">Tell us what you have in mind and we will come and take a look. ${name} works across ${areaPhrase}.</p>
 </div></section>`;
 
   // Work: three sample project cards

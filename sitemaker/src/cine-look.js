@@ -388,6 +388,23 @@ const SCENES = {
     return { art: a, mood: "gold" };
   },
   pressure(st, last, v) {
+    if (v === 1) {
+      // House washing: the front wall up close, clean siding, trim and a window
+      let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 120, W, 680, "#e9e6df", C.ink, 3);
+      a += range(26).map((i) => line(0, 120 + i * 26, W, 120 + i * 26, 1.5, "#b9b4a9")).join("");
+      a += rect(980, 240, 300, 340, "#9fb2bd", C.ink, 4) + line(1130, 240, 1130, 580, 3) + line(980, 410, 1280, 410, 3) + rect(960, 220, 340, 380, "none", "#f6f3ec", 14);
+      a += rect(0, 800, W, 100, C.stone, "none", 0) + line(0, 800, W, 800, 3);
+      return { art: a, mood: "day", raw: true };
+    }
+    if (v === 2) {
+      // Decks: clean wood boards in perspective, a railing and the house wall behind
+      let a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 0, W, 420, "#e9e6df") + range(14).map((i) => line(0, 30 * (i + 1), W, 30 * (i + 1), 1.5, "#b9b4a9")).join("");
+      a += rect(620, 120, 360, 300, "#3c4148", C.ink, 3) + line(800, 120, 800, 420, 3);
+      a += path(`M0 420 H${W} V${H} H0 Z`, "#c79e6c", "none", 0);
+      a += range(22).map((i) => line(800 + (i - 11) * 18, 420, 800 + (i - 11) * 150, H, 2, "#8e6a43")).join("");
+      a += range(10).map((i) => line(60 + i * 160, 330, 60 + i * 160, 430, 6, "#f3efe7")).join("") + line(0, 330, W, 330, 8, "#f3efe7");
+      return { art: a, mood: "day", raw: true };
+    }
     const story = v < 0;
     const B = 450;
     let a = house({ base: B, x: 800, w: 520, wallH: 160, roofH: 110, roof: "new", wall: v === 1 ? "#ebe8e1" : C.white, worn: story && st === 0,
@@ -710,6 +727,27 @@ const PAIRS = {
   },
 };
 
+// Optional service pictures for the editorial rows (kit.editorial.extra[].mod).
+const EXTRA = {
+  roofing: {
+    gutters: () => backdrop("gold") + house({ roof: "new" }) + line(270, G - 244, 1330, G - 244, 14, C.rust) + line(1300, G - 244, 1300, G, 10, C.rust) + line(300, G - 244, 300, G, 10, C.rust),
+    flat: () => backdrop("day") + rect(380, G - 300, 840, 300, C.paper2) + rect(360, G - 330, 880, 34, C.stone) + range(6).map((i) => rect(440 + i * 130, G - 240, 90, 120, "#9fb2bd")).join("") + rect(760, G - 110, 90, 110, C.char),
+    skylight: () => backdrop("day") + house({ roof: "new" }) + [[620, 360], [900, 360]].map(([x, y]) => path(`M${x} ${y} l 80 0 l 18 70 l -80 0 Z`, "#9fc0d6", C.ink, 3)).join(""),
+  },
+  fencing: {
+    chain: () => backdrop("gold") + rect(0, G, W, H - G, C.sage, "none", 0) + range(29).map((i) => line(60 + i * 50, 480, 60 + i * 50 + 50, 690, 1.5, "#8c9298") + line(60 + i * 50 + 50, 480, 60 + i * 50, 690, 1.5, "#8c9298")).join("") + line(60, 480, 1540, 480, 6, "#8c9298") + range(8).map((i) => line(60 + i * 211, 470, 60 + i * 211, 700, 8, "#7d838a")).join(""),
+    gate: () => backdrop("gold") + rect(0, G, W, H - G, C.sage, "none", 0) + rect(80, 470, 1440, 240, C.wood) + range(60).map((i) => line(80 + i * 24, 470, 80 + i * 24, 710, 1.5, C.woodD)).join("") + rect(680, 440, 240, 270, "#d9b07c", C.ink, 4) + path("M680 700 L920 460", "none", C.woodD, 6) + rect(690, 490, 24, 10, C.char) + rect(690, 640, 24, 10, C.char) + circle(900, 580, 8, C.char, "none", 0),
+    repair: () => backdrop("day") + rect(0, G, W, H - G, C.sage, "none", 0) + rect(80, 470, 1440, 240, "#a99a86") + range(60).map((i) => line(80 + i * 24, 470, 80 + i * 24, 710, 1.5, "#7d7262")).join("") + rect(704, 470, 120, 240, C.wood) + range(5).map((i) => line(704 + i * 24, 470, 704 + i * 24, 710, 1.5, C.woodD)).join(""),
+    farm: () => backdrop("gold") + rect(0, G - 40, W, H - G + 40, C.sage, "none", 0) + range(9).map((i) => line(40 + i * 190, 560, 40 + i * 190, 740, 10, C.woodD)).join("") + [600, 640, 680].map((y) => line(0, y, W, y + 20, 9, C.wood)).join(""),
+  },
+  pressure: {
+    roof: () => backdrop("day", C.sage, 1250, G) + house({ roof: "new" }) + `<clipPath id="lh"><rect x="0" y="0" width="800" height="900"/></clipPath><g clip-path="url(#lh)">${range(14).map((i) => line(420 + i * 30, 300, 380 + i * 30, 460, 10, "#0a0a0a", ' opacity=".45"')).join("")}</g>` + line(800, 280, 800, 470, 3, C.ink),
+    gutter: () => rect(0, 0, W, H, C.sky2, "none", 0) + path("M0 360 L1600 360 L1600 300 L0 300 Z", C.char) + rect(0, 360, W, 90, "#eeeeea", C.ink, 3) + range(9).map((i) => path(`M${40 + i * 80} 370 l 20 70`, "none", "#2a2a2a", 9, ' opacity=".55"')).join("") + line(800, 350, 800, 460, 3, C.ink) + rect(0, 450, W, 450, "#e9e6df") + range(16).map((i) => line(0, 470 + i * 26, W, 470 + i * 26, 1.5, "#b9b4a9")).join(""),
+    store: () => rect(0, 0, W, H, C.sky2, "none", 0) + rect(200, 140, 1200, 560, "#e9e6df", C.ink, 3) + rect(200, 120, 1200, 40, C.stone) + rect(280, 320, 440, 380, "#9fb2bd", C.ink, 3) + rect(880, 320, 440, 380, "#9fb2bd", C.ink, 3) + rect(740, 360, 120, 340, C.char) + rect(0, 700, W, 200, C.stone, "none", 0) + line(0, 700, W, 700, 3),
+    window: () => rect(0, 0, W, H, "#e9e6df", "none", 0) + range(34).map((i) => line(0, 26 * (i + 1), W, 26 * (i + 1), 1.5, "#b9b4a9")).join("") + rect(460, 150, 680, 560, "#f6f3ec", C.ink, 3) + rect(500, 190, 600, 480, "#a9c1cf", C.ink, 3) + line(800, 190, 800, 670, 4) + path("M540 600 L700 240 M600 640 L760 280", "none", "#ffffff", 10, ' opacity=".55"'),
+  },
+};
+
 // Which stage and variant a slot draws.
 function stageFor(trade, slotId) {
   const k = CINE_KIT[trade];
@@ -737,7 +775,7 @@ const MOTION = `<style>.drift{animation:dr 38s ease-in-out infinite alternate}.d
 @keyframes dr{from{transform:translateX(-60px)}to{transform:translateX(60px)}}@keyframes gl{from{opacity:.25}to{opacity:.75}}
 @media (prefers-reduced-motion:reduce){.drift,.drift2,.glow,.sway,.shimmer,.fall{animation:none}}</style>`;
 
-export function placeholderSvg(trade, slotId, labelText) {
+export function placeholderSvg(trade, slotId, labelText, opts = {}) {
   const carbon = CARBON_TRADES.has(trade);
   Object.assign(C, carbon ? CARBON : LIGHT);
   try {
@@ -746,7 +784,11 @@ export function placeholderSvg(trade, slotId, labelText) {
     const isStory = !!(k && k.story.some((s) => s.id === slotId));
     const scene = SCENES[trade];
     let body, mood = "day";
-    if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
+    const extra = k && k.editorial && (k.editorial.extra || []).find((x) => x.id === slotId);
+    if (extra && EXTRA[trade] && EXTRA[trade][extra.mod]) {
+      body = EXTRA[trade][extra.mod]();
+      if (!labelText || labelText === slotId) labelText = extra.label;
+    } else if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
       body = PAIRS[trade](slotId === "after");
     } else if (scene) {
       const out = scene(st, last, v);
@@ -764,13 +806,13 @@ export function placeholderSvg(trade, slotId, labelText) {
     // Story frames share one label so it does not ghost during the crossfade.
     const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
     const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, k && k.styles.some((s) => s.id === slotId) ? 140 : 96)}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
   } finally {
     Object.assign(C, LIGHT);
   }
 }
 
-export function placeholderArt(trade, slotId, label) {
+export function placeholderArt(trade, slotId, label, opts) {
   const k = CINE_KIT[trade];
   let text = label;
   if (!text && k) {
@@ -778,7 +820,7 @@ export function placeholderArt(trade, slotId, label) {
     const y = k.styles.find((x) => x.id === slotId);
     text = s ? s.headline : y ? y.name : slotId === "before" ? "Before" : slotId === "after" ? "After" : slotId;
   }
-  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(placeholderSvg(trade, slotId, text || ""));
+  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(placeholderSvg(trade, slotId, text || "", opts || {}));
 }
 
 // A drawn plan sheet (white lines on blueprint blue) for the blueprint tool:
@@ -867,7 +909,7 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 }
 .ed-sil{border-radius:0 0 24px 24px}
 .ed-sil.ph{background:var(--ed-sky)}
-.ed-sil.ph img{inset:auto 0 0 0;height:74%;object-position:50% 0}
+.ed-sil.ph img{inset:0;height:100%;object-position:50% 100%}
 .ed-final{background:var(--ed-dark)}
 /* Proportion pass (reference study, our own design) */
 .ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-weight:600}
@@ -880,9 +922,12 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-steps b{color:var(--ed-muted)!important}
 /* rating: one compact row, no empty half */
 #reviews{padding-block:0 72px!important}
-.ed-rev{grid-template-columns:auto minmax(0,1fr);column-gap:40px;align-items:end;border-top:1px solid var(--ed-line);padding-top:40px}
+.ed-rev{grid-template-columns:auto minmax(0,1fr) minmax(0,1.2fr);column-gap:48px;align-items:end;border-top:1px solid var(--ed-line);padding-top:40px}
 .ed-rev .ed-eyebrow{grid-column:1/-1}
-.ed-rev b{grid-row:span 2}
+.ed-rev>b{grid-column:1}
+.ed-rev>p:not(.ed-eyebrow):not(.ed-note){grid-column:2;font-size:20px;font-weight:600}
+.ed-rev>.ed-note{grid-column:3;justify-self:end;max-width:44ch}
+@media (max-width:759px){.ed-rev{grid-template-columns:minmax(0,1fr)}.ed-rev>*{grid-column:1!important;justify-self:start!important}}
 .ed-head{gap:22px}
 /* hero */
 .ed-hero h1{font-size:clamp(46px,8.4vw,108px);line-height:.9;letter-spacing:-.005em}
