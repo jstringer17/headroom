@@ -41,6 +41,7 @@ const ED_ICONS = {
   hours: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>',
   years: '<path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/>',
   rating: '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z"/>',
+  home: '<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/>',
   area: '<path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
 };
 const edIcon = (inner, size = 22) =>
@@ -80,7 +81,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 /* nav */
 .ed-nav{position:sticky;top:0;z-index:40;height:var(--ed-nav);background:rgba(236,229,220,.78);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border-bottom:1px solid var(--ed-line)}
 .ed-nav .ed-wrap{display:flex;align-items:center;gap:14px;height:100%}
-.ed-logo{font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:auto;flex:0 1 auto}
+.ed-logo{font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;display:flex;align-items:center;gap:8px;margin-right:auto;flex:1 1 auto}
+.ed-logo-t{min-width:0;overflow-wrap:anywhere;line-height:1.05;font-size:clamp(15px,4.4vw,22px);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ed-mark{flex:none}
 .ed-nav .ed-wrap{gap:10px}
 .ed-nav .ed-pill{font-size:10px;padding:5px 9px;letter-spacing:.1em;flex:none}
 .ed-nav .ed-call{margin-left:auto}
@@ -192,17 +195,15 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-foot{background:var(--ed-dark);color:rgba(236,229,220,.75);font-size:14px}
 .ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px calc(104px + env(safe-area-inset-bottom,0px))}
 .ed-foot b{font:500 22px/1.2 var(--ed-serif);color:var(--ed-cream)}
-.ed-sticky{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;transition:transform .25s var(--ed-ease)}
-.ed-sticky .ed-btn{box-shadow:0 6px 22px rgba(0,0,0,.3)}
-.ed-sticky{transform:translateY(130%);visibility:hidden}
-.past .ed-sticky{transform:none;visibility:visible}
-.nocall .ed-sticky{transform:translateY(130%);visibility:hidden}
 @media (prefers-reduced-motion:no-preference){
   .ed-rise .ed-rv{transition:opacity .9s var(--ed-ease),transform .9s var(--ed-ease)}
   .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(22px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name,.ed-sticky{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name{transition:none}}
 @media (min-width:760px){
+  .ed-rev{grid-template-columns:auto 1fr;align-items:center;gap:6px 36px}
+  .ed-rev .ed-eyebrow{grid-column:1/-1}
+  .ed-rev-text{display:grid;gap:4px;align-content:center}
   .ed-phone{white-space:nowrap;font-size:clamp(36px,5vw,64px)}
   .ed-sub{display:block}
   .ed-sec{padding-block:112px}
@@ -223,7 +224,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-process{grid-template-columns:1fr 1.15fr;gap:64px;align-items:center}
   .ed-process-pic{aspect-ratio:4/5}
   body{padding-bottom:0}
-  .ed-sticky,.ed-call{display:none}
+  .ed-call{display:none}
   .ed-links{display:flex}
   .ed-nav .ed-tel{display:inline;font-weight:600;font-size:15px;text-decoration:none}
   .ed-nav .ed-btn{display:inline-flex}
@@ -314,7 +315,7 @@ export function generateEditorial(form, d, deps) {
   const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
   const phoneShow = d.phone ? esc(d.phone.show) : "";
   const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
-  const callText = d.phone ? `Call ${phoneShow}` : "Call us";
+  const callText = d.phone ? `Call ${phoneShow}` : "Request a call";
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
   const prices = offeredPrices(kit, cine.prices);
 
@@ -381,7 +382,7 @@ export function generateEditorial(form, d, deps) {
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a><a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${d.phone ? phoneShow : "Call us"}</a></div></div>
+    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div></div>
   <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
 </div></section>`;
 
@@ -393,6 +394,13 @@ export function generateEditorial(form, d, deps) {
   if (d.years) facts.push(["years", `${d.years} year${d.years === 1 ? "" : "s"}`, "In business."]);
   // The rating has its own block below, so it is not repeated here.
   if (area) facts.push(["area", "Service area", `${area} and nearby towns.`]);
+  // Fewer than three real facts: add honest generic cells (the same promises the rest of the page makes).
+  const generic = [
+    ["estimate", "Price first", "We tell you the price before any work starts."],
+    ["area", "Local", area ? `${area} and nearby towns.` : "Your area and nearby towns."],
+    ["home", "Homes and businesses", "Big jobs and small ones, just ask."],
+  ];
+  for (const g of generic) { if (facts.length >= 3) break; if (!facts.some((f) => f[0] === g[0])) facts.push(g); }
   const cells = facts.slice(0, 4);
   const trust = cells.length ? `<section class="ed-trust" id="trust" aria-label="At a glance"><div class="ed-wrap"><ul data-ed="trust" style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
 
@@ -409,7 +417,7 @@ export function generateEditorial(form, d, deps) {
     const nm = edText(p.name, 28) || ED_NAMES[i];
     const jobName = edText(p.job, 40) || (styles.find((x) => x.id === id) || {}).name || d.services[i % d.services.length][0];
     const meta = [
-      ["Where", edText(p.where, 40) || d.city || "Your town"],
+      ["Where", edText(p.where, 40) || d.city || "Local"],
       ["Job", jobName],
       ["Type", edText(p.type, 40) || tradeName],
     ];
@@ -467,14 +475,14 @@ export function generateEditorial(form, d, deps) {
   <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${edPad(i + 1)}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol></div>
 </div></section>`;
   const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
-  <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>
-  <p class="ed-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
+  <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>
+  <p class="ed-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p></div>
 </div></section>` : "";
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
-    <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will call you back."}</p>
-    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : ""}</div>
+    <p class="ed-note">Call now, or send the form and we will call you back.</p>
+    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-note">Add your phone number here when the site goes live.</p><a class="ed-btn light" href="#ask" style="margin-top:18px">Request a call</a>`}</div>
   <form id="ask" class="ed-form ed-rv" novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>
@@ -507,9 +515,9 @@ ${lookExtra.css || ""}
 </head>
 <body class="ed">
 <header class="ed-nav" data-ed="nav"><div class="ed-wrap">
-  <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg>${name}</a><span class="ed-pill">Sample site</span>
+  <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg><span class="ed-logo-t">${name}</span></a><span class="ed-pill">Sample site</span>
   <nav class="ed-links" aria-label="Sections">${links}</nav>
-  <a class="ed-tel" href="${callHref}">${d.phone ? phoneShow : "Call us"}</a><a class="ed-btn sm" href="#contact">${askLabel}</a>
+  <a class="ed-tel" href="${callHref}">${d.phone ? phoneShow : "Request a call"}</a><a class="ed-btn sm" href="#contact">${askLabel}</a>
   <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(ED_PHONE, 20)}</a>
 </div></header>
 <main id="top">
@@ -524,7 +532,6 @@ ${reviews}
 ${contact}
 </main>
 <footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div><p>&copy; ${esc(d.year)} ${name} &middot; Sample site</p></div></footer>
-<div class="ed-sticky"><a class="ed-btn" href="${callHref}">${edIcon(ED_PHONE, 18)}<span>${callText}</span></a></div>
 <script>
 ${ED_JS}
 </script>
