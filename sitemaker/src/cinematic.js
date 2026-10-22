@@ -113,9 +113,9 @@ img,svg{max-width:100%}
 a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
 .ba-handle:focus-visible{outline:none}
 .ba-handle:focus-visible .ba-knob{box-shadow:0 0 0 3px var(--accent),0 4px 16px rgba(0,0,0,.35)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;font:600 16px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;font:600 16px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
-.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}
+@media (hover:hover){.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}}
 .btn-glass{color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .ask-link{color:#fff;font-weight:600;font-size:15px;text-underline-offset:5px;padding:12px 4px}
 .top-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
@@ -126,7 +126,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .brand{font:600 18px/1.15 var(--sans);text-decoration:none;margin-right:auto;min-width:0;overflow-wrap:anywhere}
 .nav{display:none;gap:24px;font-size:15px}
 .nav a{text-decoration:none;color:rgba(255,255,255,.78)}
-.nav a:hover{color:#fff}
+@media (hover:hover){.nav a:hover{color:#fff}}
 .top .btn{display:none}
 /* story: stacked frames by default, pinned scroll story when .cine-motion is set */
 .story{background:var(--dark);color:#fff}
@@ -243,7 +243,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .rev-note{margin-top:20px;color:var(--muted);max-width:48ch}
 .final{background:var(--dark);color:#fff}
 .final .lede{color:rgba(255,255,255,.78)}
-.big-phone{display:inline-block;white-space:nowrap;margin-top:24px;font:500 clamp(38px,8vw,64px)/1 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
+.big-phone{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
 .grid{display:grid;gap:36px}
 form{display:grid;gap:16px;align-content:start;background:var(--cream);color:var(--ink);border-radius:18px;padding:24px}
 label{display:grid;gap:6px;font-size:15px;font-weight:600}
@@ -256,7 +256,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
 .foot-name{font:500 22px/1.2 var(--serif);color:#fff}
 .mobile-call{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50}
 .mobile-call .btn{box-shadow:0 6px 22px rgba(0,0,0,.35);min-height:48px}
-.mobile-call{transform:translateY(110%);visibility:hidden;transition:transform .45s var(--ease)}
+.mobile-call{transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease)}
 .past .mobile-call{transform:none;visibility:visible}
 .nocall .mobile-call{transform:translateY(110%);visibility:hidden}
 #price,#comfort{padding-bottom:120px}
@@ -266,6 +266,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.mobile-call{transition:none}}
 @media (min-width:760px){
+  .big-phone{white-space:nowrap;font-size:clamp(38px,5vw,64px)}
   .sec{padding-block:112px}
   .svcs{grid-template-columns:1fr 1fr}
   #styles,#before-after,#price,#comfort{padding-top:72px}

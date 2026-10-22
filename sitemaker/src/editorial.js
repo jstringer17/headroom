@@ -68,8 +68,8 @@ img,svg{max-width:100%}
 .ed-wrap{max-width:var(--ed-max);margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
 .ed h1,.ed h2,.ed .ed-big{font-family:var(--ed-serif);font-weight:500;letter-spacing:-.02em;line-height:.98;text-wrap:balance}
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+span,.ed-row:focus-visible{outline:3px solid var(--ed-accent);outline-offset:3px;border-radius:6px}
-.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-ink);color:var(--ed-cream);transition:transform .35s var(--ed-ease),opacity .35s}
-.ed-btn:hover{transform:translateY(-2px)}
+.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-ink);color:var(--ed-cream);transition:transform .25s var(--ed-ease),opacity .25s}
+@media (hover:hover){.ed-btn:hover{transform:translateY(-2px)}}
 .ed-btn.light{background:var(--ed-cream);color:var(--ed-ink)}
 .ed-btn.ghost{background:transparent;color:var(--ed-ink);box-shadow:inset 0 0 0 1.5px var(--ed-ink)}
 .ed-btn.sm{min-height:42px;padding:0 18px;font-size:14px}
@@ -86,7 +86,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-pill{display:inline-flex;align-items:center;padding:6px 12px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--ed-line);font:600 11px/1 var(--ed-sans);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
 .ed-links{display:none;gap:26px;font-size:15px;font-weight:500}
 .ed-links a{text-decoration:none;color:var(--ed-muted)}
-.ed-links a:hover{color:var(--ed-ink)}
+@media (hover:hover){.ed-links a:hover{color:var(--ed-ink)}}
 .ed-nav .ed-tel,.ed-nav .ed-btn{display:none}
 .ed-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ed-ink);color:var(--ed-cream);flex:none}
 /* hero */
@@ -136,8 +136,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-row{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid rgba(236,229,220,.25);padding:18px 0;color:inherit;font:inherit;cursor:pointer}
 .ed-row-top{display:flex;align-items:baseline;gap:16px}
 .ed-row-n{font:600 13px/1 var(--ed-sans);letter-spacing:.12em;color:rgba(236,229,220,.6);font-variant-numeric:tabular-nums}
-.ed-row-name{font:500 clamp(30px,7vw,52px)/1.02 var(--ed-serif);letter-spacing:-.015em;opacity:.55;transition:opacity .35s}
-.ed-row[aria-expanded=true] .ed-row-name,.ed-row:hover .ed-row-name{opacity:1}
+.ed-row-name{font:500 clamp(30px,7vw,52px)/1.02 var(--ed-serif);letter-spacing:-.015em;opacity:.55;transition:opacity .25s}
+.ed-row[aria-expanded=true] .ed-row-name{opacity:1}
+@media (hover:hover){.ed-row:hover .ed-row-name{opacity:1}}
 .ed-row-body{display:none;margin:12px 0 4px 40px;max-width:44ch;color:rgba(236,229,220,.82)}
 .ed-row[aria-expanded=true] .ed-row-body{display:block}
 .ed-no-js .ed-row-body{display:block}
@@ -145,7 +146,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-row-pic{display:none;position:relative;margin:14px 0 6px 40px;border-radius:16px;overflow:hidden;aspect-ratio:16/10;background:#000}
 .ed-row-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
 .ed-row[aria-expanded=true] .ed-row-pic{display:block}
-.ed-pic img{transition:opacity .35s var(--ed-ease)}
+.ed-pic img{transition:opacity .25s var(--ed-ease)}
 .ed-pic img.swap{opacity:0}
 /* process, estimate, contact */
 .ed-process{display:grid;gap:32px}
@@ -179,7 +180,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
-.ed-phone{display:inline-block;margin-top:22px;font:500 clamp(36px,8vw,64px)/1 var(--ed-serif);color:var(--ed-hi,var(--ed-cream));text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ed-phone{display:inline-block;max-width:100%;margin-top:22px;font:500 clamp(26px,7vw,64px)/1.05 var(--ed-serif);color:var(--ed-hi,var(--ed-cream));text-decoration:none;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .ed-final .ed-note{color:rgba(236,229,220,.75);margin-top:14px}
 .ed-form{display:grid;gap:16px;align-content:start;background:var(--ed-cream);color:var(--ed-ink);border-radius:var(--ed-card);padding:24px}
 .ed-form label{display:grid;gap:6px;font-size:14px;font-weight:700}
@@ -190,7 +191,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-foot{background:var(--ed-dark);color:rgba(236,229,220,.75);font-size:14px}
 .ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px calc(104px + env(safe-area-inset-bottom,0px))}
 .ed-foot b{font:500 22px/1.2 var(--ed-serif);color:var(--ed-cream)}
-.ed-sticky{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;transition:transform .45s var(--ed-ease)}
+.ed-sticky{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;transition:transform .25s var(--ed-ease)}
 .ed-sticky .ed-btn{box-shadow:0 6px 22px rgba(0,0,0,.3)}
 .ed-sticky{transform:translateY(130%);visibility:hidden}
 .past .ed-sticky{transform:none;visibility:visible}
@@ -201,6 +202,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name,.ed-sticky{transition:none}}
 @media (min-width:760px){
+  .ed-phone{white-space:nowrap;font-size:clamp(36px,5vw,64px)}
   .ed-sub{display:block}
   .ed-sec{padding-block:112px}
   .ed-trust ul{grid-template-columns:repeat(var(--cols,4),1fr)}
