@@ -208,6 +208,7 @@ for (const width of [375, 1280]) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto(makerFile, { waitUntil: "load" });
+  await page.selectOption("#look", "classic"); // these checks are about the classic site; the default look is Editorial
   await page.fill("#company", "Ridge Top Roofing");
   await page.fill("#city", "Tulsa, OK");
   await page.waitForTimeout(400);

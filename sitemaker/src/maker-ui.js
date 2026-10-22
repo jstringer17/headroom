@@ -60,8 +60,8 @@
   function buildCine() {
     if (!hasCine) return;
     const key = tradeSel.value, kit = CINE_KIT[key];
-    $("cine-switch").hidden = !kit;
-    $("cine-fields").hidden = !kit || !$("cinematic").checked;
+    $("look-box").hidden = !kit;
+    $("cine-fields").hidden = !kit || $("look").value === "classic";
     if (!kit) return;
     const imgs = cineImages[key] = cineImages[key] || {};
     $("cine-slots").innerHTML = cineSlots(kit).map((s) => '<div class="slot" data-slot="' + esc(s.id) + '"><span class="slot-head">' + esc(s.label) + '</span>' +
@@ -71,6 +71,7 @@
       '<p class="status" aria-live="polite"></p></div>').join("");
     const pr = cinePrices[key] = cinePrices[key] || {};
     const est = kit.estimator || { sizes: [], options: [] };
+    $("ed-fields").closest("fieldset").hidden = $("look").value !== "editorial";
     $("ed-fields").hidden = $("look").value !== "editorial";
     $("cine-rpct-wrap").hidden = key !== "hvac"; $("cine-rpct").value = cineRpct[key] || "";
     const unit = cineUnit(key, cineUnits[key]);
@@ -98,7 +99,7 @@
       insured: $("insured").checked,
       theme,
       heroImage: heroData || $("hero-url").value.trim(),
-      cinematic: hasCine && $("cinematic").checked,
+      cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
       editorial: hasCine ? { projects: edProjects } : undefined,
       cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
@@ -134,7 +135,6 @@
   $("maker").addEventListener("input", (e) => {
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
-    if (e.target.id === "cinematic") buildCine();
     if (e.target.id === "look") buildCine();
     if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;
     if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;

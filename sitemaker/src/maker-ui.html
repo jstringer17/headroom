@@ -127,9 +127,15 @@ details.lead[open]{display:grid;gap:10px}
     </div>
     <p class="hint">Only type real numbers from their Google page. Leave blank if you do not know.</p>
 
-    <fieldset class="group" id="cine-switch" hidden>
-      <legend>Style of site</legend>
-      <label class="check" for="cinematic"><input type="checkbox" id="cinematic"> Cinematic: scroll story with style tabs, before and after, and a price estimator</label>
+    <fieldset class="group" id="look-box">
+      <legend>Look of the site</legend>
+      <label class="field" for="look"><span>Pick a look</span>
+        <select id="look">
+          <option value="editorial" selected>Editorial (cream, big serif, rounded photo cards)</option>
+          <option value="cinematic">Cinematic (scroll story, dark and bold)</option>
+          <option value="classic">Classic (older, plain)</option>
+        </select></label>
+      <p class="hint">Editorial and Cinematic have optional picture boxes and price ranges below. Leave them empty and the site shows labeled sample pictures and no prices.</p>
     </fieldset>
 
     <fieldset class="group">
@@ -161,9 +167,7 @@ details.lead[open]{display:grid;gap:10px}
 
     <div class="group" id="cine-fields" hidden>
       <fieldset class="group">
-        <legend>Look</legend>
-        <label class="field" for="look"><span>How the cinematic site looks</span>
-          <select id="look"><option value="cinematic">Cinematic (scroll story, dark and bold)</option><option value="editorial">Editorial (cream, big serif, rounded photo cards)</option></select></label>
+        <legend>Sample project cards (Editorial)</legend>
         <div id="ed-fields" class="prices" hidden>
           <p class="hint">Editorial shows 3 sample project cards. Names and homes are fictional. Type your own words or leave blank.</p>
           <div id="ed-projects"></div>

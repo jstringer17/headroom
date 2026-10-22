@@ -90,3 +90,20 @@ export function buildCine(form, look = "cinematic") {
   const real = (/id="story"/.test(html) && /id="contact"/.test(html)) || isEditorial(html);
   return real ? { html, real } : { html: samplePage({ prices: !!form.cine?.prices }), real: false };
 }
+
+// Default path: drive the REAL maker.html like a user (type company, pick trade, touch nothing else).
+// Returns the exact HTML the preview iframe shows (its srcdoc). Also screenshots the form page itself.
+export async function defaultPathHtml(browser, trade, company, shotPath) {
+  const { pathToFileURL } = await import("node:url");
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1400, height: 900 } });
+  const page = await ctx.newPage();
+  await page.route("**/*", (r) => { const u = r.request().url(); return /^(file|data|about):/.test(u) || /fonts\.(googleapis|gstatic)\.com/.test(u) ? r.continue() : r.abort(); });
+  await page.goto(pathToFileURL(join(here, "..", "maker.html")).href, { waitUntil: "load" });
+  await page.fill("#company", company);
+  await page.selectOption("#trade", trade);
+  await page.waitForTimeout(600);
+  const html = await page.evaluate(() => document.getElementById("frame").srcdoc);
+  if (shotPath) await page.screenshot({ path: shotPath, type: "jpeg", quality: 70 });
+  await ctx.close();
+  return html;
+}

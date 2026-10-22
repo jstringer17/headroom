@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, isEditorial, ED, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, isEditorial, defaultPathHtml, ED, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
 import { TRADE_ORDER, TRADES } from "./src/trades.js";
 const ALL = [...TRADE_ORDER, ...NEW_TRADES.filter((k) => !TRADE_ORDER.includes(k))]; // 19 trades
 
@@ -256,6 +256,32 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
     check("S", `break-ui ${look}: one-letter name, no phone, no town still renders without sideways scroll`, r.sw <= r.cw && /J/.test(r.txt) && !/undefined|NaN|null/.test(r.txt), "bad render");
     await ctx.close();
   }
+}
+
+// ---- Default path (D): the REAL maker.html as a user sees it: company + trade only ----
+{
+  for (const trade of ["roofing", "fencing", "pressure"]) {
+    const html = await defaultPathHtml(browser, trade, `Sample ${trade} Co`);
+    check("D", `${trade}: the form's default preview is the Editorial look (data-look="editorial")`, isEditorial(html), "default output is not editorial (classic or cinematic)");
+    check("D", `${trade}: the default preview is not the classic site`, !/class="[^"]*\bhero\b/.test(html) || isEditorial(html), "classic markup");
+    if (isEditorial(html)) {
+      for (const width of [375, 1280]) {
+        const { page, ctx } = await open(html, `default-${trade}`, { width, tag: `-${width}` });
+        const r = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, hero: !!document.querySelector('[data-ed="hero"]') }));
+        check("D", `${trade}@${width}: default output has the Editorial hero and no sideways scroll`, r.hero && r.sw <= r.cw, JSON.stringify(r));
+        await ctx.close();
+      }
+    }
+  }
+  // Look select is always visible (no hidden checkbox needed)
+  const { pathToFileURL: toUrl } = await import("node:url");
+  const c = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const pg = await c.newPage();
+  await pg.route("**/*", (r) => (/^(file|data|about):/.test(r.request().url()) ? r.continue() : r.abort()));
+  await pg.goto(toUrl(join(here, "..", "maker.html")).href, { waitUntil: "load" });
+  const visible = await pg.evaluate(() => { const l = document.getElementById("look"); if (!l) return false; const b = l.getBoundingClientRect(); const cs = getComputedStyle(l); let e = l, vis = true; for (; e; e = e.parentElement) if (getComputedStyle(e).display === "none" || getComputedStyle(e).visibility === "hidden") vis = false; return vis && b.width > 0 && b.height > 0; });
+  check("D", "the Look select is visible on the form without ticking anything", visible, "Look select hidden");
+  await c.close();
 }
 
 await browser.close();
