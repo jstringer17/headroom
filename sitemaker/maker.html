@@ -3021,7 +3021,7 @@ const ED_CSS = `
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:84px}
 section[id]{scroll-margin-top:84px}
-body{margin:0;background:var(--ed-cream);color:var(--ed-ink);font:400 17px/1.6 var(--ed-sans);overflow-x:clip;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+body{margin:0;background:var(--ed-cream);color:var(--ed-ink);font:400 17px/1.6 var(--ed-sans);overflow-x:clip}
 h1,h2,h3,h4,p,dl,dd,dt,figure,ul,ol{margin:0}
 ul,ol{padding:0;list-style:none}
 a{color:inherit;text-underline-offset:4px}
@@ -3050,9 +3050,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 /* hero */
 .ed-hero{padding-block:36px 56px}
 .ed-hero-grid{display:grid;gap:36px}
-.ed-hero h1{margin-top:22px;font-size:clamp(46px,13vw,132px);text-transform:uppercase;line-height:.92}
-.ed-sub{margin-top:24px;max-width:38ch;color:var(--ed-muted);font-size:18px}
-.ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:28px}
+.ed-hero h1{margin-top:18px;font-size:clamp(40px,11.5vw,132px);text-transform:uppercase;line-height:.92}
+.ed-sub{margin-top:16px;max-width:38ch;color:var(--ed-muted);font-size:18px}
+.ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:20px}
 .ed-sil{position:relative;aspect-ratio:1/1;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
 .ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
 .ed-sil.ph img{inset:auto 0 0 0;height:82%}
@@ -3081,7 +3081,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-card::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(0deg,rgba(0,0,0,.6),rgba(0,0,0,0) 55%)}
 .ed-card .ed-pill{position:absolute;top:16px;right:16px;z-index:2;color:#fff;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4)}
 .ed-card h3{position:absolute;left:20px;right:20px;bottom:18px;z-index:2;font:500 clamp(40px,10vw,84px)/.95 var(--ed-serif);letter-spacing:-.02em;text-transform:uppercase;overflow-wrap:anywhere}
-.ed-meta{display:grid;grid-template-columns:1fr 1fr;gap:0 18px;margin-top:14px}
+.ed-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0 18px;margin-top:14px}
 .ed-meta div{padding:12px 0;border-top:1px solid var(--ed-line)}
 .ed-meta dt{font:600 11px/1.2 var(--ed-sans);letter-spacing:.16em;text-transform:uppercase;color:var(--ed-muted)}
 .ed-meta dd{margin-top:5px;font-weight:600;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
@@ -3089,7 +3089,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 /* services */
 .ed-dark{background:var(--ed-dark);color:var(--ed-cream)}
 .ed-dark .ed-eyebrow{color:var(--ed-hi,var(--ed-accent))}
-.ed-svc{display:grid;gap:32px}
+.ed-svc{display:grid;gap:20px;align-items:start}
 .ed-rows{border-top:1px solid rgba(236,229,220,.25)}
 .ed-row{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid rgba(236,229,220,.25);padding:18px 0;color:inherit;font:inherit;cursor:pointer}
 .ed-row-top{display:flex;align-items:baseline;gap:16px}
@@ -3099,7 +3099,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-row-body{display:none;margin:12px 0 4px 40px;max-width:44ch;color:rgba(236,229,220,.82)}
 .ed-row[aria-expanded=true] .ed-row-body{display:block}
 .ed-no-js .ed-row-body{display:block}
-.ed-pic{position:relative;border-radius:var(--ed-card);overflow:hidden;aspect-ratio:4/3;background:#000}
+.ed-pic{position:sticky;top:calc(var(--ed-nav) + 8px);z-index:5;border-radius:var(--ed-card);overflow:hidden;aspect-ratio:16/9;background:#000}
 .ed-pic img{transition:opacity .35s var(--ed-ease)}
 .ed-pic img.swap{opacity:0}
 .ed-sample{right:auto!important;left:16px}
@@ -3144,7 +3144,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-form input:focus,.ed-form select:focus,.ed-form textarea:focus{outline:none;border-color:var(--ed-ink);box-shadow:0 0 0 3px var(--ed-accent)}
 .ed-form-note{font-size:14px;color:var(--ed-muted)}
 .ed-foot{background:var(--ed-dark);color:rgba(236,229,220,.75);font-size:14px}
-.ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px}
+.ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px calc(104px + env(safe-area-inset-bottom,0px))}
 .ed-foot b{font:500 22px/1.2 var(--ed-serif);color:var(--ed-cream)}
 .ed-sticky{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;transition:transform .45s var(--ed-ease)}
 .ed-sticky .ed-btn{box-shadow:0 6px 22px rgba(0,0,0,.3)}
@@ -3170,6 +3170,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-final .ed-grid{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
 }
 @media (min-width:1024px){
+  .ed-foot .ed-wrap{padding-block:32px}
   .ed-process{grid-template-columns:1fr 1.15fr;gap:64px;align-items:center}
   .ed-process-pic{aspect-ratio:4/5}
   body{padding-bottom:0}
@@ -3180,7 +3181,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-hero{padding-block:64px 88px}
   .ed-hero-grid{grid-template-columns:1.25fr 1fr;align-items:center;gap:48px}
   .ed-svc{grid-template-columns:1.1fr 1fr;gap:64px;align-items:start}
-  .ed-pic{position:sticky;top:104px;aspect-ratio:4/5}
+  .ed-rows{grid-column:1;grid-row:1}
+  .ed-pic{grid-column:2;grid-row:1;top:104px;aspect-ratio:4/5}
 }
 `;
 
@@ -3235,7 +3237,7 @@ if(dataEl){
 /* the floating call button shows after the hero buttons scroll away */
 var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
-if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
+if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","services"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".ed-rv"));
 els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
@@ -3290,7 +3292,28 @@ function generateEditorial(form, d, deps) {
   const workIds = [0, 1, 2].map((i) => pick(e.work && e.work[i], pool[i % pool.length]));
   const rows = d.services.slice(0, 6);
   const svcPool = e.services && e.services.length ? e.services.filter(exists) : [...story.map((s) => s.id), ...styles.map((s) => s.id)];
-  const svcIds = rows.map((_, i) => svcPool[i % svcPool.length]);
+  // A row gets the picture whose name shares words with the service ("Vinyl fences" -> "White vinyl");
+  // with no shared word it gets the plain finished scene, never a picture of something else.
+  const STOP = new Set(["and", "the", "for", "of", "a", "new", "repair", "repairs", "install", "installs", "service", "services", "work", "help", "your"]);
+  const toks = (txt) => new Set(String(txt).toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w && !STOP.has(w)).map((w) => w.replace(/(es|s)$/, "")));
+  const cand = [...styles.map((x) => ({ id: x.id, t: toks(`${x.name} ${x.note || ""}`) })), ...story.map((x) => ({ id: x.id, t: toks(x.headline) }))];
+  const svcIds = rows.map(([n], i) => {
+    if (e.services && e.services.length) return svcPool[i % svcPool.length];
+    const want = toks(n);
+    let best = null, bestScore = 0;
+    for (const c of cand) { let sc = 0; want.forEach((w) => { if (c.t.has(w)) sc++; }); if (sc > bestScore) { best = c; bestScore = sc; } }
+    return best ? best.id : null;
+  });
+  // Rows with no matching picture rotate through the trade's own scene frames, and two
+  // neighbours never share a picture, so the swap is always visible.
+  const scene = story.map((x) => x.id);
+  let turn = 0;
+  for (let i = 0; i < svcIds.length; i++) {
+    if (svcIds[i] && svcIds[i] !== svcIds[i - 1]) continue;
+    let id = null;
+    for (let k = 0; k < scene.length && !id; k++) { const c = scene[(turn + k) % scene.length]; if (c !== svcIds[i - 1] && c !== svcIds[i + 1]) id = c; }
+    svcIds[i] = id || heroId; turn++;
+  }
 
   const fam = (deps.editorialShape || editorialShape)(d.tradeKey) || ED_SHAPES[ED_SHAPE_FOR[d.tradeKey] || "house"];
   const shapeName = /50% 0%, 100% 40%/.test(fam) ? "house" : "other";
@@ -3330,14 +3353,15 @@ function generateEditorial(form, d, deps) {
     const p = typed[i] || {};
     const st = styles[i % Math.max(styles.length, 1)];
     const nm = edText(p.name, 28) || ED_NAMES[i];
+    const jobName = edText(p.job, 40) || (styles.find((x) => x.id === id) || {}).name || d.services[i % d.services.length][0];
     const meta = [
       ["Where", edText(p.where, 40) || d.city || "Your town"],
-      ["Job", edText(p.job, 40) || (st ? st.name : d.services[i % d.services.length][0])],
-      ["Type", edText(p.type, 40) || d.services[i % d.services.length][0]],
-      ["Time", edText(p.time, 40) || "&mdash;"],
+      ["Job", jobName],
+      ["Type", edText(p.type, 40) || tradeName],
     ];
+    if (edText(p.time, 40)) meta.push(["Time", edText(p.time, 40)]);
     return `<li class="ed-rv"><article><div class="ed-card" data-ed="card">${pic(id)}<span class="ed-pill ed-sample">Sample project</span><span class="ed-pill">${edPad(i + 1)} / 03</span><h3>${esc(nm)}</h3></div>
-    <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${v === "&mdash;" ? v : esc(v)}</dd></div>`).join("")}</dl></article></li>`;
+    <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></article></li>`;
   }).join("");
   const work = `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Sample projects</p><h2>The <em>work</em></h2></div>
@@ -3349,8 +3373,7 @@ function generateEditorial(form, d, deps) {
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we <em>do</em></h2></div>
-  <div class="ed-svc"><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div>
-  <div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}</div></div>
+  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}</div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span></button>`).join("")}</div></div>
   <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
 </div></section>`;
 
