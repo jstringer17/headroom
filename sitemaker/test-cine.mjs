@@ -215,6 +215,49 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
   }
 }
 
+// ---- Skills-derived checks (Emil Kowalski review-animations + break-ui; see qa/RUBRIC.md "Skills") ----
+{
+  // Motion lint on the generated CSS (review-animations escalation triggers)
+  for (const look of ["cinematic", "editorial"]) for (const trade of ["roofing", "fencing", "pressure"]) {
+    const b = buildCine({ company: "Sample Co", trade, year: 2026 }, look);
+    if (!b.real) { rec("S", `${look}/${trade}: motion lint`, "skip", "needs real build"); continue; }
+    const css = [...b.html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]).join("\n");
+    const tag = `${look}/${trade}`;
+    check("S", `${tag}: no "transition: all"`, !/transition\s*:\s*all\b/.test(css), "transition: all found");
+    check("S", `${tag}: no scale(0) entrance`, !/scale\(\s*0\s*\)/.test(css), "scale(0) found");
+    check("S", `${tag}: no ease-in on UI transitions`, !/transition[^;{}]*\bease-in\b(?!-out)/.test(css), "ease-in found");
+    check("S", `${tag}: transitions do not animate layout props`, !/transition[^;{}]*\b(width|height|margin|padding|top|left)\b/.test(css), "layout property in transition");
+    check("S", `${tag}: reduced-motion handled`, /prefers-reduced-motion/.test(css), "no prefers-reduced-motion rule");
+    const ungated = [...css.matchAll(/([^{}@]*:hover[^{}]*)\{[^}]*(transform|transition)[^}]*\}/g)].length;
+    const gated = /@media\s*\(hover\s*:\s*hover\)/.test(css);
+    check("S", `${tag}: hover motion is gated by (hover: hover) or absent`, ungated === 0 || gated, `${ungated} ungated :hover motion rules`);
+    // Scroll reveals, captions and the story are rare/first-time motion (Emil: delight allowed); only plain UI transitions are held to 300ms.
+    const long = [...css.matchAll(/([^{}]*)\{([^{}]*transition[^{}]*)\}/g)].filter((m) => !/\.rv\b|reveal|rise|caption|story|-rv\b/.test(m[1])).flatMap((m) => [...m[2].matchAll(/transition[^;]*?(\d*\.?\d+)(ms|s)\b/g)]).filter((x) => (x[2] === "s" ? +x[1] * 1000 : +x[1]) > 300).length;
+    check("S", `${tag}: UI transitions are 300ms or less (story/scroll motion excluded by name)`, long === 0, `${long} transitions over 300ms`);
+  }
+  // break-ui: worst realistic data
+  const worst = { company: "Wiśniewska-Kowalczyk & Fitzgerald Roofing, Exteriors and Restoration Holdings LLC", city: "Pennsylvania Avenue Northwest, Washington, DC", phone: "(202) 555-0100 ext. 12", year: 2026, rating: "5.0", reviews: "12840", years: "99", insured: true, emergency: true };
+  for (const look of ["cinematic", "editorial"]) for (const trade of ["roofing", "fencing", "pressure"]) for (const width of [375, 1280]) {
+    const b = buildCine({ ...worst, trade }, look);
+    if (!b.real) { rec("S", `break-ui ${look}/${trade}@${width}`, "skip", "needs real build"); continue; }
+    const { page, ctx } = await open(b.html, `worst-${look}-${trade}`, { width, tag: `-${width}` });
+    const r = await page.evaluate(() => { const d = document.documentElement; const over = [...document.querySelectorAll("h1,h2,h3,p,a,button,li,b")].filter((e) => e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflow !== "visible" && getComputedStyle(e).textOverflow !== "ellipsis").map((e) => e.tagName + "." + e.className).slice(0, 3); return { sw: d.scrollWidth, cw: d.clientWidth, over, h1: document.querySelector("h1") ? document.querySelector("h1").getBoundingClientRect().height : 0, vh: innerHeight }; });
+    check("S", `break-ui ${look}/${trade}@${width}: long name/town/phone, no sideways scroll`, r.sw <= r.cw, `${r.sw}>${r.cw}`);
+    check("S", `break-ui ${look}/${trade}@${width}: no clipped text`, r.over.length === 0, r.over.join(","));
+    check("S", `break-ui ${look}/${trade}@${width}: headline fits in one screen`, r.h1 < r.vh, `h1 ${Math.round(r.h1)}px of ${r.vh}`);
+    await ctx.close();
+  }
+  // one-letter name, no phone, no town
+  for (const look of ["cinematic", "editorial"]) {
+    const b = buildCine({ company: "J", trade: "roofing", year: 2026 }, look);
+    if (!b.real) { rec("S", `break-ui ${look}: one-letter name`, "skip", "needs real build"); continue; }
+    const { page, ctx } = await open(b.html, `worst-one-${look}`, { width: 375, tag: "-375" });
+    const r = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, txt: document.body.innerText }));
+    check("S", `break-ui ${look}: one-letter name, no phone, no town still renders without sideways scroll`, r.sw <= r.cw && /J/.test(r.txt) && !/undefined|NaN|null/.test(r.txt), "bad render");
+    await ctx.close();
+  }
+}
+
 await browser.close();
 
 // ---- report ----
