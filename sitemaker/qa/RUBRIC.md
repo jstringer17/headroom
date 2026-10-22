@@ -22,6 +22,10 @@ Score the 7 lines above too (line 2 judges the photo cards and the hero silhouet
 The Editorial look has NO tabs or before/after slider by design. Line 5 (tools) judges the numbered service rows with their picture swap (`ed-row1-3`, at both widths: the swap must be visible on a phone) and the estimator. Do not cap line 5 for missing tabs/sliders.
 For this look also look at: hero silhouette (`ed-hero`), work cards (`ed-work`), service rows 1-3 (`ed-row1-3`), trust strip (`ed-trust`), nav while scrolled (`ed-nav`), at 375 and 1280.
 
+## Line 9: Default path (applies to every pack)
+Judge the "Default path" section at the top of `index.html`: the output of the REAL maker form when a user types a company name and picks a trade and touches nothing else, next to the Northpeak reference frames. **Question: does the default output look clearly different from the classic site and close to the reference in structure and feel?** 3 = still looks like the old template or only loosely like the reference; 5 = a visitor would think it is the reference's cousin (silhouette hero, big serif, rounded photo cards, numbered rows, trust strip). If the form's default is not the Editorial look, line 9 is 1.
+Pass rule for Editorial packs becomes: no line under 4 and average of the 9 lines 4.3 or more.
+
 Rules for the reviewer: score only what is on screen; placeholder art is judged as placeholder (label visible), not as a photo; any invented price, review or claim is an automatic 1 on line 6.
 
 ## Skills (CEO: use all skills in the CEO's repos, including for review)
