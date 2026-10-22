@@ -692,3 +692,27 @@ Object.assign(CINE_KIT.pressure.editorial, {
     EX("svc-window", "Service: Window washing", "window", "A large house window with spotless clear glass and clean white trim, sky reflected, soft daylight."),
   ],
 });
+
+// Editorial second beat: one short line per trade, its own words (not the hero's).
+const ED_BEAT = {
+  roofing: "Shingles, flashing and gutters, checked one by one before anyone climbs down.",
+  fencing: "Posts set first, then rails, then every board, straight along the line.",
+  pressure: "The right pressure for each surface, from concrete to siding to wood.",
+  hvac: "A system sized for your rooms, and a tune-up that keeps it that way.",
+  restoration: "Dry it out, clean it up, then build it back the way it was.",
+  builder: "From the first stake on the lot to the last coat of paint.",
+  framing: "Studs, plates and trusses, measured twice and set on center.",
+  remodeling: "Walls opened, rooms rebuilt, and the dust cleaned up after.",
+  painting: "Scraped, primed and painted, with the edges kept crisp.",
+  concrete: "Graded, formed and poured, with joints cut where cracks want to go.",
+  landscaping: "Beds edged, plants set, and a lawn that fills in.",
+  tree: "Limbs off the roof and the yard left clean.",
+  garage: "Doors, springs and openers, fitted and tested before we leave.",
+  plumbing: "Leaks found, lines replaced, and the cabinet left dry.",
+  electrical: "Panels, circuits and lights, wired neatly and labeled.",
+  pest: "Entry points found and sealed, inside and out.",
+  junk: "Loaded, hauled away and swept, in one visit.",
+  cleaning: "Every room, top to bottom, done the same way each time.",
+  towing: "Hooked up with care and taken where you need it.",
+};
+for (const [t, note] of Object.entries(ED_BEAT)) if (CINE_KIT[t]) CINE_KIT[t].editorial = { ...(CINE_KIT[t].editorial || {}), beatNote: note };

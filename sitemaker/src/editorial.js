@@ -382,7 +382,7 @@ export function generateEditorial(form, d, deps) {
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a><a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${d.phone ? phoneShow : "Call us"}</a></div></div>
-  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"', { labelY: 560 })}</div>
+  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
 </div></section>`;
 
   // Trust strip: only facts the owner ticked or typed
@@ -399,7 +399,7 @@ export function generateEditorial(form, d, deps) {
   // Second beat
   const beat = `<section class="ed-beat" data-ed="beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
   <p class="ed-big">${d.city ? `${esc(d.city.split(",")[0].trim())}<br>${esc(tradeName)}` : story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
-  <p class="ed-beat-note">Tell us what you have in mind and we will come and take a look. ${name} works across ${areaPhrase}.</p>
+  <p class="ed-beat-note">${esc(e.beatNote || "Tell us what you have in mind and we will come and take a look.")}</p>
 </div></section>`;
 
   // Work: three sample project cards
@@ -473,8 +473,8 @@ export function generateEditorial(form, d, deps) {
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
-    <p class="ed-note">Call now, or send the form and we will call you back.</p>
-    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-phone">Phone number here</p>`}</div>
+    <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will call you back."}</p>
+    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : ""}</div>
   <form id="ask" class="ed-form ed-rv" novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>

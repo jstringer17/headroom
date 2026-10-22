@@ -808,6 +808,11 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
     const dark = mood === "dusk" || carbon;
     // Story frames share one label so it does not ghost during the crossfade.
     const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
+    if (opts.hero) {
+      // Hero crop: zoom toward the subject so the house (or fence) fills the silhouette.
+      const focus = { fencing: [1080, 560], pressure: [800, 420] }[trade] || [800, 520];
+      body = `<g transform="translate(${focus[0]} ${focus[1]}) scale(1.55) translate(${-focus[0]} ${-focus[1]})">${body}</g>`;
+    }
     const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
   } finally {
@@ -881,7 +886,7 @@ export function editorialLook(themeKey, tradeKey) {
   const BY_THEME = { navy: "#b5551a", forest: "#8f6b12", steel: "#c0392b", sky: "#3f6fb5" };
   const one = ONE[CINE_TRADE_LOOK[tradeKey]] || BY_THEME[themeKey] || "#b5551a";
   const p = carbon
-    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: one, dark: v.night, mark: null }
+    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: v.accentHi, dark: v.night, mark: null }
     : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: one, hi: one, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
   const css = `
 :root{--ed-sky:${carbon ? "#121417" : "#dccdb5"};--ed-cream:${p.cream};--ed-cream2:${p.cream2};--ed-paper:${p.paper};--ed-line:${p.line};--ed-accent:${p.accent};--ed-hi:${p.hi};--ed-dark:${p.dark};--ed-muted:${carbon ? v.muted : "#5a5249"}}
@@ -923,6 +928,13 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-row-name{transition:opacity 200ms var(--ed-ease-out)}
 .ed-btn:active{transform:scale(.97);transition:transform 160ms var(--ed-ease-out)}
 @media (prefers-reduced-motion:reduce){.ed-pic img{transition:opacity 200ms linear}.ed-pic img.swap{filter:none}.ed-btn:active{transform:none}}
+/* Picture titles: smaller optical size + heavier weight so hairlines never break over photos */
+.ed-card h3,.ed-beat .ed-big{font-variation-settings:"opsz" 18;font-weight:700;letter-spacing:.005em}
+.ed-beat::after{background:linear-gradient(0deg,rgba(8,8,10,.78),rgba(8,8,10,.25) 55%,rgba(8,8,10,.35))!important}
+/* Default path: calm empty states */
+.ed-trust ul[style="--cols:1"],.ed-trust ul[style="--cols:2"]{width:fit-content;max-width:100%}
+.ed-trust ul[style="--cols:1"] li{grid-template-columns:auto 1fr;column-gap:16px;align-items:center;padding:22px 28px}
+.ed-trust ul[style="--cols:1"] svg{grid-row:span 2;margin:0}
 /* Proportion pass (reference study, our own design) */
 .ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-weight:600}
 .ed-logo{display:inline-flex;align-items:center;gap:10px;font-size:23px;color:var(--ed-ink)}
