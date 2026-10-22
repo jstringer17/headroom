@@ -127,9 +127,15 @@ details.lead[open]{display:grid;gap:10px}
     </div>
     <p class="hint">Only type real numbers from their Google page. Leave blank if you do not know.</p>
 
-    <fieldset class="group" id="cine-switch" hidden>
-      <legend>Style of site</legend>
-      <label class="check" for="cinematic"><input type="checkbox" id="cinematic"> Cinematic: scroll story with style tabs, before and after, and a price estimator</label>
+    <fieldset class="group" id="look-box">
+      <legend>Look of the site</legend>
+      <label class="field" for="look"><span>Pick a look</span>
+        <select id="look">
+          <option value="editorial" selected>Editorial (cream, big serif, rounded photo cards)</option>
+          <option value="cinematic">Cinematic (scroll story, dark and bold)</option>
+          <option value="classic">Classic (older, plain)</option>
+        </select></label>
+      <p class="hint">Editorial and Cinematic have optional picture boxes and price ranges below. Leave them empty and the site shows labeled sample pictures and no prices.</p>
     </fieldset>
 
     <fieldset class="group">
@@ -161,9 +167,7 @@ details.lead[open]{display:grid;gap:10px}
 
     <div class="group" id="cine-fields" hidden>
       <fieldset class="group">
-        <legend>Look</legend>
-        <label class="field" for="look"><span>How the cinematic site looks</span>
-          <select id="look"><option value="cinematic">Cinematic (scroll story, dark and bold)</option><option value="editorial">Editorial (cream, big serif, rounded photo cards)</option></select></label>
+        <legend>Sample project cards (Editorial)</legend>
         <div id="ed-fields" class="prices" hidden>
           <p class="hint">Editorial shows 3 sample project cards. Names and homes are fictional. Type your own words or leave blank.</p>
           <div id="ed-projects"></div>
@@ -4256,8 +4260,8 @@ function parseLead(text) {
   function buildCine() {
     if (!hasCine) return;
     const key = tradeSel.value, kit = CINE_KIT[key];
-    $("cine-switch").hidden = !kit;
-    $("cine-fields").hidden = !kit || !$("cinematic").checked;
+    $("look-box").hidden = !kit;
+    $("cine-fields").hidden = !kit || $("look").value === "classic";
     if (!kit) return;
     const imgs = cineImages[key] = cineImages[key] || {};
     $("cine-slots").innerHTML = cineSlots(kit).map((s) => '<div class="slot" data-slot="' + esc(s.id) + '"><span class="slot-head">' + esc(s.label) + '</span>' +
@@ -4267,6 +4271,7 @@ function parseLead(text) {
       '<p class="status" aria-live="polite"></p></div>').join("");
     const pr = cinePrices[key] = cinePrices[key] || {};
     const est = kit.estimator || { sizes: [], options: [] };
+    $("ed-fields").closest("fieldset").hidden = $("look").value !== "editorial";
     $("ed-fields").hidden = $("look").value !== "editorial";
     $("cine-rpct-wrap").hidden = key !== "hvac"; $("cine-rpct").value = cineRpct[key] || "";
     const unit = cineUnit(key, cineUnits[key]);
@@ -4294,7 +4299,7 @@ function parseLead(text) {
       insured: $("insured").checked,
       theme,
       heroImage: heroData || $("hero-url").value.trim(),
-      cinematic: hasCine && $("cinematic").checked,
+      cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
       editorial: hasCine ? { projects: edProjects } : undefined,
       cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
@@ -4330,7 +4335,6 @@ function parseLead(text) {
   $("maker").addEventListener("input", (e) => {
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
-    if (e.target.id === "cinematic") buildCine();
     if (e.target.id === "look") buildCine();
     if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;
     if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;

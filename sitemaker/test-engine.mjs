@@ -117,6 +117,40 @@ for (const trade of TRADE_ORDER) {
   }
 }
 
+// The real maker form: type a company, pick a trade, nothing else. The preview must be the Editorial
+// site by default, and the Look select must switch it to Cinematic and to Classic.
+{
+  const makerFile = new URL("./maker.html", import.meta.url).href;
+  for (const [trade, word] of [["roofing", "roof"], ["fencing", "fenc"], ["pressure", "wash"]]) {
+    for (const width of [375, 1280]) {
+      const page = await browser.newPage({ viewport: { width, height: 900 } });
+      const errs = []; page.on("pageerror", (e) => errs.push(e.message));
+      await page.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+      await page.goto(makerFile, { waitUntil: "load" });
+      ok((await page.inputValue("#look")) === "editorial", `maker@${width}: Look defaults to ${await page.inputValue("#look")}, not editorial`);
+      ok(await page.isVisible("#look"), `maker@${width}: Look select is hidden`);
+      await page.fill("#company", "Ridge Top Roofing");
+      await page.selectOption("#trade", trade);
+      await page.waitForTimeout(450);
+      const src = () => page.$eval("#frame", (f) => f.srcdoc);
+      const ed = await src();
+      ok(ed.includes('data-look="editorial"') && ed.includes('data-ed="hero"'), `maker ${trade}@${width}: default form output is not the Editorial site`);
+      ok(new RegExp(word, "i").test(ed), `maker ${trade}@${width}: Editorial preview is missing the trade`);
+      ok(await page.isVisible("#cine-prices") && await page.isVisible("#cine-slots"), `maker ${trade}@${width}: picture or price fields are hidden for Editorial`);
+      ok(await page.isVisible("#ed-projects"), `maker ${trade}@${width}: Editorial project cards fields are hidden`);
+      await page.selectOption("#look", "cinematic"); await page.waitForTimeout(450);
+      const ci = await src();
+      ok(ci.includes('id="story"') && !ci.includes('data-look="editorial"'), `maker ${trade}@${width}: Cinematic option did not change the output`);
+      ok(await page.isVisible("#cine-prices"), `maker ${trade}@${width}: price fields hidden for Cinematic`);
+      await page.selectOption("#look", "classic"); await page.waitForTimeout(450);
+      const cl = await src();
+      ok(!cl.includes('id="story"') && !cl.includes('data-look="editorial"') && cl.includes('class="hero'), `maker ${trade}@${width}: Classic option did not change the output`);
+      ok(errs.length === 0, `maker ${trade}@${width}: page error ${errs[0]}`);
+      await page.close();
+    }
+  }
+}
+
 await browser.close();
 if (fails.length) { console.log("FAIL"); fails.forEach((f) => console.log(" - " + f)); process.exit(1); }
 console.log(`PASS: engine layout checks (${TRADE_ORDER.length} trades x 2 widths)`);
