@@ -94,9 +94,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-nav .ed-tel,.ed-nav .ed-btn{display:none}
 .ed-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ed-ink);color:var(--ed-cream);flex:none}
 /* hero */
-.ed-hero{padding-block:36px 56px}
+.ed-hero{padding-block:18px 44px}
 .ed-hero-grid{display:grid;gap:36px}
-.ed-hero h1{margin-top:18px;font-size:clamp(40px,11.5vw,132px);text-transform:uppercase;line-height:.92}
+.ed-hero h1{margin-top:12px;font-size:clamp(40px,11.5vw,132px);text-transform:uppercase;line-height:.92}
 .ed-sub{display:none;margin-top:16px;max-width:38ch;color:var(--ed-muted);font-size:18px}
 .ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:20px}
 .ed-sil{position:relative;aspect-ratio:4/3;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
@@ -201,6 +201,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 }
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name{transition:none}}
 @media (min-width:760px){
+  .ed-meta{grid-template-columns:repeat(var(--n,3),minmax(0,1fr))!important}
+  #price{padding-bottom:48px}
   .ed-rev{grid-template-columns:auto 1fr;align-items:center;gap:6px 36px}
   .ed-rev .ed-eyebrow{grid-column:1/-1}
   .ed-rev-text{display:grid;gap:4px;align-content:center}
@@ -218,6 +220,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-beat p{justify-self:end;text-align:left}
   .ed-final .ed-grid{grid-template-columns:1.1fr 1fr;gap:56px;align-items:start}
 }
+@media (min-width:1240px){
+  .ed-nav .ed-tel{display:inline}
+}
 @media (min-width:1024px){
   .ed-sil{aspect-ratio:1/1}
   .ed-foot .ed-wrap{padding-block:32px}
@@ -225,8 +230,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-process-pic{aspect-ratio:4/5}
   body{padding-bottom:0}
   .ed-call{display:none}
-  .ed-links{display:flex}
-  .ed-nav .ed-tel{display:inline;font-weight:600;font-size:15px;text-decoration:none}
+  .ed-links{display:flex;margin-left:auto}
+  .ed-nav .ed-wrap{gap:20px}
+  .ed-logo{flex:0 1 auto;margin-right:0}
+  .ed-nav .ed-tel{display:none;font-weight:600;font-size:15px;text-decoration:none;white-space:nowrap}
   .ed-nav .ed-btn{display:inline-flex}
   .ed-hero{padding-block:64px 88px}
   .ed-hero-grid{grid-template-columns:1.25fr 1fr;align-items:center;gap:48px}
@@ -424,7 +431,7 @@ export function generateEditorial(form, d, deps) {
     if (edText(p.time, 40)) meta.push(["Time", edText(p.time, 40)]);
     return `<li class="ed-rv"><article><div class="ed-card" data-ed="card">${pic(id)}<h3>${esc(nm)}</h3></div>
     <p class="ed-tags"><span class="ed-pill">Sample project</span><span class="ed-pill">${edPad(i + 1)} / 03</span></p>
-    <dl class="ed-meta">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></article></li>`;
+    <dl class="ed-meta" style="--n:${meta.length}">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></article></li>`;
   }).join("");
   const work = `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Sample projects</p><h2>The <em>work</em></h2></div>
@@ -476,13 +483,13 @@ export function generateEditorial(form, d, deps) {
 </div></section>`;
   const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
   <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>
-</div>
+  </div>
 </div></section>` : "";
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="ed-note">Call now, or send the form and we will call you back.</p>
-    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-note">Leave your number below and we will call you back.</p><a class="ed-btn light" href="#ask" style="margin-top:18px">Request a call</a>`}</div>
+    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-note">Request a call and we will get back to you.</p><a class="ed-btn light" href="#ask" style="margin-top:18px">Request a call</a>`}</div>
   <form id="ask" class="ed-form ed-rv" novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>

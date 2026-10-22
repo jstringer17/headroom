@@ -889,6 +889,10 @@ export function editorialLook(themeKey, tradeKey) {
   const p = carbon
     ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: v.accentHi, dark: v.night, mark: null }
     : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: one, hi: one, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
+  // Phone hero size: as large as fits, capped by the longest word of this trade's line.
+  const edLine = (CINE_KIT[tradeKey] && CINE_KIT[tradeKey].editorial && CINE_KIT[tradeKey].editorial.headline) || "";
+  const edLongest = Math.max(6, ...edLine.split(/\s+/).map((w) => w.replace(/[^A-Za-z]/g, "").length));
+  const edHeroSize = `min(16.5vw, calc((100vw - 40px) / ${(edLongest * 0.7).toFixed(2)}), 92px)`;
   const css = `
 :root{--ed-sky:${carbon ? "#121417" : "#dccdb5"};--ed-cream:${p.cream};--ed-cream2:${p.cream2};--ed-paper:${p.paper};--ed-line:${p.line};--ed-accent:${p.accent};--ed-hi:${p.hi};--ed-dark:${p.dark};--ed-muted:${carbon ? v.muted : "#5a5249"}}
 ::selection{background:${v.accent};color:${v.accentInk}}
@@ -937,7 +941,7 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-num,.ed-rev b,.ed-phone{font-family:var(--ed-sans)!important;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums lining-nums}
 @media (max-width:759px){
 .ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-variation-settings:"opsz" 11}
-.ed-hero h1{font-size:clamp(52px,16.5vw,92px)!important;line-height:.88!important}
+.ed-hero h1{font-size:${edHeroSize}!important;line-height:.88!important}
 .ed-hero{padding-block:24px 40px}
 }
 /* Picture titles: smaller optical size + heavier weight so hairlines never break over photos */
