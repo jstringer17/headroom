@@ -476,13 +476,13 @@ export function generateEditorial(form, d, deps) {
 </div></section>`;
   const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap ed-rev ed-rv">
   <p class="ed-eyebrow">Google rating</p><b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p>
-  <p class="ed-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p></div>
+</div>
 </div></section>` : "";
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="ed-note">Call now, or send the form and we will call you back.</p>
-    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-note">Add your phone number here when the site goes live.</p><a class="ed-btn light" href="#ask" style="margin-top:18px">Request a call</a>`}</div>
+    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : `<p class="ed-note">Leave your number below and we will call you back.</p><a class="ed-btn light" href="#ask" style="margin-top:18px">Request a call</a>`}</div>
   <form id="ask" class="ed-form ed-rv" novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>

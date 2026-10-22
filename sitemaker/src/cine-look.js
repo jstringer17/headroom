@@ -794,7 +794,8 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
     } else if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
       body = PAIRS[trade](slotId === "after");
     } else if (scene) {
-      const out = scene(st, last, v);
+      const heroV = opts.hero && trade === "fencing" && v < 0 ? 0 : v; // hero: full-width fence, house centred
+      const out = scene(st, last, heroV);
       // One camera for the whole story: the light of the last frame on every frame,
       // so nothing but the work changes when frames crossfade.
       mood = isStory ? scene(last, last, -1).mood || "day" : out.mood || "day";
@@ -810,8 +811,8 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
     const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
     if (opts.hero) {
       // Hero crop: zoom toward the subject so the house (or fence) fills the silhouette.
-      const focus = { fencing: [1080, 560], pressure: [800, 420] }[trade] || [800, 520];
-      body = `<g transform="translate(${focus[0]} ${focus[1]}) scale(1.55) translate(${-focus[0]} ${-focus[1]})">${body}</g>`;
+      const focus = { fencing: [800, 540], pressure: [800, 420] }[trade] || [800, 520];
+      body = `<g transform="translate(${focus[0]} ${focus[1]}) scale(1.9) translate(${-focus[0]} ${-focus[1]})">${body}</g>`;
     }
     const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
@@ -928,6 +929,17 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-row-name{transition:opacity 200ms var(--ed-ease-out)}
 .ed-btn:active{transform:scale(.97);transition:transform 160ms var(--ed-ease-out)}
 @media (prefers-reduced-motion:reduce){.ed-pic img{transition:opacity 200ms linear}.ed-btn:active{transform:none}}
+/* Readable on any picture: titles get their own scrim and shadow */
+.ed-card::after{background:linear-gradient(0deg,rgba(10,10,12,.78) 0%,rgba(10,10,12,.45) 30%,rgba(10,10,12,0) 62%)!important}
+.ed-card h3{text-shadow:0 1px 2px rgba(0,0,0,.45),0 4px 30px rgba(0,0,0,.45)}
+/* Small sizes: low optical size (thicker hairlines); numbers in a tabular lining sans */
+.ed-row-name,.ed-steps h3,.ed-trust b,.ed-logo{font-variation-settings:"opsz" 11}
+.ed-num,.ed-rev b,.ed-phone{font-family:var(--ed-sans)!important;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums lining-nums}
+@media (max-width:759px){
+.ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-variation-settings:"opsz" 11}
+.ed-hero h1{font-size:clamp(52px,16.5vw,92px)!important;line-height:.88!important}
+.ed-hero{padding-block:24px 40px}
+}
 /* Picture titles: smaller optical size + heavier weight so hairlines never break over photos */
 .ed-card h3,.ed-beat .ed-big{font-variation-settings:"opsz" 18;font-weight:700;letter-spacing:.005em}
 .ed-beat::after{background:linear-gradient(0deg,rgba(8,8,10,.78),rgba(8,8,10,.25) 55%,rgba(8,8,10,.35))!important}
