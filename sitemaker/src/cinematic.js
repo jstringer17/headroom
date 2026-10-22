@@ -99,7 +99,7 @@ const svgIcon = (inner, size) =>
 const CINE_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
 
 const ENGINE_CSS = `
-:root{--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--cream:#f6f0e4;--cream2:#ece4d3;--card:rgba(255,255,255,.14);--ease:cubic-bezier(.16,1,.3,1);--hh:64px;--max:1200px;color-scheme:light}
+:root{--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--cream:#f6f0e4;--cream2:#ece4d3;--card:rgba(255,255,255,.14);--ease:cubic-bezier(.23,1,.32,1);--ease-io:cubic-bezier(.77,0,.175,1);--hh:64px;--max:1200px;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:80px}
 section[id]{scroll-margin-top:80px}
@@ -112,8 +112,10 @@ img,svg{max-width:100%}
 .wrap{max-width:var(--max);margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
 a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
 .ba-handle:focus-visible{outline:none}
+.ba:active .ba-knob{scale:.94}
 .ba-handle:focus-visible .ba-knob{box-shadow:0 0 0 3px var(--accent),0 4px 16px rgba(0,0,0,.35)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;font:600 16px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;font:600 16px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .16s var(--ease),box-shadow .25s var(--ease)}
+.btn:active,.tab:active{transform:scale(.97)}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
 @media (hover:hover){.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}}
 .btn-glass{color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -174,7 +176,6 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .glass{isolation:isolate}
 .cine-no-js .panel[hidden]{display:block}
 .cine-no-js .panel{margin-bottom:16px}
-@media (prefers-reduced-motion:no-preference){.panel:not([hidden]){animation:fadein .6s var(--ease)}@keyframes fadein{from{opacity:0}to{opacity:1}}}
 /* before / after */
 .dark-sec{background:var(--dark);color:#fff}
 .dark-sec .kicker,.dark-sec .lede{color:rgba(255,255,255,.7)}
@@ -185,7 +186,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .ba-cap{display:flex;justify-content:space-between;margin-top:12px;font:600 13px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .ba-handle{position:absolute;top:0;bottom:0;left:calc(var(--pos) * 1%);width:44px;margin-left:-22px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
 .ba-handle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
-.ba-knob{position:relative;transform:translateX(var(--kx,0px));width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.ba-knob{position:relative;scale:1;transition:scale .16s var(--ease);transform:translateX(var(--kx,0px));width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .ba-knob svg{width:22px;height:22px}
 /* hvac tools */
 .tools{display:grid;gap:28px}
@@ -432,7 +433,8 @@ if(dataEl){
     optIn.forEach(function(o){o.disabled=!row[o.value];if(!o.disabled&&!first)first=o});
     var cur=optIn.filter(function(o){return o.checked&&!o.disabled})[0];
     if(!cur&&first){first.checked=true;cur=first}
-    out.textContent=cur?row[cur.value]:"";
+    var nv=cur?row[cur.value]:"";
+    if(out.textContent!==nv){out.textContent=nv;if(!reduce&&out.animate)out.animate([{opacity:.35,transform:"translateY(6px)"},{opacity:1,transform:"none"}],{duration:180,easing:"cubic-bezier(.23,1,.32,1)"})}
   };
   sizeIn.concat(optIn).forEach(function(i){i.addEventListener("change",show)});
   show();

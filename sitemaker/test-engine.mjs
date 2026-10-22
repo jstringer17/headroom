@@ -105,6 +105,11 @@ for (const trade of TRADE_ORDER) {
       await rows[2].focus(); await page.keyboard.press("Enter"); await page.waitForTimeout(450);
       const src2 = await page.getAttribute("[data-ed=row-img]", "src");
       ok(src2 !== src1 && (await rows[2].getAttribute("aria-expanded")) === "true", "editorial rows: Enter did not open row 3 / swap picture");
+      // rapid switching: the last row wins (no stale picture from an earlier row)
+      for (const r of [rows[0], rows[1], rows[2], rows[3]]) await r.click();
+      await page.waitForTimeout(500);
+      const want = await rows[3].getAttribute("data-pic");
+      ok((await page.getAttribute("[data-ed=row-img]", "data-slot")) === want, "editorial rows: rapid clicks left a stale picture");
       await rows[1].focus(); await page.keyboard.press("ArrowDown");
       ok(await page.evaluate(() => document.querySelectorAll("[data-ed=row]")[2] === document.activeElement), "editorial rows: ArrowDown does not move to the next row");
     }
