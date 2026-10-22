@@ -1569,7 +1569,8 @@ border-radius:var(--radius);padding:22px 24px;box-shadow:0 20px 50px -20px rgba(
 .cine-btn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:11px 20px;border-radius:999px;border:0;cursor:pointer;
 background:var(--c-accent);color:var(--c-accent-ink);font:600 .95rem/1 var(--f-body);text-decoration:none;
 transition:transform var(--t-ui) var(--ease),box-shadow var(--t-ui) var(--ease)}
-@media (hover:hover){.cine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}}
+@media (hover:hover) and (pointer:fine){.cine-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -12px rgba(0,0,0,.5)}}
+.cine-btn:active{transform:scale(.97);transition:transform 160ms cubic-bezier(.23,1,.32,1)}
 .cine-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .cine-btn.ghost{background:transparent;color:inherit;box-shadow:inset 0 0 0 1px currentColor}
 .cine-link{color:var(--c-accent-text);text-underline-offset:3px}
@@ -2201,7 +2202,7 @@ const INTERIOR = new Set(["restoration", "remodeling", "plumbing", "electrical",
 // Gentle looping motion inside the drawing (clouds drift, light breathes),
 // off for people who ask for reduced motion.
 const MOTION = `<style>.drift{animation:dr 38s ease-in-out infinite alternate}.drift2{animation:dr 56s ease-in-out infinite alternate-reverse}
-.glow{animation:gl 5s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+.glow{transform-box:fill-box;transform-origin:center}
 .sway{animation:sw 4s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:bottom}
 .shimmer{animation:sh 7s ease-in-out infinite alternate}.fall{animation:fa 1.6s linear infinite}
 @keyframes sw{from{transform:skewX(-4deg)}to{transform:skewX(4deg)}}@keyframes sh{from{transform:translateX(-220px)}to{transform:translateX(220px)}}
@@ -2347,6 +2348,13 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-final{background:var(--ed-dark)}
 .ed-phone{white-space:normal;overflow-wrap:anywhere;max-width:100%}
 .ed-final .ed-grid>*{min-width:0}
+/* Motion (Emil Kowalski review): strong ease-out, sub-300ms UI, blur bridges the picture swap */
+:root{--ed-ease-out:cubic-bezier(.23,1,.32,1)}
+.ed-pic img{transition:opacity 240ms var(--ed-ease-out),filter 240ms var(--ed-ease-out)}
+.ed-pic img.swap{opacity:0;filter:blur(6px)}
+.ed-row-name{transition:opacity 200ms var(--ed-ease-out)}
+.ed-btn:active{transform:scale(.97);transition:transform 160ms var(--ed-ease-out)}
+@media (prefers-reduced-motion:reduce){.ed-pic img{transition:opacity 200ms linear}.ed-pic img.swap{filter:none}.ed-btn:active{transform:none}}
 /* Proportion pass (reference study, our own design) */
 .ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-weight:600}
 .ed-logo{display:inline-flex;align-items:center;gap:10px;font-size:23px;color:var(--ed-ink)}

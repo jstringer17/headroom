@@ -145,3 +145,65 @@ Compared side by side at 1280 with northpeak-s0/s2/s4/s7. Changes, in our own de
 - **Nav:** our own drawn roofline mark before the serif name, the "Sample site" pill, links centered, phone and dark pill.
 - **Eyebrows:** short spaced-caps eyebrows are back over the work, services and process heads, because the CEO's brief asks for them (the brief wins over the craft-floor default).
 Not copied: their words, logo, mark, photos and code.
+
+## Round 4 (2026-10-22): every skill in the CEO's repos, one line each
+What was taken and where it shows. Where a skill conflicts with the CEO's pinned brief (the Northpeak reference), the brief wins and the conflict is noted.
+
+**impeccable** (jstringer17/impeccable)
+- **shape:** a short brief (job, proof, focal moment, anti-goals) before Round 3 → the section order and "Sample project" honesty.
+- **craft:** the craft floor's checks (6rem display cap, ≥12px labels, themed selection/caret/scrollbar) → cine-look.js editorialLook.
+- **typeset:** two families with one role each (Bodoni Moda caps + Manrope), balanced headings, tabular phone/price numerals → every heading and number.
+- **layout:** tight groups inside generous sections; the squint test → hero, trust box, work cards.
+- **colorize:** one accent per trade, used only on the accent word, icons and rules, at 3:1+ on paper and night → the orange, gold and blue accents.
+- **animate:** one authored moment, the house-rise in the hero → .ed-sil[data-shape=house].
+- **polish:** browser surfaces, focus and states → ::selection, caret and the focus rings.
+- **critique:** the qa-reviewer's pass notes were treated as the critique backlog and fixed in rounds 3b–3d.
+- **audit:** ran `impeccable detect` on built pages and fixed undersized labels, a 4.3:1 pair and a missing dark fallback; the rest were brief-mandated.
+- **bolder:** pushed the hero to heavy Didone caps (weight 600, up to about 108px) and the giant work-card names.
+- **quieter:** removed highlighter blocks, sparkles, grass glyphs and the pulsing picture glow.
+
+**ui-ux-pro-max**
+- **typography search:** chose a Didone over Playfair → Bodoni Moda.
+- **style search:** editorial grid → full-width work cards and the 4-column meta row.
+- **color search:** a single warm accent on neutral paper, confirmed against its contractor/legal palettes → one accent per trade.
+- **landing search:** proof right after the hero → the trust box sits second.
+- **ux search:** "animate 1–2 key elements per view" and reduced motion → the glow loop was cut; drift stays and stops under reduced motion.
+- **--design-system:** proposed Liquid Glass, rejected as off-brand for trades.
+- **chart:** not used; there is no data to chart.
+
+**Emil Kowalski skills** (jstringer17/skill)
+- **review-animations:** applied its ten standards:
+  - strong ease-out `cubic-bezier(.23,1,.32,1)`;
+  - UI motion under 300ms (picture swap 240ms, row dim 200ms);
+  - hover gated by `(hover:hover) and (pointer:fine)`;
+  - press feedback `scale(.97)` over 160ms;
+  - reduced motion keeps the fade and drops the blur and scale.
+- **improve-animations:** audited the motion surface. The highest-leverage fix was the hard crossfade on the service pictures, now bridged with a 6px blur.
+- **animation-vocabulary:** names used in the CSS: settle, rise, crossfade, blur bridge, press.
+- **find-animation-opportunities:** the one rare moment worth delight is the hero rise. Rows, tabs and buttons get feedback only.
+- **animate:** the hero clip-path rise (1.1s, first view only) and the image settle 1.08→1. Both are off under reduced motion.
+- **break-ui:**
+  - Fed the worst realistic data: a long Polish company name, a street-like town, a phone extension, an umlaut-and-emoji name, a Brazilian town, counts of 1.
+  - Fixed the place line and phone wrapping at 375.
+  - Checked no "1 reviews", "1 years", undefined or NaN.
+- **prototype:** the side-by-side scratch builds at 1280/375 before each push are the prototype loop.
+- **apple-design:** hit targets of at least 44px, and the restraint of one accent and one button style.
+- **pick-ui-library:** none. It is one offline HTML file with no framework, which is the right call for the maker.
+
+**taste-skill** (jstringer17/taste-skill)
+- **taste-skill (v2):**
+  - "Write the argument": every section states a claim with its proof (trust facts typed by the owner, sample work labeled, prices only when typed). Sections without one stay hidden.
+  - Hero length kept near the gallery median (4–6 words).
+  - Picture slots filled honestly: drawn samples, no fake product shots.
+- **soft-skill:** took its banned list for motion (no linear/ease-in-out UI easing) and hairline borders. Rejected its font ban, since Manrope is on brief, and its "never sticky nav", since the brief has one.
+- **brutalist-skill:** studied and rejected. Square corners and terminal styling fight the warm editorial brief.
+- **redesign-skill, imagegen-frontend-web, image-to-code-skill, brandkit:** these are retired or moved stubs in the repo. The redesign route now lives in taste-skill v2 (used above). No image tool was run; pictures stay with the CEO in Higgsfield.
+
+**anthropic skills** (jstringer17/skills)
+- **canvas-design:** its "90% visual, 10% text" stance shaped the placeholder art: drawn scenes with one small label.
+- **web-artifacts-builder:** took its anti-slop list (no purple gradients, no centered-everything); the React stack was not used.
+- **brand-guidelines:** Anthropic's own brand, not applied to client sites.
+- **webapp-testing:** Playwright checks at 375/1280 (overflow, row clicks, captures) in every round.
+
+**brand-ops**
+- No design skills. Took its falsification rule: the looks are judged by the qa rubric against the classic site as a control, never by "looks like the reference".
