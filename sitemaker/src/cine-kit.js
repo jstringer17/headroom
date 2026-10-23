@@ -682,6 +682,7 @@ Object.assign(CINE_KIT.fencing.editorial, {
   ],
 });
 Object.assign(CINE_KIT.pressure.editorial, {
+  hero: "half",
   process: "dirty",
   rows: { "House washing": "siding", "Driveways and sidewalks": "drive", "Decks and fences": "deck", "Roof cleaning": "svc-roof",
     "Gutter brightening": "svc-gutter", "Commercial washing": "svc-store", "Patios and pool decks": "before", "Window washing": "svc-window" },

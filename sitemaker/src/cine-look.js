@@ -811,8 +811,9 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
     const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
     if (opts.hero) {
       // Hero crop: zoom toward the subject so the house (or fence) fills the silhouette.
-      const focus = { fencing: [800, 540], pressure: [800, 420] }[trade] || [800, 520];
-      body = `<g transform="translate(${focus[0]} ${focus[1]}) scale(1.9) translate(${-focus[0]} ${-focus[1]})">${body}</g>`;
+      // Roof peak (scene y) -> just above the gable apex, scaled so the roof covers the triangle.
+      const [peakY, k] = { fencing: [330, 1.6], pressure: [180, 1.45] }[trade] || [280, 1.75];
+      body = `<g transform="translate(800 -12) scale(${k}) translate(-800 ${-peakY})">${body}</g>`;
     }
     const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
@@ -883,11 +884,11 @@ export function editorialLook(themeKey, tradeKey) {
   const v = cineVars(themeKey, tradeKey);
   const carbon = v.display === "grotesk";
   // One accent per trade for display words, icons and rules: at least 3:1 on the paper and on the night.
-  const ONE = { carbonYellow: "#a37800", carbonOrange: "#c25a12", woodBlueprint: "#4572c4", creamSerif: "#b5551a" };
+  const ONE = { carbonYellow: "#a87d00", carbonOrange: "#c25a12", woodBlueprint: "#4572c4", creamSerif: "#b5551a" };
   const BY_THEME = { navy: "#b5551a", forest: "#8f6b12", steel: "#c0392b", sky: "#3f6fb5" };
   const one = ONE[CINE_TRADE_LOOK[tradeKey]] || BY_THEME[themeKey] || "#b5551a";
   const p = carbon
-    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: v.accentHi, dark: v.night, mark: null }
+    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: one, dark: v.night, mark: null }
     : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: one, hi: one, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
   // Phone hero size: as large as fits, capped by the longest word of this trade's line.
   const edLine = (CINE_KIT[tradeKey] && CINE_KIT[tradeKey].editorial && CINE_KIT[tradeKey].editorial.headline) || "";
@@ -938,7 +939,8 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-card h3{text-shadow:0 1px 2px rgba(0,0,0,.45),0 4px 30px rgba(0,0,0,.45)}
 /* Small sizes: low optical size (thicker hairlines); numbers in a tabular lining sans */
 .ed-row-name,.ed-steps h3,.ed-trust b,.ed-logo{font-variation-settings:"opsz" 11}
-.ed-num,.ed-rev b,.ed-phone{font-family:var(--ed-sans)!important;font-weight:600;letter-spacing:-.025em;font-variant-numeric:tabular-nums lining-nums}
+.ed-num,.ed-rev b,.ed-phone{font-family:var(--ed-sans)!important;font-weight:600;letter-spacing:-.01em;font-variant-numeric:lining-nums proportional-nums}
+.ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-variation-settings:"opsz" 36;-webkit-text-stroke:.012em currentColor;paint-order:stroke fill}
 @media (max-width:759px){
 .ed h1,.ed h2,.ed .ed-big,.ed-card h3{font-variation-settings:"opsz" 11}
 .ed-hero h1{font-size:${edHeroSize}!important;line-height:.88!important}
