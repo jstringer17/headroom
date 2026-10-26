@@ -3,7 +3,7 @@
 Owner: the session that runs this file. Needs **Claude in Chrome** on a session that runs on the CEO's own computer, with the CEO already signed in to Higgsfield in that Chrome. Written 2026-10-26. CEO talks in plain 5th-grade words, wants short updates.
 
 ## Goal
-Make the 9 fencing pictures below, one at a time, for the Sample Site Maker (private artifact https://claude.ai/artifact/73v4S1BSpREDeXxZM8PxJQ). They must look like clean, real, calm, premium photos (think a modern roofing or fencing company site shot at golden hour). These are sample-site pictures only, never presented as a client's real work.
+Make the 9 required fencing pictures below (and 4 optional ones only if the CEO says go), one at a time, for the Sample Site Maker (private artifact https://claude.ai/artifact/73v4S1BSpREDeXxZM8PxJQ). They must look like clean, real, calm, premium photos (think a modern roofing or fencing company site shot at golden hour). These are sample-site pictures only, never presented as a client's real work.
 
 ## Money rules (the CEO's credits, Higgsfield Plus plan, about 1,698 credits at last check)
 1. Before the first picture, open Higgsfield and note the credit balance. Tell the CEO the balance and what one picture costs before you spend more than 3 credits' worth of tries. If you cannot see the cost, make ONE picture, then tell the CEO what it cost.
@@ -18,7 +18,7 @@ Make the 9 fencing pictures below, one at a time, for the Sample Site Maker (pri
 - Optional for consistency: for `vinyl` and `rail`, use the `cedar` picture as the reference image so the yard matches.
 - After each picture: look at it. Reject it and retry if it has any people, text, logos, warped fence lines, or a plastic or cartoon look. The fence lines must be straight and the grass, light and shadows believable.
 
-## The 9 pictures (in order)
+## The 9 required pictures (in order), then 4 optional ones
 ### 1. `stakes` : Story 1 of 4: It starts with a string line
 - How: Make this one new. It is the base picture for the story.
 - Save as: `fencing-stakes.jpg`
@@ -82,6 +82,8 @@ Make the 9 fencing pictures below, one at a time, for the Sample Site Maker (pri
 
 > Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: a new cedar gate hangs straight and level in the same spot with new black hinges and latch, fresh boards on both sides. Wide 16:9 photo, natural light, realistic, calm and premium, with quiet open space for a headline. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks, no vehicles with writing.
 
+## Optional (only after the CEO says go; these fill the Editorial look's service rows)
+
 ### 10. `svc-chain` : Service: Chain link
 - How: Make it new.
 - Save as: `fencing-svc-chain.jpg`
@@ -116,7 +118,7 @@ Make the 9 fencing pictures below, one at a time, for the Sample Site Maker (pri
 3. Write a short note in `org/art/pictures-log.md` (model, settings, credits spent, any retries, what looked off). Commit and push to branch `claude/inspiring-edison-6s7ude`.
 
 ## Done when (pass/fail)
-- [ ] 9 files exist with the names above, all 16:9, no people, no text.
+- [ ] The 9 required files (1 to 9) exist with the names above, all 16:9, no people, no text. Pictures 10 to 13 only if the CEO said go.
 - [ ] Story set (stakes, posts, rails, done) shows the same yard and camera in all four.
 - [ ] CEO saw the pictures and said go (or no) after pictures 4 and 9.
 - [ ] Credits spent are written down.
