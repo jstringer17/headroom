@@ -101,7 +101,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:20px}
 .ed-sil{position:relative;aspect-ratio:4/3;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
 .ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
-.ed-sil img[data-real],.ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real]{object-position:72% 45%}
+.ed-sil img[data-real],.ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real],.ed-how-pic img[data-real]{object-position:72% 45%}
 .ed-beat img[data-real]{object-position:85% 50%}
 .ed-cap{position:absolute;left:12px;bottom:12px;z-index:2;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:600 11px/1 var(--ed-sans);letter-spacing:.1em;text-transform:uppercase}
 .ed-cap[hidden]{display:none}

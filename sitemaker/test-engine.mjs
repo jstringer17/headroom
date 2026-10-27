@@ -180,6 +180,64 @@ for (const trade of TRADE_ORDER) {
   await page.close();
 }
 
+// The picture library: type only a company and pick Fencing, and the CEO's four pictures are in the site
+// (Editorial and Cinematic) without any upload. Roofing has no library; the checkbox, uploads and Remove work.
+{
+  const makerFile = new URL("./maker.html", import.meta.url).href;
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const errs = []; page.on("pageerror", (e) => errs.push(e.message));
+  await page.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await page.goto(makerFile, { waitUntil: "load" });
+  await page.fill("#company", "Cedar Post Fencing");
+  await page.selectOption("#trade", "fencing");
+  await page.waitForTimeout(600);
+  const prefix = (id) => page.evaluate((k) => PICTURE_LIBRARY.fencing[k].slice(0, 160), id);
+  const srcdoc = () => page.$eval("#frame", (f) => f.srcdoc);
+  const ids = ["stakes", "posts", "rails", "done"];
+  const pre = Object.fromEntries(await Promise.all(ids.map(async (k) => [k, await prefix(k)])));
+  ok(ids.every((k) => pre[k].startsWith("data:image/webp;base64,")), "library: fencing pictures are not embedded in maker.html");
+  ok(await page.isVisible("#lib-wrap") && (await page.isChecked("#use-library")), "library: checkbox missing or not on by default for fencing");
+  ok((await page.$$eval("#cine-slots .slot .lib-tag:not([hidden])", (e) => e.length)) === 4, "library: the four spots do not show 'Library picture'");
+  let ed = await srcdoc();
+  ok(ed.includes('data-look="editorial"') && ids.every((k) => ed.includes(pre[k])), "library: Editorial preview is missing library pictures");
+  ok(/class="ed-sil[^"]*"[^>]*><img src="data:image\/webp/.test(ed), "library: Editorial hero is not a library picture");
+  ok(/<section class="ed-beat"[^>]*><img src="data:image\/webp/.test(ed), "library: Editorial second beat is not a library picture");
+  const proc = (ed.match(/class="ed-how-pic[^"]*"[^>]*>\s*<img[^>]*data-slot="([^"]+)"[^>]*data-real="1"/) || [])[1];
+  ok(ids.includes(proc), `library: Editorial process picture is not a library picture (${proc})`);
+    await page.selectOption("#look", "cinematic"); await page.waitForTimeout(500);
+  const ci = await srcdoc();
+  ok(ci.includes('id="story"') && ids.every((k) => ci.includes(pre[k])), "library: Cinematic story is missing library pictures");
+  await page.selectOption("#look", "editorial"); await page.waitForTimeout(400);
+  // download is one sane file
+  const dl = page.waitForEvent("download");
+  await page.click("#download");
+  const file = await dl; const path2 = await file.path();
+  const size = (await import("node:fs")).statSync(path2).size;
+  ok(size > 1.2e6 && size < 6e6, `library: download size ${Math.round(size / 1024)} KB is not sane`);
+  // checkbox off -> drawings only
+  await page.uncheck("#use-library"); await page.waitForTimeout(500);
+  ed = await srcdoc();
+  ok(!ed.includes(pre.posts) && !ed.includes(pre.done), "library: unticking the checkbox still shows library pictures");
+  await page.check("#use-library"); await page.waitForTimeout(500);
+  // Remove on one spot -> that spot goes back to the drawing, the rest stay
+  await page.click('#cine-slots .slot[data-slot="posts"] .slot-clear'); await page.waitForTimeout(500);
+  ed = await srcdoc();
+  ok(!ed.includes(pre.posts) && ed.includes(pre.done), "library: Remove did not drop only that picture");
+  // an upload wins over the library picture
+  await page.check("#use-library"); await page.waitForTimeout(200);
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "base64");
+  await page.setInputFiles('#cine-slots .slot[data-slot="done"] input[type=file]', { name: "mine.png", mimeType: "image/png", buffer: png });
+  await page.waitForTimeout(900);
+  ed = await srcdoc();
+  ok(!ed.includes(pre.done) && ed.includes("data:image/jpeg"), "library: an uploaded picture did not replace the library picture");
+  // roofing has no library
+  await page.selectOption("#trade", "roofing"); await page.waitForTimeout(600);
+  ed = await srcdoc();
+  ok(!(await page.isVisible("#lib-wrap")) && !ed.includes("data:image/webp") && ed.includes("image/svg+xml"), "library: roofing should keep drawings and no library box");
+  ok(errs.length === 0, `library: page error ${errs[0]}`);
+  await page.close();
+}
+
 await browser.close();
 if (fails.length) { console.log("FAIL"); fails.forEach((f) => console.log(" - " + f)); process.exit(1); }
 console.log(`PASS: engine layout checks (${TRADE_ORDER.length} trades x 2 widths)`);

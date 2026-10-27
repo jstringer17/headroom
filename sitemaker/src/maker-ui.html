@@ -77,6 +77,7 @@ details.lead[open]{display:grid;gap:10px}
 .slot-head{font-weight:700;font-size:14px}
 .slot .hero-pick img{width:96px;height:56px}
 .prices{display:grid;gap:12px}
+.lib-tag{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .price-row{display:grid;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
 .price-row>b{font-size:14px}
 .price-cell{display:grid;grid-template-columns:minmax(0,1fr) 84px 84px;gap:6px;align-items:center;font-size:14px}
@@ -175,6 +176,7 @@ details.lead[open]{display:grid;gap:10px}
       </fieldset>
       <fieldset class="group">
         <legend>Cinematic pictures</legend>
+        <label class="check" id="lib-wrap" for="use-library" hidden><input type="checkbox" id="use-library" checked> Use the library pictures for this trade</label>
         <p class="hint">One picture per spot. Empty spots show a labeled sample picture. Never use fake work photos.</p>
         <div id="cine-slots" class="slots"></div>
       </fieldset>

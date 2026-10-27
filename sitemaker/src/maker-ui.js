@@ -10,7 +10,19 @@
   let downloads = null;
   let heroData = "";
   const hasCine = typeof CINE_KIT !== "undefined";
-  const cineImages = {}; // trade -> slotId -> picture
+  const cineImages = {}; // trade -> slotId -> picture the user added (upload or link)
+  // Built-in pictures per trade (sitemaker/library). Used by default, the user's own pictures win.
+  const LIB = typeof PICTURE_LIBRARY !== "undefined" ? PICTURE_LIBRARY : {};
+  const libOn = {}; // trade -> false when the checkbox is off
+  const libGone = {}; // trade -> { slotId: true } removed library pictures
+  const hasLib = (k) => !!LIB[k] && Object.keys(LIB[k]).length > 0;
+  function libFor(key) {
+    if (!hasLib(key) || libOn[key] === false) return {};
+    const gone = libGone[key] || {}, o = {};
+    for (const id in LIB[key]) if (!gone[id]) o[id] = LIB[key][id];
+    return o;
+  }
+  const effectiveImages = (key) => Object.assign({}, libFor(key), cineImages[key] || {});
   const cineUnits = {}; // trade -> chosen unit
   const edProjects = [{}, {}, {}]; // typed words for the editorial project cards
   const cineRpct = {}; // trade -> typed percent
@@ -64,11 +76,17 @@
     $("cine-fields").hidden = !kit || $("look").value === "classic";
     if (!kit) return;
     const imgs = cineImages[key] = cineImages[key] || {};
-    $("cine-slots").innerHTML = cineSlots(kit).map((s) => '<div class="slot" data-slot="' + esc(s.id) + '"><span class="slot-head">' + esc(s.label) + '</span>' +
-      '<label class="btn file-btn">Upload a picture<input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Upload picture for ' + esc(s.label) + '"></label>' +
-      '<input type="text" inputmode="url" class="slot-url" placeholder="Or paste https:// link" aria-label="Picture link for ' + esc(s.label) + '" value="' + (/^https:/.test(imgs[s.id] || "") ? esc(imgs[s.id]) : "") + '">' +
-      '<div class="hero-pick"' + (/^data:/.test(imgs[s.id] || "") ? "" : " hidden") + '><img alt="" ' + (/^data:/.test(imgs[s.id] || "") ? 'src="' + imgs[s.id] + '"' : "") + '><button class="btn slot-clear" type="button">Remove</button></div>' +
-      '<p class="status" aria-live="polite"></p></div>').join("");
+    $("lib-wrap").hidden = !hasLib(key);
+    $("use-library").checked = libOn[key] !== false;
+    const lib = libFor(key);
+    $("cine-slots").innerHTML = cineSlots(kit).map((s) => {
+      const user = imgs[s.id], libpic = !user && lib[s.id], thumb = /^data:/.test(user || "") ? user : libpic || "";
+      return '<div class="slot" data-slot="' + esc(s.id) + '"><span class="slot-head">' + esc(s.label) + '</span>' +
+        '<label class="btn file-btn"><span class="up-text">' + (thumb || /^https:/.test(user || "") ? "Replace" : "Upload a picture") + '</span><input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Upload picture for ' + esc(s.label) + '"></label>' +
+        '<input type="text" inputmode="url" class="slot-url" placeholder="Or paste https:// link" aria-label="Picture link for ' + esc(s.label) + '" value="' + (/^https:/.test(user || "") ? esc(user) : "") + '">' +
+        '<div class="hero-pick"' + (thumb ? "" : " hidden") + '><img alt="" ' + (thumb ? 'src="' + thumb + '"' : "") + '><span class="lib-tag"' + (libpic ? "" : " hidden") + '>Library picture</span><button class="btn slot-clear" type="button">Remove</button></div>' +
+        '<p class="status" aria-live="polite"></p></div>';
+    }).join("");
     const pr = cinePrices[key] = cinePrices[key] || {};
     const est = kit.estimator || { sizes: [], options: [] };
     $("ed-fields").closest("fieldset").hidden = $("look").value !== "editorial";
@@ -102,7 +120,7 @@
       cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
       editorial: hasCine ? { projects: edProjects } : undefined,
-      cine: hasCine ? { images: cineImages[tradeSel.value] || {}, prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
+      cine: hasCine ? { images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
     };
   }
 
@@ -136,6 +154,7 @@
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "look") buildCine();
+    if (e.target.id === "use-library") { libOn[tradeSel.value] = e.target.checked; buildCine(); }
     if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;
     if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;
     if (e.target.id === "cine-unit") cineUnits[tradeSel.value] = e.target.value;
@@ -150,18 +169,22 @@
   $("cine-slots").addEventListener("change", (e) => { if (e.target.type === "file") onSlotFile(e.target); });
   $("cine-slots").addEventListener("click", (e) => {
     if (!e.target.classList.contains("slot-clear")) return;
-    const slot = e.target.closest(".slot");
-    delete cineImages[tradeSel.value][slot.dataset.slot];
-    slot.querySelector(".slot-url").value = "";
-    slot.querySelector(".hero-pick").hidden = true;
-    slotSay(slot, "Picture removed."); render();
+    const slot = e.target.closest(".slot"), key = tradeSel.value;
+    // Removing a picture the user added falls back to the library picture (if any); removing the
+    // library picture itself leaves the spot to the labeled drawing.
+    if (cineImages[key][slot.dataset.slot]) delete cineImages[key][slot.dataset.slot];
+    else (libGone[key] = libGone[key] || {})[slot.dataset.slot] = true;
+    buildCine();
+    const again = document.querySelector('#cine-slots .slot[data-slot="' + slot.dataset.slot + '"] .status');
+    if (again) { again.textContent = "Picture removed."; again.className = "status"; }
+    render();
   });
   function slotSay(slot, msg, bad) { const s = slot.querySelector(".status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); }
   function onSlotUrl(input) {
     const slot = input.closest(".slot"), v = input.value.trim(), imgs = cineImages[tradeSel.value];
     if (!v) { delete imgs[slot.dataset.slot]; slot.querySelector(".hero-pick").hidden = true; slotSay(slot, ""); return; }
     if (!/^https:\/\/\S+$/.test(v)) { delete imgs[slot.dataset.slot]; slotSay(slot, "A picture link starts with https://", true); return; }
-    imgs[slot.dataset.slot] = v; slot.querySelector(".hero-pick").hidden = true;
+    imgs[slot.dataset.slot] = v; slot.querySelector(".hero-pick").hidden = true; slot.querySelector(".up-text").textContent = "Replace";
     slotSay(slot, "Link added. Upload the file instead to keep the picture inside the download.");
   }
   function onSlotFile(input) {
@@ -176,6 +199,7 @@
       cineImages[tradeSel.value][slot.dataset.slot] = data;
       slot.querySelector(".slot-url").value = "";
       const box = slot.querySelector(".hero-pick"); box.hidden = false; box.querySelector("img").src = data;
+      box.querySelector(".lib-tag").hidden = true; slot.querySelector(".up-text").textContent = "Replace";
       slotSay(slot, "Picture added (" + Math.round(data.length * 0.75 / 1024) + " KB).");
       render();
     };
