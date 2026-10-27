@@ -124,6 +124,9 @@ export async function realPicturesHtml(browser, trade, pics, look, company = "Ce
     const inp = page.locator(`#cine-slots .slot[data-slot="${slot}"] input[type=file]`);
     if (await inp.count()) { await inp.setInputFiles(file); await page.waitForTimeout(1000); } else missing.push(slot);
   }
+  // type one price range (test data) so the estimator can be seen
+  const lo = page.locator('#cine-prices input[data-end="low"]').first(), hi = page.locator('#cine-prices input[data-end="high"]').first();
+  if (await lo.count()) { await lo.fill("22"); await hi.fill("34"); await page.waitForTimeout(500); }
   await page.selectOption("#look", look); await page.waitForTimeout(1500);
   const html = await page.evaluate(() => document.getElementById("frame").srcdoc);
   await ctx.close();
