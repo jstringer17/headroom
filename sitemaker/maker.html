@@ -1782,13 +1782,13 @@ function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, wo
 // Label on the art: always visible. Top center and narrow (440 of 1600), so
 // it survives object-fit: cover on a phone (about 450 wide stays in view)
 // and stays clear of headlines and buttons, which sit at the bottom.
-function label(text, dark, y = 96) {
+function label(text, dark, y = 96, cx = 800) {
   const t1 = "Sample picture: make in Higgsfield";
   const t2 = text.length > 40 ? text.slice(0, 39) + "\u2026" : text;
   return `<g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
-<rect x="600" y="${y}" width="400" height="74" rx="12" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
-<text x="800" y="${y + 32}" font-size="20" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
-<text x="800" y="${y + 59}" font-size="17" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
+<rect x="${cx - 200}" y="${y}" width="400" height="74" rx="12" fill="${dark ? "rgba(250,246,238,.92)" : "rgba(29,27,24,.86)"}"/>
+<text x="${cx}" y="${y + 32}" font-size="20" font-weight="700" fill="${dark ? "#1d1b18" : "#faf6ee"}">${svgEsc(t1)}</text>
+<text x="${cx}" y="${y + 59}" font-size="17" fill="${dark ? "#4a443b" : "#d8cfbf"}">${svgEsc(t2)}</text></g>`;
 }
 
 // Viewfinder corner marks and a small "16:9 sketch" tag: reads as a shot to be made.
@@ -2286,7 +2286,7 @@ function placeholderSvg(trade, slotId, labelText, opts = {}) {
 <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .35  0 0 0 .22 0"/></filter>
 <linearGradient id="ql" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d6" stop-opacity=".18"/><stop offset="1" stop-color="#1a140c" stop-opacity=".22"/></linearGradient></defs>` : "";
     const drawn = opts.quiet ? `${quiet}<g filter="url(#qt)">${body}</g><rect width="${W}" height="${H}" fill="url(#ql)"/><rect width="${W}" height="${H}" filter="url(#gr)"/>` : body;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${drawn}${vignette}${opts.quiet ? "" : frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${drawn}${vignette}${opts.quiet ? "" : frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96), opts.labelSide === "left" ? 440 : opts.labelSide === "right" ? 1160 : 800)}</svg>`;
   } finally {
     Object.assign(C, LIGHT);
   }
