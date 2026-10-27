@@ -93,7 +93,7 @@ export function buildCine(form, look = "cinematic") {
 
 // Default path: drive the REAL maker.html like a user (type company, pick trade, touch nothing else).
 // Returns the exact HTML the preview iframe shows (its srcdoc). Also screenshots the form page itself.
-export async function defaultPathHtml(browser, trade, company, shotPath) {
+export async function defaultPathHtml(browser, trade, company, shotPath, look) {
   const { pathToFileURL } = await import("node:url");
   const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1400, height: 900 } });
   const page = await ctx.newPage();
@@ -102,6 +102,7 @@ export async function defaultPathHtml(browser, trade, company, shotPath) {
   await page.fill("#company", company);
   await page.selectOption("#trade", trade);
   await page.waitForTimeout(600);
+  if (look) { await page.selectOption("#look", look); await page.waitForTimeout(1200); } // only for cinematic: Editorial is the form default
   const html = await page.evaluate(() => document.getElementById("frame").srcdoc);
   if (shotPath) await page.screenshot({ path: shotPath, type: "jpeg", quality: 70 });
   await ctx.close();
@@ -131,4 +132,10 @@ export async function realPicturesHtml(browser, trade, pics, look, company = "Ce
   const html = await page.evaluate(() => document.getElementById("frame").srcdoc);
   await ctx.close();
   return { html, missing };
+}
+
+// Real (non-placeholder) pictures in a page: every <img> whose source is not the SVG placeholder art, counted by distinct source.
+export function realPictures(html) {
+  const srcs = [...html.matchAll(/<img\b[^>]*?\bsrc="([^"]+)"/g)].map((m) => m[1]).filter((u) => !/^data:image\/svg\+xml/.test(u));
+  return { count: srcs.length, distinct: new Set(srcs).size };
 }

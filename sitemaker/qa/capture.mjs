@@ -24,7 +24,7 @@ const refDir = join(here, "..", "..", "org", "inspiration", "frames");
 const refs = ["northpeak-s0.jpg", "northpeak-s2.jpg", "northpeak-s4.jpg", "northpeak-s7.jpg"].filter((f) => existsSync(join(refDir, f)));
 for (const f of refs) copyFileSync(join(refDir, f), join(out, "ref-" + f));
 for (const trade of trades) {
-  const html = await defaultPathHtml(browser, trade, `Sample ${trade} Co`, join(out, `default-${trade}-form.jpg`));
+  const html = await defaultPathHtml(browser, trade, `Sample ${trade} Co`, join(out, `default-${trade}-form.jpg`), look === "cinematic" ? "cinematic" : undefined);
   writeFileSync(join(out, `default-${trade}.html`), html);
   defaultShots.push({ trade, w: 1400, file: `default-${trade}-form.jpg`, label: `Form as a user sees it (company + trade only): look is ${isEditorial(html) ? "EDITORIAL" : "NOT editorial (classic or cinematic)"}` });
   for (const width of [375, 1280]) {

@@ -4,7 +4,7 @@
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, isEditorial, defaultPathHtml, ED, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, isEditorial, defaultPathHtml, realPictures, ED, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
 import { TRADE_ORDER, TRADES } from "./src/trades.js";
 const ALL = [...TRADE_ORDER, ...NEW_TRADES.filter((k) => !TRADE_ORDER.includes(k))]; // 19 trades
 
@@ -272,6 +272,19 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
         await ctx.close();
       }
     }
+  }
+  // Built-in picture library: typed name + trade only must already show the CEO's real pictures (fencing), drawings elsewhere.
+  {
+    const ed = await defaultPathHtml(browser, "fencing", "Sample fencing Co");
+    const cine = await defaultPathHtml(browser, "fencing", "Sample fencing Co", null, "cinematic");
+    const rf = realPictures(ed), rc = realPictures(cine);
+    check("D", "fencing default (company + trade only): Editorial shows the 4 real pictures (4+ distinct)", rf.distinct >= 4, `${rf.distinct} distinct real pictures, ${rf.count} real <img> in total`);
+    check("D", "fencing default: Cinematic story shows the 4 real pictures (4+ distinct)", rc.distinct >= 4, `${rc.distinct} distinct real pictures, ${rc.count} in total`);
+    check("D", "fencing default: Editorial hero uses a real picture", /data-ed="hero"[\s\S]{0,1500}?<img\b[^>]*src="(?!data:image\/svg)/.test(ed) || /<img\b[^>]*src="(?!data:image\/svg)[^"]+"[^>]*>[\s\S]{0,400}data-ed="hero"/.test(ed), "hero has no real picture");
+    for (const [name, h] of [["roofing", await defaultPathHtml(browser, "roofing", "Sample roofing Co")], ["pressure", await defaultPathHtml(browser, "pressure", "Sample pressure Co")]]) {
+      check("D", `${name} default still shows drawings only (no real pictures yet)`, realPictures(h).count === 0, `${realPictures(h).count} real pictures`);
+    }
+    check("D", "default page with the fencing library stays under 6 MB", Math.max(Buffer.byteLength(ed), Buffer.byteLength(cine)) < 6 * 1048576, `${(Math.max(Buffer.byteLength(ed), Buffer.byteLength(cine)) / 1048576).toFixed(1)} MB`);
   }
   // Look select is always visible (no hidden checkbox needed)
   const { pathToFileURL: toUrl } = await import("node:url");
