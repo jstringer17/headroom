@@ -471,7 +471,8 @@ export function generateCinematic(form, d, deps) {
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
   // A slot's picture: the owner's, or labeled placeholder art drawn in code.
-  const slotSrc = (id, label) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, label);
+  const anyReal = Object.values(images).some((v) => safeImage(v));
+  const slotSrc = (id, label) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, label, anyReal ? { quiet: true } : undefined);
   const slots = cineSlots(kit);
   const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
   const pic = (id, attrs = "") => `<img src="${esc(slotSrc(id, slotLabel(id)))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="" ${attrs}>`;
