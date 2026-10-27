@@ -151,6 +151,35 @@ for (const trade of TRADE_ORDER) {
   }
 }
 
+// The owner's own pictures: Editorial uses them first (hero, beat, process, cards, rows, never the same
+// picture on neighbours) and the cinematic story keeps the subject on phones with a readable counter.
+{
+  const px = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA=";
+  const imgs = Object.fromEntries(["stakes", "posts", "rails", "done"].map((k, i) => [k, px + "".padEnd(0) ]));
+  // make each picture distinct so de-duplication does not merge them
+  const distinct = Object.fromEntries(Object.keys(imgs).map((k, i) => [k, "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP" + "A".repeat(i + 1) + "//wgALCAABAAEBAREA/8QAFBABAAAAAAAAAAAAAAAAAAAAAP/aAAgBAQABPxA="]));
+  const ed = generateSite({ company: "Cedar Post", trade: "fencing", cinematic: true, look: "editorial", cine: { images: distinct } });
+  const slot = (re) => (ed.match(re) || [])[1];
+  ok(slot(/class="ed-sil[^"]*"[^>]*><img[^>]*data-slot="([^"]+)"/) === "done", "editorial: hero is not the owner's last picture");
+  const beat = slot(/<section class="ed-beat"[^>]*><img[^>]*data-slot="([^"]+)"/);
+  ok(["stakes", "posts", "rails"].includes(beat), `editorial: second beat is not an owner picture (${beat})`);
+  const cards = [...ed.matchAll(/data-ed="card"><img[^>]*data-slot="([^"]+)"/g)].map((m) => m[1]);
+  ok(cards.length === 3 && cards.every((c) => c in distinct) && cards[0] !== cards[1] && cards[1] !== cards[2], `editorial: work cards do not cycle the owner pictures (${cards})`);
+  const rowsPics = [...ed.matchAll(/data-ed="row" data-pic="([^"]+)"/g)].map((m) => m[1]);
+  ok(rowsPics.length >= 4 && rowsPics.slice(0, 4).every((c) => c in distinct) && rowsPics.every((c, i) => c !== rowsPics[i - 1]), `editorial: service rows do not use the owner pictures first (${rowsPics})`);
+  ok((ed.match(/data-real="1"/g) || []).length >= 4, "editorial: owner pictures not marked for the focal crop");
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  await page.route("**/*", (q) => (/^(data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await page.setContent(generateSite({ company: "Cedar Post", trade: "fencing", cinematic: true, cine: { images: distinct } }), { waitUntil: "load" });
+  const r = await page.evaluate(() => {
+    const im = document.querySelector(".frame img[data-real]"); const c = document.querySelector(".prog-count");
+    return { pos: im ? getComputedStyle(im).objectPosition : "", bg: c ? getComputedStyle(c).backgroundColor : "" };
+  });
+  ok(/^8\d%|88%/.test(r.pos), `cinematic: phone crop does not favour the subject side (${r.pos})`);
+  ok(/rgba\(0, 0, 0, 0\.5/.test(r.bg), `cinematic: story counter has no dark backing (${r.bg})`);
+  await page.close();
+}
+
 await browser.close();
 if (fails.length) { console.log("FAIL"); fails.forEach((f) => console.log(" - " + f)); process.exit(1); }
 console.log(`PASS: engine layout checks (${TRADE_ORDER.length} trades x 2 widths)`);

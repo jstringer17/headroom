@@ -151,9 +151,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-motion .story-cta>*{pointer-events:auto}
 .cine-motion .story-sub{display:none}
 .prog-bar,.prog-count{display:none}
+.frame img[data-real]{object-position:var(--fp,88% 50%)}
+.panel img[data-real],.ba img[data-real]{object-position:72% 45%}
+@media (min-width:760px){.frame img[data-real]{object-position:var(--fp,50% 50%)}}
 .cine-motion .prog-bar{display:block;position:absolute;left:0;right:0;bottom:0;height:4px;z-index:4;background:rgba(255,255,255,.18)}
 .prog-bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);will-change:transform}
-.cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:rgba(255,255,255,.8);font-variant-numeric:tabular-nums}
+.cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
 /* sections on cream */
 .sec{padding-block:72px}
 .sec h2{font-size:clamp(38px,7vw,72px)}
@@ -471,7 +474,7 @@ export function generateCinematic(form, d, deps) {
   const slotSrc = (id, label) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, label);
   const slots = cineSlots(kit);
   const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
-  const pic = (id, attrs = "") => `<img src="${esc(slotSrc(id, slotLabel(id)))}" alt="" ${attrs}>`;
+  const pic = (id, attrs = "") => `<img src="${esc(slotSrc(id, slotLabel(id)))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="" ${attrs}>`;
 
   const story = kit.story || [];
   const styles = kit.styles || [];

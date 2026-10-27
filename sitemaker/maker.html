@@ -2641,9 +2641,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-motion .story-cta>*{pointer-events:auto}
 .cine-motion .story-sub{display:none}
 .prog-bar,.prog-count{display:none}
+.frame img[data-real]{object-position:var(--fp,88% 50%)}
+.panel img[data-real],.ba img[data-real]{object-position:72% 45%}
+@media (min-width:760px){.frame img[data-real]{object-position:var(--fp,50% 50%)}}
 .cine-motion .prog-bar{display:block;position:absolute;left:0;right:0;bottom:0;height:4px;z-index:4;background:rgba(255,255,255,.18)}
 .prog-bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);will-change:transform}
-.cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:rgba(255,255,255,.8);font-variant-numeric:tabular-nums}
+.cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
 /* sections on cream */
 .sec{padding-block:72px}
 .sec h2{font-size:clamp(38px,7vw,72px)}
@@ -2961,7 +2964,7 @@ function generateCinematic(form, d, deps) {
   const slotSrc = (id, label) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, label);
   const slots = cineSlots(kit);
   const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
-  const pic = (id, attrs = "") => `<img src="${esc(slotSrc(id, slotLabel(id)))}" alt="" ${attrs}>`;
+  const pic = (id, attrs = "") => `<img src="${esc(slotSrc(id, slotLabel(id)))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="" ${attrs}>`;
 
   const story = kit.story || [];
   const styles = kit.styles || [];
@@ -3224,6 +3227,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:20px}
 .ed-sil{position:relative;aspect-ratio:4/3;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
 .ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
+.ed-sil img[data-real],.ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real]{object-position:72% 45%}
+.ed-beat img[data-real]{object-position:85% 50%}
 .ed-sil.ph img{inset:auto 0 0 0;height:82%}
 /* trust strip */
 .ed-trust{padding-block:0 56px}
@@ -3375,8 +3380,8 @@ var root=document.documentElement;root.classList.add("js");root.classList.remove
 var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
 /* picture lookup: every picture is in the page once, copies are filled in from it */
-var lib={};
-function scan(r){[].slice.call(r.querySelectorAll("img[data-slot]")).forEach(function(im){var k=im.getAttribute("data-slot"),sr=im.getAttribute("src");if(sr&&sr.indexOf("R0lGODlhAQABAAAAACH5")<0&&!lib[k])lib[k]=sr})}
+var lib={},realMap={};
+function scan(r){[].slice.call(r.querySelectorAll("img[data-slot]")).forEach(function(im){var k=im.getAttribute("data-slot"),sr=im.getAttribute("src");if(sr&&sr.indexOf("R0lGODlhAQABAAAAACH5")<0&&!lib[k]){lib[k]=sr;realMap[k]=im.hasAttribute("data-real")}})}
 scan(document);var tp=document.getElementById("ed-pool");if(tp&&tp.content)scan(tp.content);
 [].slice.call(document.querySelectorAll("img[data-slot]")).forEach(function(im){var sr=im.getAttribute("src");if(sr&&sr.indexOf("R0lGODlhAQABAAAAACH5")>=0&&lib[im.getAttribute("data-slot")])im.src=lib[im.getAttribute("data-slot")]});
 /* service rows: hover, focus or tap opens a row and swaps the picture */
@@ -3385,7 +3390,7 @@ function open(i){
   rows.forEach(function(r,j){r.setAttribute("aria-expanded",j===i?"true":"false")});
   var id=rows[i].getAttribute("data-pic");
   if(rimg&&lib[id]&&rimg.getAttribute("data-slot")!==id){
-    rimg.setAttribute("data-slot",id);clearTimeout(swapT);
+    rimg.setAttribute("data-slot",id);if(realMap[id])rimg.setAttribute("data-real","1");else rimg.removeAttribute("data-real");clearTimeout(swapT);
     if(reduce){rimg.src=lib[id];rimg.classList.remove("swap")}
     else{rimg.classList.add("swap");swapT=setTimeout(function(){rimg.src=lib[id];rimg.classList.remove("swap")},110)}
   }
@@ -3465,7 +3470,7 @@ function generateEditorial(form, d, deps) {
     const big = /^data:image\/(jpeg|png|webp)/.test(src(id));
     const dupe = big && written.has(id);
     written.add(id);
-    return `<img src="${dupe ? BLANK : esc(src(id, o))}" data-slot="${esc(id)}" alt="" ${attrs}>`;
+    return `<img src="${dupe ? BLANK : esc(src(id, o))}" data-slot="${esc(id)}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="" ${attrs}>`;
   };
 
   const story = kit.story || [], styles = kit.styles || [];
@@ -3473,10 +3478,27 @@ function generateEditorial(form, d, deps) {
   const pool = [...styles.map((s) => s.id), ...story.map((s) => s.id)];
   const e = kit.editorial || {};
   const pick = (id, fb) => (id && exists(id) ? id : fb);
-  const heroId = pick(e.hero, story.length ? story[story.length - 1].id : pool[0]);
-  const processId = pick(e.process, story.length > 1 ? story[1].id : pool[0]);
-  const beatId = pick(e.beat, styles.length ? styles[0].id : pool[0]);
-  const workIds = [0, 1, 2].map((i) => pick(e.work && e.work[i], pool[i % pool.length]));
+  // The owner's own pictures come first: hero, second beat, process, then they cycle through the
+  // work cards and service rows before any drawing is used (never the same picture on neighbours).
+  const isUp = (id) => !!safeImage(images[id]);
+  const ups = slots.map((x) => x.id).filter(isUp);
+  const upStory = story.map((x) => x.id).filter(isUp);
+  let heroId = pick(e.hero, story.length ? story[story.length - 1].id : pool[0]);
+  let beatId = pick(e.beat, styles.length ? styles[0].id : pool[0]);
+  let processId = pick(e.process, story.length > 1 ? story[1].id : pool[0]);
+  let workIds = [0, 1, 2].map((i) => pick(e.work && e.work[i], pool[i % pool.length]));
+  let svcFromUps = null;
+  if (ups.length) {
+    heroId = upStory.length ? upStory[upStory.length - 1] : ups[ups.length - 1];
+    const others = ups.filter((id) => id !== heroId);
+    if (others.length) beatId = others[others.length - 1];
+    const rest = others.filter((id) => id !== beatId);
+    processId = rest.length ? rest[rest.length - 1] : (others.length ? others[0] : heroId);
+    let order = ups.slice();
+    if (order.length > 1 && order[0] === heroId) order = [...order.slice(1), order[0]];
+    workIds = workIds.map((fb, i) => (order.length >= 2 ? order[i % order.length] : i === 0 ? order[0] : fb));
+    if (order.length >= 2) svcFromUps = order;
+  }
   const rows = d.services.slice(0, 6);
   const svcPool = e.services && e.services.length ? e.services.filter(exists) : [...story.map((s) => s.id), ...styles.map((s) => s.id)];
   // A row gets the picture whose name shares words with the service ("Vinyl fences" -> "White vinyl");
@@ -3485,6 +3507,7 @@ function generateEditorial(form, d, deps) {
   const toks = (txt) => new Set(String(txt).toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w && !STOP.has(w)).map((w) => w.replace(/(es|s)$/, "")));
   const cand = [...styles.map((x) => ({ id: x.id, t: toks(`${x.name} ${x.note || ""}`) })), ...story.map((x) => ({ id: x.id, t: toks(x.headline) }))];
   const svcIds = rows.map(([n], i) => {
+    if (svcFromUps) return svcFromUps[i % svcFromUps.length];
     if (e.rows && e.rows[n] && exists(e.rows[n])) return e.rows[n];
     if (e.services && e.services.length) return svcPool[i % svcPool.length];
     const want = toks(n);
@@ -3496,6 +3519,7 @@ function generateEditorial(form, d, deps) {
   // neighbours never share a picture, so the swap is always visible.
   const scene = story.map((x) => x.id);
   let turn = 0;
+  if (!svcFromUps && ups.length === 1) svcIds[0] = ups[0];
   for (let i = 0; i < svcIds.length; i++) {
     if (svcIds[i] && svcIds[i] !== svcIds[i - 1]) continue;
     let id = null;
