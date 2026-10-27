@@ -335,7 +335,9 @@ export function generateEditorial(form, d, deps) {
   // Optional service pictures (kit.editorial.extra) behave like slots here.
   const extras = (kit.editorial && kit.editorial.extra) || [];
   const slotLabel = (id) => (slots.find((s) => s.id === id) || extras.find((x) => x.id === id) || {}).label || id;
-  const src = (id, o) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id), o);
+  // Once the owner has real photos, leftover drawn placeholders switch to a quieter style.
+  const anyReal = Object.values(images).some((v) => safeImage(v));
+  const src = (id, o) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id), anyReal ? { ...(o || {}), quiet: true } : o);
   // An uploaded picture is large, so each one is written into the page once; later uses
   // carry only data-slot and the script copies the picture over (keeps the file small).
   const BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
@@ -437,7 +439,7 @@ export function generateEditorial(form, d, deps) {
 
   // Second beat
   const beat = `<section class="ed-beat" data-ed="beat" aria-label="${esc(heroWords.headline)}">${pic(beatId)}<div class="ed-wrap">
-  <p class="ed-big">${d.city ? `${esc(d.city.split(",")[0].trim())}<br>${esc(tradeName)}` : story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
+  <p class="ed-big">${d.city ? `${esc(d.city.split(",")[0].trim())}<br><em>${esc(tradeName.toLowerCase())}</em>` : story.length > 1 ? edAccent(story[0].headline, story[0].accent) : esc(t.headline)}</p>
   <p class="ed-beat-note">${esc(e.beatNote || "Tell us what you have in mind and we will come and take a look.")}</p>
 </div></section>`;
 

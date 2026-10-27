@@ -816,7 +816,16 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
       body = `<g transform="translate(800 -12) scale(${k}) translate(-800 ${-peakY})">${body}</g>`;
     }
     const vignette = `<defs><radialGradient id="vg" cx="50%" cy="46%" r="75%"><stop offset=".6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#1d1b18" stop-opacity="${dark ? 0.4 : 0.16}"/></radialGradient></defs><rect width="${W}" height="${H}" fill="url(#vg)"/>`;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${body}${vignette}${frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
+    // Quiet mode (real photos exist on the page): the drawing steps back so it does not fight
+    // the photos: desaturated warm tone, softened edges (no crisp cartoon outlines), photo-like
+    // grain and light falloff, no viewfinder marks. The label stays sharp.
+    const quiet = opts.quiet ? `<defs><filter id="qt" x="0" y="0" width="100%" height="100%">
+<feColorMatrix type="saturate" values=".35"/><feGaussianBlur stdDeviation="1.4"/>
+<feComponentTransfer><feFuncR type="linear" slope=".92" intercept=".06"/><feFuncG type="linear" slope=".9" intercept=".05"/><feFuncB type="linear" slope=".82" intercept=".03"/></feComponentTransfer></filter>
+<filter id="gr"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .35  0 0 0 .22 0"/></filter>
+<linearGradient id="ql" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d6" stop-opacity=".18"/><stop offset="1" stop-color="#1a140c" stop-opacity=".22"/></linearGradient></defs>` : "";
+    const drawn = opts.quiet ? `${quiet}<g filter="url(#qt)">${body}</g><rect width="${W}" height="${H}" fill="url(#ql)"/><rect width="${W}" height="${H}" filter="url(#gr)"/>` : body;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${drawn}${vignette}${opts.quiet ? "" : frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96))}</svg>`;
   } finally {
     Object.assign(C, LIGHT);
   }
@@ -948,7 +957,8 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 }
 /* Picture titles: smaller optical size + heavier weight so hairlines never break over photos */
 .ed-card h3,.ed-beat .ed-big{font-variation-settings:"opsz" 18;font-weight:700;letter-spacing:.005em}
-.ed-beat::after{background:linear-gradient(0deg,rgba(8,8,10,.78),rgba(8,8,10,.25) 55%,rgba(8,8,10,.35))!important}
+.ed-beat::after{background:linear-gradient(90deg,rgba(8,8,10,.62) 0%,rgba(8,8,10,.25) 55%,rgba(8,8,10,0) 80%),linear-gradient(0deg,rgba(8,8,10,.72),rgba(8,8,10,.15) 55%,rgba(8,8,10,.25))!important}
+.ed-beat .ed-big{text-shadow:0 2px 24px rgba(0,0,0,.4)}
 /* Default path: calm empty states */
 .ed-trust ul[style="--cols:1"],.ed-trust ul[style="--cols:2"]{width:fit-content;max-width:100%}
 .ed-trust ul[style="--cols:1"] li{grid-template-columns:auto 1fr;column-gap:16px;align-items:center;padding:22px 28px}
