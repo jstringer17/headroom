@@ -472,7 +472,7 @@ export function generateCinematic(form, d, deps) {
 
   // A slot's picture: the owner's, or labeled placeholder art drawn in code.
   const anyReal = Object.values(images).some((v) => safeImage(v));
-  const slotSrc = (id, label) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, label, anyReal ? { quiet: true } : undefined);
+  const slotSrc = (id, label, opts) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, label, anyReal || opts ? { ...(anyReal ? { quiet: true } : {}), ...(opts || {}) } : undefined);
   const slots = cineSlots(kit);
   const slotLabel = (id) => (slots.find((s) => s.id === id) || {}).label || id;
   const pic = (id, attrs = "") => `<img src="${esc(slotSrc(id, slotLabel(id)))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="" ${attrs}>`;
@@ -505,8 +505,8 @@ export function generateCinematic(form, d, deps) {
   const baSec = ba ? `<section class="sec dark-sec" id="before-after"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(baTags(d.tradeKey)[0])} to ${esc(baTags(d.tradeKey)[1]).toLowerCase()}</span><h2>${accentLast(ba.title || "Drag the line.")}</h2><p class="lede">${baTags(d.tradeKey)[2]}.</p></div>
   <div class="ba rv" id="ba">
-    <img class="after" src="${esc(slotSrc("after", slotLabel("after")))}" alt="${esc(baTags(d.tradeKey)[1])}">
-    <img class="before" src="${esc(slotSrc("before", slotLabel("before")))}" alt="${esc(baTags(d.tradeKey)[0])}">
+    <img class="after" src="${esc(slotSrc("after", slotLabel("after"), { labelSide: "right" }))}" alt="${esc(baTags(d.tradeKey)[1])}">
+    <img class="before" src="${esc(slotSrc("before", slotLabel("before"), { labelSide: "left" }))}" alt="${esc(baTags(d.tradeKey)[0])}">
         <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(baTags(d.tradeKey)[0])} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div>
   </div>
   <p class="ba-cap" aria-hidden="true"><span>${esc(baTags(d.tradeKey)[0])}</span><span>${esc(baTags(d.tradeKey)[1])}</span></p>

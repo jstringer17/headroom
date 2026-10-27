@@ -103,6 +103,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
 .ed-sil img[data-real],.ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real]{object-position:72% 45%}
 .ed-beat img[data-real]{object-position:85% 50%}
+.ed-cap{position:absolute;left:12px;bottom:12px;z-index:2;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:600 11px/1 var(--ed-sans);letter-spacing:.1em;text-transform:uppercase}
+.ed-cap[hidden]{display:none}
 .ed-sil.ph img{inset:auto 0 0 0;height:82%}
 /* trust strip */
 .ed-trust{padding-block:0 56px}
@@ -262,7 +264,8 @@ scan(document);var tp=document.getElementById("ed-pool");if(tp&&tp.content)scan(
 var rows=[].slice.call(document.querySelectorAll(".ed-row")),rimg=document.querySelector("[data-ed=row-img]"),swapT=0;
 function open(i){
   rows.forEach(function(r,j){r.setAttribute("aria-expanded",j===i?"true":"false")});
-  var id=rows[i].getAttribute("data-pic");
+  var id=rows[i].getAttribute("data-pic"),capEl=document.getElementById("ed-pic-cap");
+  if(capEl){capEl.textContent=rows[i].getAttribute("data-cap")||"";capEl.hidden=!capEl.textContent}
   if(rimg&&lib[id]&&rimg.getAttribute("data-slot")!==id){
     rimg.setAttribute("data-slot",id);if(realMap[id])rimg.setAttribute("data-real","1");else rimg.removeAttribute("data-real");clearTimeout(swapT);
     if(reduce){rimg.src=lib[id];rimg.classList.remove("swap")}
@@ -382,8 +385,18 @@ export function generateEditorial(form, d, deps) {
   const STOP = new Set(["and", "the", "for", "of", "a", "new", "repair", "repairs", "install", "installs", "service", "services", "work", "help", "your"]);
   const toks = (txt) => new Set(String(txt).toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w && !STOP.has(w)).map((w) => w.replace(/(es|s)$/, "")));
   const cand = [...styles.map((x) => ({ id: x.id, t: toks(`${x.name} ${x.note || ""}`) })), ...story.map((x) => ({ id: x.id, t: toks(x.headline) }))];
+  const rowCap = rows.map(() => "");
   const svcIds = rows.map(([n], i) => {
-    if (svcFromUps) return svcFromUps[i % svcFromUps.length];
+    if (svcFromUps) {
+      // The owner's pictures first: a row that names a style uses the picture of that style when it
+      // was uploaded; otherwise it shows another real photo with a small "Sample photo" tag.
+      const want = toks(n);
+      let best = null, bs = 0;
+      for (const c of cand) { let sc = 0; want.forEach((w) => { if (c.t.has(w)) sc++; }); if (sc > bs) { best = c; bs = sc; } }
+      if (best && isUp(best.id)) return best.id;
+      rowCap[i] = "Sample photo"; // not a picture of this exact service: say so
+      return svcFromUps[i % svcFromUps.length];
+    }
     if (e.rows && e.rows[n] && exists(e.rows[n])) return e.rows[n];
     if (e.services && e.services.length) return svcPool[i % svcPool.length];
     const want = toks(n);
@@ -448,7 +461,7 @@ export function generateEditorial(form, d, deps) {
     const p = typed[i] || {};
     const st = styles[i % Math.max(styles.length, 1)];
     const nm = edText(p.name, 28) || ED_NAMES[i];
-    const jobName = edText(p.job, 40) || (styles.find((x) => x.id === id) || {}).name || d.services[i % d.services.length][0];
+    const jobName = edText(p.job, 40) || (styles.find((x) => x.id === id) || {}).name || `New ${tradeName.toLowerCase()}`;
     const meta = [
       ["Where", edText(p.where, 40) || d.city || "Local"],
       ["Job", jobName],
@@ -469,7 +482,7 @@ export function generateEditorial(form, d, deps) {
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we <em>do</em></h2></div>
-  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}</div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span><span class="ed-row-pic" aria-hidden="true">${pic(svcPics[i])}</span></button>`).join("")}</div></div>
+  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}<span class="ed-cap" id="ed-pic-cap"${rowCap[0] ? "" : " hidden"}>${esc(rowCap[0])}</span></div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" data-cap="${esc(rowCap[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span><span class="ed-row-pic" aria-hidden="true">${pic(svcPics[i])}${rowCap[i] ? `<span class="ed-cap">${esc(rowCap[i])}</span>` : ""}</span></button>`).join("")}</div></div>
   <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
 </div></section>`;
 
