@@ -107,3 +107,25 @@ export async function defaultPathHtml(browser, trade, company, shotPath) {
   await ctx.close();
   return html;
 }
+
+// Real-picture run: drive the REAL maker, upload the CEO's pictures into their slots, return the preview HTML for a look.
+// pics = { slotId: "path/to/file.webp" }. Used by capture.mjs --real=fencing.
+export async function realPicturesHtml(browser, trade, pics, look, company = "Cedar & Post Fencing") {
+  const { pathToFileURL } = await import("node:url");
+  const ctx = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1500, height: 950 } });
+  const page = await ctx.newPage();
+  await page.route("**/*", (r) => { const u = r.request().url(); return /^(file|data|about|blob):/.test(u) || /fonts\.(googleapis|gstatic)\.com/.test(u) ? r.continue() : r.abort(); });
+  await page.goto(pathToFileURL(join(here, "..", "maker.html")).href, { waitUntil: "load" });
+  await page.fill("#company", company); await page.selectOption("#trade", trade);
+  await page.fill("#city", "Tulsa, OK"); await page.fill("#phone", "9185550142");
+  await page.waitForTimeout(800);
+  const missing = [];
+  for (const [slot, file] of Object.entries(pics)) {
+    const inp = page.locator(`#cine-slots .slot[data-slot="${slot}"] input[type=file]`);
+    if (await inp.count()) { await inp.setInputFiles(file); await page.waitForTimeout(1000); } else missing.push(slot);
+  }
+  await page.selectOption("#look", look); await page.waitForTimeout(1500);
+  const html = await page.evaluate(() => document.getElementById("frame").srcdoc);
+  await ctx.close();
+  return { html, missing };
+}

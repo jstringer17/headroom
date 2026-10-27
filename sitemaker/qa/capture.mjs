@@ -3,11 +3,12 @@
 import { mkdirSync, writeFileSync, rmSync, readFileSync, copyFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell, fullTable, isEditorial, defaultPathHtml, ED } from "./lib.mjs";
+import { here, loadPlaywright, launchOpts, SEL, buildCine, firstCell, fullTable, isEditorial, defaultPathHtml, realPicturesHtml, ED } from "./lib.mjs";
 
 // node sitemaker/qa/capture.mjs [--look=editorial] [trade ...]   (default look: cinematic)
 const args = process.argv.slice(2);
 const look = (args.find((a) => a.startsWith("--look=")) || "--look=cinematic").split("=")[1];
+const realTrade = (args.find((a) => a.startsWith("--real=")) || "").split("=")[1]; // e.g. --real=fencing: use the CEO's real pictures for that trade
 const trades = args.filter((a) => !a.startsWith("--")).length ? args.filter((a) => !a.startsWith("--")) : ["fencing", "roofing", "pressure"];
 const outName = (args.find((a) => a.startsWith("--out=")) || "").split("=")[1];
 const out = join(here, outName || (look === "cinematic" ? "out" : `out-${look}`));
@@ -49,7 +50,15 @@ for (const trade of trades) {
   const form = { company: "Sample " + trade + " Co", trade, city: "Tulsa, OK", phone: "918-555-0100", year: 2026, rating: "4.8", reviews: "112", years: "12", insured: true, // test facts typed in so trust line can be judged
    
     cine: { prices: await fullTable(trade) } };
-  const b = buildCine(form, look); realBuild ||= b.real;
+  let b = buildCine(form, look);
+  if (realTrade && trade === realTrade) {
+    const dir = join(here, "..", "..", "org", "art", "pictures", trade);
+    const pics = Object.fromEntries(["stakes", "posts", "rails", "done"].filter((k) => existsSync(join(dir, `${trade}-${k}.webp`))).map((k) => [k, join(dir, `${trade}-${k}.webp`)]));
+    const r = await realPicturesHtml(browser, trade, pics, look);
+    console.log(`REAL pictures for ${trade}/${look}: ${Object.keys(pics).join(",")} loaded; slots with no upload input: ${r.missing.join(",") || "none"}; ${(Buffer.byteLength(r.html) / 1048576).toFixed(2)} MB`);
+    b = { html: r.html, real: true };
+  }
+  realBuild ||= b.real;
   if (look === "editorial" && !isEditorial(b.html)) { console.log(`NOTE ${trade}: build is not editorial yet, shots would be the cinematic look`); }
   writeFileSync(join(out, `${trade}.html`), b.html);
   sheet[trade] = [];
