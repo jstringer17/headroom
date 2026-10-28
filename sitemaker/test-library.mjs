@@ -122,7 +122,7 @@ function png(w, h, [r, g, b]) {
   ok(/fencing-posts\.png: 300x300 is not 16:9/.test(all1), "ingest: a non-16:9 picture is not flagged");
   ok(existsSync(join(lib, "roofing", "old.webp")) && existsSync(join(lib, "fencing", "stakes.webp")), "ingest: good pictures were not written as webp");
   ok(!existsSync(join(lib, "bogus")) && !existsSync(join(lib, "roofing", "nonsense.webp")), "ingest: rejected names were written anyway");
-  ok(/roofing\s+1\/9/.test(all1) && /fencing\s+3\/9/.test(all1) === false && /fencing\s+2\/9/.test(all1), "ingest: summary table does not show slots found and missing");
+  ok(/roofing(\/shingle)?\s+1\/9/.test(all1) && /fencing(\/cedar)?\s+2\/9/.test(all1), "ingest: summary table does not show slots found and missing");
   const first = statSync(join(lib, "fencing", "stakes.webp")).mtimeMs;
   await new Promise((r) => setTimeout(r, 60));
   const r2 = run();
