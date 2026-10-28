@@ -5,7 +5,7 @@
 import { createRequire } from "node:module";
 import { execSync, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
-import { readFileSync, writeFileSync, mkdirSync, rmSync, statSync, existsSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, rmSync, statSync, existsSync, readdirSync, utimesSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { dirname, join, extname } from "node:path";
@@ -132,6 +132,70 @@ function png(w, h, [r, g, b]) {
   ok(/written/.test(r3.stdout) && statSync(join(lib, "fencing", "stakes.webp")).mtimeMs > first, "ingest: --force did not replace the picture");
   const r4 = node([join(here, "ingest.mjs"), inbox, "--library", join(tmp, "dry"), "--dry-run"]);
   ok(!existsSync(join(tmp, "dry")), "ingest: --dry-run wrote files");
+  rmSync(tmp, { recursive: true, force: true });
+}
+
+
+// ---- 3b. ingest by order (downloads that kept their default names)
+{
+  const tmp = join(here, "test-out", "ingest-order-test");
+  rmSync(tmp, { recursive: true, force: true });
+  const inbox = join(tmp, "inbox"), lib = join(tmp, "library"), sheet = join(tmp, "sheet.jpg");
+  mkdirSync(inbox, { recursive: true });
+  // 10 downloads: names run "download (1)" to "download (10)" but the modification times run the other way
+  const base = Date.now() / 1000 - 3600;
+  for (let i = 1; i <= 10; i++) {
+    const f = join(inbox, `download (${i}).png`);
+    writeFileSync(f, png(320, 180, [i * 20, 90, 255 - i * 20]));
+    utimesSync(f, base + (11 - i) * 60, base + (11 - i) * 60);
+  }
+  const run = (extra = []) => node([join(here, "ingest.mjs"), "--trade", "roofing", "--by-order", inbox, "--library", lib, "--sheet", sheet, ...extra]);
+  // 10 files for 9 required slots: refused, but the table is still printed, nothing written
+  let r = run();
+  ok(r.status === 3 && /Refused: 10 pictures for 9 slots/.test(r.stderr), `by-order: expected refusal for 10 files / 9 slots, got ${r.status}`);
+  ok(/pos\s+file\s+KB\s+pixels\s+slot/.test(r.stdout) && /download \(10\)\.png/.test(r.stdout), "by-order: table (position, file, size, pixels, slot) is not printed");
+  ok(!existsSync(join(lib, "roofing")), "by-order: files were written on a refusal");
+  // skip position 4 -> 9 files; without --yes it is a dry run
+  r = run(["--skip", "4"]);
+  ok(r.status === 0 && /Dry run only/.test(r.stdout) && !existsSync(join(lib, "roofing")), "by-order: dry run wrote files or did not say so");
+  // mtime order: the oldest file is "download (10)" and gets the first slot, "old"
+  ok(/download \(10\)\.png\s+\d+\s+320x180\s+old\b/.test(r.stdout), "by-order: the oldest file does not get the first slot");
+  ok(/\(skipped\)/.test(r.stdout.split("\n").find((l) => /^4\s/.test(l)) || ""), "by-order: --skip 4 is not shown as skipped at position 4");
+  ok(existsSync(sheet) && statSync(sheet).size > 1000, "by-order: no contact sheet written");
+  // sort by name changes the assignment
+  r = run(["--skip", "4", "--sort", "name"]);
+  ok(/download \(1\)\.png\s+\d+\s+320x180\s+old\b/.test(r.stdout), "by-order: --sort name does not give the first slot to the first name");
+  // write
+  r = run(["--skip", "4", "--yes"]);
+  const slotsOfRoofing = ["old", "deck", "wrap", "new", "shingle", "metal", "slate", "before", "after"];
+  ok(r.status === 0 && slotsOfRoofing.every((s) => existsSync(join(lib, "roofing", `${s}.webp`))), "by-order: --yes did not write all 9 required slots as webp");
+  ok(/9 written, 0 left alone/.test(r.stdout), "by-order: summary does not count 9 written");
+  // never overwrite without --force
+  const m0 = statSync(join(lib, "roofing", "old.webp")).mtimeMs;
+  await new Promise((rr) => setTimeout(rr, 60));
+  r = run(["--skip", "4", "--yes"]);
+  ok(/left alone: roofing\/old/.test(r.stdout) && statSync(join(lib, "roofing", "old.webp")).mtimeMs === m0, "by-order: overwrote a picture without --force");
+  r = run(["--skip", "4", "--yes", "--force"]);
+  ok(/9 written, 0 left alone/.test(r.stdout) && statSync(join(lib, "roofing", "old.webp")).mtimeMs > m0, "by-order: --force did not replace pictures");
+  // fewer files than slots: refused unless --allow-fewer, then the first slots are filled
+  const lib2 = join(tmp, "library2");
+  const few = (extra = []) => node([join(here, "ingest.mjs"), "--trade", "roofing", "--by-order", inbox, "--library", lib2, "--sheet", sheet, "--skip", "4,5,6,7,8", ...extra]);
+  r = few(["--yes"]);
+  ok(r.status === 3 && /Refused: 5 pictures for 9 slots; missing: metal, slate, before, after/.test(r.stderr) && !existsSync(lib2), "by-order: fewer files were not refused with the missing slots listed");
+  r = few(["--yes", "--allow-fewer"]);
+  ok(r.status === 0 && existsSync(join(lib2, "roofing", "old.webp")) && existsSync(join(lib2, "roofing", "deck.webp")) && existsSync(join(lib2, "roofing", "shingle.webp")) && !existsSync(join(lib2, "roofing", "metal.webp")), "by-order: --allow-fewer did not fill only the first slots");
+  // unknown trade, bad skip
+  r = node([join(here, "ingest.mjs"), "--trade", "nope", "--by-order", inbox]);
+  ok(r.status === 2 && /Trades: roofing/.test(r.stderr), "by-order: unknown trade not rejected with the list");
+  r = run(["--skip", "99"]);
+  ok(r.status === 2 && /past the last picture/.test(r.stderr), "by-order: a --skip past the end is not rejected");
+  // optional slots only with --with-optional (roofing has 3 extra service pictures): 12 files fit
+  rmSync(inbox, { recursive: true, force: true }); mkdirSync(inbox, { recursive: true });
+  for (let i = 1; i <= 12; i++) { const f = join(inbox, `img-${String(i).padStart(2, "0")}.png`); writeFileSync(f, png(320, 180, [i * 15, 60, 60])); utimesSync(f, base + i * 60, base + i * 60); }
+  r = run();
+  ok(r.status === 3 && /12 pictures for 9 slots/.test(r.stderr), "by-order: 12 files without --with-optional should be refused");
+  r = run(["--with-optional"]);
+  ok(r.status === 0 && /svc-gutters/.test(r.stdout), "by-order: --with-optional does not assign the optional slots");
   rmSync(tmp, { recursive: true, force: true });
 }
 
