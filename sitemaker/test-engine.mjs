@@ -300,6 +300,17 @@ for (const trade of TRADE_ORDER) {
   await page.close();
 }
 
+// Cinematic shows years, 24/7 and insured only when typed or ticked, for every trade.
+for (const trade of TRADE_ORDER) {
+  const strip = (h) => h.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/g, "");
+  const none = strip(generateSite({ company: "T", trade, cinematic: true, look: "cinematic", phone: "9185550100" }));
+  const all = strip(generateSite({ company: "T", trade, cinematic: true, look: "cinematic", phone: "9185550100", years: "12", emergency: true, insured: true }));
+  ok(!/12 years/.test(none) && !/Open 24\/7/.test(none) && !/Licensed and insured/.test(none), `${trade}: Cinematic shows a fact that was not typed or ticked`);
+  ok(/12 years in business/.test(all), `${trade}: Cinematic does not show years in business`);
+  ok((all.match(/Open 24\/7 for emergencies/g) || []).length >= 2, `${trade}: Cinematic does not show 24/7 in the facts and the contact block`);
+  ok(/Licensed and insured/.test(all), `${trade}: Cinematic does not show licensed and insured`);
+}
+
 await browser.close();
 if (fails.length) { console.log("FAIL"); fails.forEach((f) => console.log(" - " + f)); process.exit(1); }
 console.log(`PASS: engine layout checks (${TRADE_ORDER.length} trades x 2 widths)`);

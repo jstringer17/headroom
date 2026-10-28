@@ -583,7 +583,7 @@ export function generateCinematic(form, d, deps) {
   const contact = `<section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">
     <h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
-    <p class="lede">Call now, or send the form and we will call you back.</p>
+    <p class="lede">Call now, or send the form and we will call you back.${d.emergency ? " Open 24/7 for emergencies." : ""}</p>
     ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : `<p class="big-phone">Phone number here</p>`}
   </div>
   <form id="ask" class="body rv" novalidate>
