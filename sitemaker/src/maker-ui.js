@@ -19,13 +19,19 @@
   if (typeof PICTURE_LIBRARY !== "undefined") for (const k in PICTURE_LIBRARY) LIBDATA[k] = Object.assign({}, PICTURE_LIBRARY[k]);
   const libLoad = {}; // trade -> promise while its pictures are being fetched
   const libFailed = {}; // trade -> number of pictures that could not be loaded
-  const libOn = {}; // trade -> false when the checkbox is off
+  const variantOf = {}; // trade -> picked variation key (default: the first)
+  const libOn = {}; // "trade|variation" -> false when the checkbox is off
+  const libTag = (key) => key + "|" + (variantOf[key] || "");
   const libGone = {}; // trade -> { slotId: true } removed library pictures
-  const hasLib = (k) => (!!IDX[k] && Object.keys(IDX[k]).length > 0) || (!!LIBDATA[k] && Object.keys(LIBDATA[k]).length > 0);
+  // The kit of the picked variation (the trade's own kit when it has none) and its slot ids.
+  const kitNow = (key) => kitVariant(CINE_KIT[key], variantOf[key]);
+  const slotIdsNow = (key) => { const k = kitNow(key); return k ? cineSlots(k).map((s) => s.id) : []; };
+  // Library pictures that belong to the picked variation.
+  const hasLib = (k) => slotIdsNow(k).some((id) => (IDX[k] && IDX[k][id]) || (LIBDATA[k] && LIBDATA[k][id]));
   function libFor(key) {
-    if (!hasLib(key) || libOn[key] === false) return {};
+    if (!hasLib(key) || libOn[libTag(key)] === false) return {};
     const gone = libGone[key] || {}, o = {}, data = LIBDATA[key] || {};
-    for (const id in data) if (!gone[id]) o[id] = data[id];
+    for (const id of slotIdsNow(key)) if (data[id] && !gone[id]) o[id] = data[id];
     return o;
   }
   const blobToData = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
@@ -33,25 +39,26 @@
   // Fetch the trade's library files that are not embedded. Safe to call again: one fetch per trade.
   function ensureLib(key) {
     if (!IDX[key]) return Promise.resolve();
-    if (libLoad[key]) return libLoad[key];
+    const tag = key + "|" + (variantOf[key] || "");
+    if (libLoad[tag]) return libLoad[tag];
     const have = LIBDATA[key] || {};
-    const need = Object.keys(IDX[key]).filter((id) => !have[id]);
+    const need = slotIdsNow(key).filter((id) => IDX[key][id] && !have[id]); // only this variation's pictures
     if (!need.length) return Promise.resolve();
-    libFailed[key] = 0;
+    libFailed[tag] = 0;
     if (tradeSel.value === key) libStatus("Loading library pictures...");
-    libLoad[key] = Promise.all(need.map(async (id) => {
+    libLoad[tag] = Promise.all(need.map(async (id) => {
       try {
         const r = await fetch(IDX[key][id].file);
         if (!r.ok) throw new Error("http " + r.status);
         (LIBDATA[key] = LIBDATA[key] || {})[id] = await blobToData(await r.blob());
-      } catch (_) { libFailed[key]++; }
+      } catch (_) { libFailed[tag]++; }
     })).then(() => {
-      if (tradeSel.value === key) {
-        libStatus(libFailed[key] ? "Some library pictures could not be loaded here. The sample drawings are used for them." : "", !!libFailed[key]);
+      if (tradeSel.value === key && (variantOf[key] || "") === tag.split("|")[1]) {
+        libStatus(libFailed[tag] ? "Some library pictures could not be loaded here. The sample drawings are used for them." : "", !!libFailed[tag]);
         buildCine(); render();
       }
     });
-    return libLoad[key];
+    return libLoad[tag];
   }
   const effectiveImages = (key) => Object.assign({}, libFor(key), cineImages[key] || {});
   const cineUnits = {}; // trade -> chosen unit
@@ -100,16 +107,26 @@
       '<label class="field"><span>' + lab + '</span><input type="text" data-pi="' + i + '" data-pk="' + k + '" maxlength="40" aria-label="Project ' + (i + 1) + ", " + lab + '"></label>').join("") + "</div>").join("");
   }
 
+  // Variation dropdown: only when the trade has more than one variation. The first one is the default.
+  function buildVariant(key) {
+    const vs = (CINE_KIT[key] && CINE_KIT[key].variants) || [];
+    $("variant-wrap").hidden = vs.length < 2;
+    if (vs.length < 2) return;
+    const cur = variantKey(CINE_KIT[key], variantOf[key]);
+    $("variant").innerHTML = vs.map((v) => '<option value="' + esc(v.key) + '"' + (v.key === cur ? " selected" : "") + ">" + esc(v.label || v.key) + "</option>").join("");
+  }
+
   // Cinematic: one picture slot per kit slot, and a price table of typed ranges.
   function buildCine() {
     if (!hasCine) return;
-    const key = tradeSel.value, kit = CINE_KIT[key];
+    const key = tradeSel.value, kit = kitNow(key);
+    buildVariant(key);
     $("look-box").hidden = !kit;
     $("cine-fields").hidden = !kit || $("look").value === "classic";
     if (!kit) return;
     const imgs = cineImages[key] = cineImages[key] || {};
     $("lib-wrap").hidden = !hasLib(key);
-    $("use-library").checked = libOn[key] !== false;
+    $("use-library").checked = libOn[libTag(key)] !== false;
     const lib = libFor(key);
     $("cine-slots").innerHTML = cineSlots(kit).map((s) => {
       const user = imgs[s.id], libpic = !user && lib[s.id], thumb = /^data:/.test(user || "") ? user : libpic || "";
@@ -153,7 +170,7 @@
       cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
       editorial: hasCine ? { projects: edProjects } : undefined,
-      cine: hasCine ? { images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
+      cine: hasCine ? { variant: variantOf[tradeSel.value] || "", images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
     };
   }
 
@@ -187,7 +204,8 @@
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "look") buildCine();
-    if (e.target.id === "use-library") { libOn[tradeSel.value] = e.target.checked; buildCine(); }
+    if (e.target.id === "variant") { variantOf[tradeSel.value] = e.target.value; buildCine(); ensureLib(tradeSel.value); }
+    if (e.target.id === "use-library") { libOn[libTag(tradeSel.value)] = e.target.checked; buildCine(); }
     if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;
     if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;
     if (e.target.id === "cine-unit") cineUnits[tradeSel.value] = e.target.value;

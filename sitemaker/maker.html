@@ -113,6 +113,9 @@ details.lead[open]{display:grid;gap:10px}
     <label class="field" for="trade"><span>Trade <span class="req">(needed)</span></span>
       <select id="trade" name="trade"></select></label>
 
+    <label class="field" for="variant" id="variant-wrap" hidden><span>Variation</span>
+      <select id="variant"></select></label>
+
     <label class="field" for="city"><span>Town</span>
       <input type="text" id="city" name="city" placeholder="Like: Tulsa, OK"></label>
 
@@ -1463,6 +1466,8 @@ const ED_BEAT = {
 };
 for (const [t, note] of Object.entries(ED_BEAT)) if (CINE_KIT[t]) CINE_KIT[t].editorial = { ...(CINE_KIT[t].editorial || {}), beatNote: note };
 
+
+
 // Cinematic mode look: type, color and visual system (shared contract in
 // org/plan.md; the why is in org/art/direction.md).
 // cineLook(themeKey, tradeKey?, { tradeLook }) -> { css, fontsHref, vars }.
@@ -2503,6 +2508,64 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
   return { css, fontsHref: ED_LOOK_FONTS };
 }
 
+// Picture variations per trade (roofing: shingle, metal, tile, ...). Pure functions, no imports.
+//
+// CINE_KIT[trade].variants = [{ key, label, default?, story?, beforeAfter?, styles? }]. The first entry is the
+// default: it has no story or beforeAfter and means the trade's own, with bare slot ids ("old", "before").
+// Every other variant brings its own story frames and before/after pair, with ids like "metal/s1" and
+// "metal/before" (the library file is library/<trade>/metal/s1.webp). A variant without styles keeps the
+// trade's styles, whose pictures (bare ids) are shared by all variants.
+
+// The variant key to use: the one asked for if the trade has it, else the first.
+function variantKey(kit, wanted) {
+  const vs = (kit && kit.variants) || [];
+  if (!vs.length) return "";
+  return vs.some((v) => v.key === wanted) ? wanted : vs[0].key;
+}
+
+// The kit for one variant: story, beforeAfter and styles swapped in, plus variantKey and slotPrefix.
+function kitVariant(kit, wanted) {
+  if (!kit) return kit;
+  const vs = kit.variants || [];
+  const key = variantKey(kit, wanted);
+  const v = vs.find((x) => x.key === key);
+  if (!v || v === vs[0]) return { ...kit, variantKey: key, slotPrefix: "" };
+  return {
+    ...kit,
+    story: v.story || kit.story,
+    beforeAfter: v.beforeAfter || kit.beforeAfter,
+    styles: v.styles || kit.styles,
+    variantKey: key,
+    slotPrefix: `${key}/`,
+  };
+}
+
+// Required slot ids of a kit (or kit variant), in the picture book's order: story, styles, before, after.
+function kitSlotIds(kit) {
+  if (!kit) return [];
+  const ids = [...(kit.story || []).map((s) => s.id), ...(kit.styles || []).map((s) => s.id)];
+  if (kit.beforeAfter) ids.push((kit.beforeAfter.before && kit.beforeAfter.before.id) || "before", (kit.beforeAfter.after && kit.beforeAfter.after.id) || "after");
+  return ids;
+}
+
+// Every non-default variant key of a trade (these have their own library folder).
+function extraVariantKeys(kit) {
+  return ((kit && kit.variants) || []).slice(1).map((v) => v.key);
+}
+
+// The slots a variant owns (what its pictures cover): its own story, before/after and styles. The default
+// variant owns the trade's own story, styles, before and after. Shared style pictures belong to the default.
+function ownSlotIds(kit, wanted) {
+  if (!kit) return [];
+  const vs = kit.variants || [];
+  const key = variantKey(kit, wanted);
+  const v = vs.find((x) => x.key === key);
+  if (!v || v === vs[0]) return kitSlotIds({ ...kit, variants: undefined });
+  const ids = [...(v.story || []).map((x) => x.id), ...(v.styles || []).map((x) => x.id)];
+  if (v.beforeAfter) ids.push((v.beforeAfter.before && v.beforeAfter.before.id) || `${key}/before`, (v.beforeAfter.after && v.beforeAfter.after.id) || `${key}/after`);
+  return ids;
+}
+
 // Sample Site Maker: Cinematic mode.
 // generateCinematic(form, d, deps) builds one scroll-story site as a single
 // self-contained HTML document. `d` is normalize(form); `deps` is
@@ -2523,6 +2586,7 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 
 
 
+
 // The picture slots a trade's kit asks for, in the order the form lists them.
 function cineSlots(kit) {
   if (!kit) return [];
@@ -2530,8 +2594,8 @@ function cineSlots(kit) {
   (kit.story || []).forEach((s, i) => out.push({ id: s.id, group: "Story", label: `Story ${i + 1}: ${s.headline}`, prompt: s.prompt }));
   (kit.styles || []).forEach((s) => out.push({ id: s.id, group: "Styles", label: `Style: ${s.name}`, prompt: s.prompt }));
   if (kit.beforeAfter) {
-    out.push({ id: "before", group: "Before and after", label: "Before picture", prompt: kit.beforeAfter.before && kit.beforeAfter.before.prompt });
-    out.push({ id: "after", group: "Before and after", label: "After picture", prompt: kit.beforeAfter.after && kit.beforeAfter.after.prompt });
+    out.push({ id: (kit.beforeAfter.before && kit.beforeAfter.before.id) || "before", group: "Before and after", label: "Before picture", prompt: kit.beforeAfter.before && kit.beforeAfter.before.prompt });
+    out.push({ id: (kit.beforeAfter.after && kit.beforeAfter.after.id) || "after", group: "Before and after", label: "After picture", prompt: kit.beforeAfter.after && kit.beforeAfter.after.prompt });
   }
   return out;
 }
@@ -2963,7 +3027,7 @@ els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
 
 function generateCinematic(form, d, deps) {
   const { CINE_KIT, cineLook, placeholderArt } = deps;
-  const kit = CINE_KIT[d.tradeKey];
+  const kit = kitVariant(CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant);
   const th = THEMES[d.themeKey];
   const look = cineLook(d.themeKey, d.tradeKey, { tradeLook: !d.themePicked });
   const t = d.trade;
@@ -2989,6 +3053,7 @@ function generateCinematic(form, d, deps) {
   const story = kit.story || [];
   const styles = kit.styles || [];
   const ba = kit.beforeAfter;
+  const baBefore = (ba && ba.before && ba.before.id) || "before", baAfter = (ba && ba.after && ba.after.id) || "after";
   const prices = offeredPrices(kit, cine.prices);
 
   // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
@@ -3022,8 +3087,8 @@ function generateCinematic(form, d, deps) {
   const baSec = ba ? `<section class="sec dark-sec" id="before-after"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(baTags(d.tradeKey)[0])} to ${esc(baTags(d.tradeKey)[1]).toLowerCase()}</span><h2>${accentLast(ba.title || "Drag the line.")}</h2><p class="lede">${baTags(d.tradeKey)[2]}.</p></div>
   <div class="ba rv" id="ba">
-    <img class="after" src="${esc(slotSrc("after", slotLabel("after"), { labelSide: "right" }))}" alt="${esc(baTags(d.tradeKey)[1])}">
-    <img class="before" src="${esc(slotSrc("before", slotLabel("before"), { labelSide: "left" }))}" alt="${esc(baTags(d.tradeKey)[0])}">
+    <img class="after" src="${esc(slotSrc(baAfter, slotLabel(baAfter), { labelSide: "right" }))}" alt="${esc(baTags(d.tradeKey)[1])}">
+    <img class="before" src="${esc(slotSrc(baBefore, slotLabel(baBefore), { labelSide: "left" }))}" alt="${esc(baTags(d.tradeKey)[0])}">
         <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(baTags(d.tradeKey)[0])} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div>
   </div>
   <p class="ba-cap" aria-hidden="true"><span>${esc(baTags(d.tradeKey)[0])}</span><span>${esc(baTags(d.tradeKey)[1])}</span></p>
@@ -3166,6 +3231,7 @@ ${ENGINE_JS}
 // form.editorial = { projects: [{ name, where, job, type, time } x 3] }, all optional.
 // form.cine.images / form.cine.prices / form.cine.unit work as in cinematic mode.
 // deps = { CINE_KIT, cineLook, placeholderArt, editorialLook? (optional), editorialShape? (optional) }
+
 
 
 
@@ -3473,7 +3539,7 @@ const edText = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 
 
 function generateEditorial(form, d, deps) {
   const { CINE_KIT, placeholderArt } = deps;
-  const kit = CINE_KIT[d.tradeKey];
+  const kit = kitVariant(CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant);
   const th = THEMES[d.themeKey];
   const t = d.trade;
   const cine = (form && form.cine) || {};
@@ -4371,13 +4437,19 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
   if (typeof PICTURE_LIBRARY !== "undefined") for (const k in PICTURE_LIBRARY) LIBDATA[k] = Object.assign({}, PICTURE_LIBRARY[k]);
   const libLoad = {}; // trade -> promise while its pictures are being fetched
   const libFailed = {}; // trade -> number of pictures that could not be loaded
-  const libOn = {}; // trade -> false when the checkbox is off
+  const variantOf = {}; // trade -> picked variation key (default: the first)
+  const libOn = {}; // "trade|variation" -> false when the checkbox is off
+  const libTag = (key) => key + "|" + (variantOf[key] || "");
   const libGone = {}; // trade -> { slotId: true } removed library pictures
-  const hasLib = (k) => (!!IDX[k] && Object.keys(IDX[k]).length > 0) || (!!LIBDATA[k] && Object.keys(LIBDATA[k]).length > 0);
+  // The kit of the picked variation (the trade's own kit when it has none) and its slot ids.
+  const kitNow = (key) => kitVariant(CINE_KIT[key], variantOf[key]);
+  const slotIdsNow = (key) => { const k = kitNow(key); return k ? cineSlots(k).map((s) => s.id) : []; };
+  // Library pictures that belong to the picked variation.
+  const hasLib = (k) => slotIdsNow(k).some((id) => (IDX[k] && IDX[k][id]) || (LIBDATA[k] && LIBDATA[k][id]));
   function libFor(key) {
-    if (!hasLib(key) || libOn[key] === false) return {};
+    if (!hasLib(key) || libOn[libTag(key)] === false) return {};
     const gone = libGone[key] || {}, o = {}, data = LIBDATA[key] || {};
-    for (const id in data) if (!gone[id]) o[id] = data[id];
+    for (const id of slotIdsNow(key)) if (data[id] && !gone[id]) o[id] = data[id];
     return o;
   }
   const blobToData = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
@@ -4385,25 +4457,26 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
   // Fetch the trade's library files that are not embedded. Safe to call again: one fetch per trade.
   function ensureLib(key) {
     if (!IDX[key]) return Promise.resolve();
-    if (libLoad[key]) return libLoad[key];
+    const tag = key + "|" + (variantOf[key] || "");
+    if (libLoad[tag]) return libLoad[tag];
     const have = LIBDATA[key] || {};
-    const need = Object.keys(IDX[key]).filter((id) => !have[id]);
+    const need = slotIdsNow(key).filter((id) => IDX[key][id] && !have[id]); // only this variation's pictures
     if (!need.length) return Promise.resolve();
-    libFailed[key] = 0;
+    libFailed[tag] = 0;
     if (tradeSel.value === key) libStatus("Loading library pictures...");
-    libLoad[key] = Promise.all(need.map(async (id) => {
+    libLoad[tag] = Promise.all(need.map(async (id) => {
       try {
         const r = await fetch(IDX[key][id].file);
         if (!r.ok) throw new Error("http " + r.status);
         (LIBDATA[key] = LIBDATA[key] || {})[id] = await blobToData(await r.blob());
-      } catch (_) { libFailed[key]++; }
+      } catch (_) { libFailed[tag]++; }
     })).then(() => {
-      if (tradeSel.value === key) {
-        libStatus(libFailed[key] ? "Some library pictures could not be loaded here. The sample drawings are used for them." : "", !!libFailed[key]);
+      if (tradeSel.value === key && (variantOf[key] || "") === tag.split("|")[1]) {
+        libStatus(libFailed[tag] ? "Some library pictures could not be loaded here. The sample drawings are used for them." : "", !!libFailed[tag]);
         buildCine(); render();
       }
     });
-    return libLoad[key];
+    return libLoad[tag];
   }
   const effectiveImages = (key) => Object.assign({}, libFor(key), cineImages[key] || {});
   const cineUnits = {}; // trade -> chosen unit
@@ -4452,16 +4525,26 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
       '<label class="field"><span>' + lab + '</span><input type="text" data-pi="' + i + '" data-pk="' + k + '" maxlength="40" aria-label="Project ' + (i + 1) + ", " + lab + '"></label>').join("") + "</div>").join("");
   }
 
+  // Variation dropdown: only when the trade has more than one variation. The first one is the default.
+  function buildVariant(key) {
+    const vs = (CINE_KIT[key] && CINE_KIT[key].variants) || [];
+    $("variant-wrap").hidden = vs.length < 2;
+    if (vs.length < 2) return;
+    const cur = variantKey(CINE_KIT[key], variantOf[key]);
+    $("variant").innerHTML = vs.map((v) => '<option value="' + esc(v.key) + '"' + (v.key === cur ? " selected" : "") + ">" + esc(v.label || v.key) + "</option>").join("");
+  }
+
   // Cinematic: one picture slot per kit slot, and a price table of typed ranges.
   function buildCine() {
     if (!hasCine) return;
-    const key = tradeSel.value, kit = CINE_KIT[key];
+    const key = tradeSel.value, kit = kitNow(key);
+    buildVariant(key);
     $("look-box").hidden = !kit;
     $("cine-fields").hidden = !kit || $("look").value === "classic";
     if (!kit) return;
     const imgs = cineImages[key] = cineImages[key] || {};
     $("lib-wrap").hidden = !hasLib(key);
-    $("use-library").checked = libOn[key] !== false;
+    $("use-library").checked = libOn[libTag(key)] !== false;
     const lib = libFor(key);
     $("cine-slots").innerHTML = cineSlots(kit).map((s) => {
       const user = imgs[s.id], libpic = !user && lib[s.id], thumb = /^data:/.test(user || "") ? user : libpic || "";
@@ -4505,7 +4588,7 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
       cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
       editorial: hasCine ? { projects: edProjects } : undefined,
-      cine: hasCine ? { images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
+      cine: hasCine ? { variant: variantOf[tradeSel.value] || "", images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
     };
   }
 
@@ -4539,7 +4622,8 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "look") buildCine();
-    if (e.target.id === "use-library") { libOn[tradeSel.value] = e.target.checked; buildCine(); }
+    if (e.target.id === "variant") { variantOf[tradeSel.value] = e.target.value; buildCine(); ensureLib(tradeSel.value); }
+    if (e.target.id === "use-library") { libOn[libTag(tradeSel.value)] = e.target.checked; buildCine(); }
     if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;
     if (e.target.id === "cine-rpct") cineRpct[tradeSel.value] = e.target.value;
     if (e.target.id === "cine-unit") cineUnits[tradeSel.value] = e.target.value;

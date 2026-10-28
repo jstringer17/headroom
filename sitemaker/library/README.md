@@ -90,3 +90,14 @@ show the style a row names is tagged "Sample photo" and job words stay neutral.
 drives the real maker (pictures fetched only when a trade with files is picked, inlined into Preview and
 Download, checkbox and fallbacks), runs the ingest script on generated pictures (rejects, warnings, no
 overwrite, `--force`, `--dry-run`) and checks the publish plan.
+
+## Variations (roofing: shingle, metal, tile ...)
+
+A trade can have several variations in the kit (`CINE_KIT[trade].variants`, first one is the default). The maker then shows a **Variation** dropdown right under Trade. Picking one swaps the story frames, hero, style tabs and before/after to that variation's pictures, with its own headlines and accent words.
+
+- Default variation: keeps today's ids and paths, `library/<trade>/<slot>.webp`.
+- Any other variation: `library/<trade>/<variation>/<slot>.webp` (in the page the slot id is `<variation>/<slot>`). Styles it does not define itself are shared with the default.
+- Only the picked variation's pictures are fetched (lazy) and inlined in Download. Library checkbox, Replace/Remove, uploads and the hero override work per variation. Slots without a picture fall back to drawings.
+- Ingest by name: `roofing-metal-s1.png` (`<trade>-<variation>-<slot>`). By order: `node sitemaker/ingest.mjs --trade roofing --variant metal --by-order <folder>`. The summary table shows found/missing per variation.
+- `node sitemaker/publish-plan.mjs` lists the files of every variation.
+- Tests: `node sitemaker/test-variants.mjs` (uses fixture variations until the real kit has them).

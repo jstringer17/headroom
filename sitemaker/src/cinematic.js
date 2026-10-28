@@ -17,6 +17,7 @@
 // no ranges at all hides the section.
 import { esc, safeImage } from "./generate.js";
 import { THEMES } from "./themes.js";
+import { kitVariant } from "./variants.js";
 
 // The picture slots a trade's kit asks for, in the order the form lists them.
 export function cineSlots(kit) {
@@ -25,8 +26,8 @@ export function cineSlots(kit) {
   (kit.story || []).forEach((s, i) => out.push({ id: s.id, group: "Story", label: `Story ${i + 1}: ${s.headline}`, prompt: s.prompt }));
   (kit.styles || []).forEach((s) => out.push({ id: s.id, group: "Styles", label: `Style: ${s.name}`, prompt: s.prompt }));
   if (kit.beforeAfter) {
-    out.push({ id: "before", group: "Before and after", label: "Before picture", prompt: kit.beforeAfter.before && kit.beforeAfter.before.prompt });
-    out.push({ id: "after", group: "Before and after", label: "After picture", prompt: kit.beforeAfter.after && kit.beforeAfter.after.prompt });
+    out.push({ id: (kit.beforeAfter.before && kit.beforeAfter.before.id) || "before", group: "Before and after", label: "Before picture", prompt: kit.beforeAfter.before && kit.beforeAfter.before.prompt });
+    out.push({ id: (kit.beforeAfter.after && kit.beforeAfter.after.id) || "after", group: "Before and after", label: "After picture", prompt: kit.beforeAfter.after && kit.beforeAfter.after.prompt });
   }
   return out;
 }
@@ -458,7 +459,7 @@ els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
 
 export function generateCinematic(form, d, deps) {
   const { CINE_KIT, cineLook, placeholderArt } = deps;
-  const kit = CINE_KIT[d.tradeKey];
+  const kit = kitVariant(CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant);
   const th = THEMES[d.themeKey];
   const look = cineLook(d.themeKey, d.tradeKey, { tradeLook: !d.themePicked });
   const t = d.trade;
@@ -484,6 +485,7 @@ export function generateCinematic(form, d, deps) {
   const story = kit.story || [];
   const styles = kit.styles || [];
   const ba = kit.beforeAfter;
+  const baBefore = (ba && ba.before && ba.before.id) || "before", baAfter = (ba && ba.after && ba.after.id) || "after";
   const prices = offeredPrices(kit, cine.prices);
 
   // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
@@ -517,8 +519,8 @@ export function generateCinematic(form, d, deps) {
   const baSec = ba ? `<section class="sec dark-sec" id="before-after"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(baTags(d.tradeKey)[0])} to ${esc(baTags(d.tradeKey)[1]).toLowerCase()}</span><h2>${accentLast(ba.title || "Drag the line.")}</h2><p class="lede">${baTags(d.tradeKey)[2]}.</p></div>
   <div class="ba rv" id="ba">
-    <img class="after" src="${esc(slotSrc("after", slotLabel("after"), { labelSide: "right" }))}" alt="${esc(baTags(d.tradeKey)[1])}">
-    <img class="before" src="${esc(slotSrc("before", slotLabel("before"), { labelSide: "left" }))}" alt="${esc(baTags(d.tradeKey)[0])}">
+    <img class="after" src="${esc(slotSrc(baAfter, slotLabel(baAfter), { labelSide: "right" }))}" alt="${esc(baTags(d.tradeKey)[1])}">
+    <img class="before" src="${esc(slotSrc(baBefore, slotLabel(baBefore), { labelSide: "left" }))}" alt="${esc(baTags(d.tradeKey)[0])}">
         <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(baTags(d.tradeKey)[0])} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" aria-valuetext="50 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div>
   </div>
   <p class="ba-cap" aria-hidden="true"><span>${esc(baTags(d.tradeKey)[0])}</span><span>${esc(baTags(d.tradeKey)[1])}</span></p>

@@ -22,12 +22,15 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { TRADE_ORDER } from "./src/trades.js";
 import { CINE_KIT } from "./src/cine-kit.js";
+import { extraVariantKeys, ownSlotIds, variantKey } from "./src/variants.js";
+// Test hook: SITEMAKER_KIT_PATCH=<file.js> runs JS against CINE_KIT (fixture variations before the real ones exist).
+if (process.env.SITEMAKER_KIT_PATCH) new Function("CINE_KIT", readFileSync(process.env.SITEMAKER_KIT_PATCH, "utf8"))(CINE_KIT);
 
 const here = dirname(fileURLToPath(import.meta.url));
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const val = (n) => (args.includes(n) ? args[args.indexOf(n) + 1] : null);
-const VALUE_OPTS = ["--library", "--trade", "--sort", "--skip", "--sheet"];
+const VALUE_OPTS = ["--library", "--trade", "--sort", "--skip", "--sheet", "--variant"];
 const positional = args.filter((a, i) => !a.startsWith("--") && !VALUE_OPTS.includes(args[i - 1]));
 const folder = positional[0];
 const libDir = val("--library") || join(here, "library");
@@ -40,15 +43,22 @@ if (!folder || flag("--help")) {
 }
 if (!existsSync(folder) || !statSync(folder).isDirectory()) { console.error(`Not a folder: ${folder}`); process.exit(1); }
 
-// All slot ids per trade, in kit order: story, styles, before, after (required), then optional extras.
-function slotsOf(trade) {
+// Slot ids of a trade's variation, in the picture book's order: story, styles, before, after (required), then the
+// optional service pictures (default variation only). Non-default ids look like "metal/s1".
+function slotsOf(trade, variant) {
   const k = CINE_KIT[trade];
   if (!k) return { required: [], optional: [] };
-  const required = [...(k.story || []).map((s) => s.id), ...(k.styles || []).map((s) => s.id)];
-  if (k.beforeAfter) required.push("before", "after");
-  const optional = ((k.editorial && k.editorial.extra) || []).map((x) => x.id);
+  const required = ownSlotIds(k, variant);
+  const isDefault = variantKey(k, variant) === variantKey(k, "");
+  const optional = isDefault ? ((k.editorial && k.editorial.extra) || []).map((x) => x.id) : [];
   return { required, optional };
 }
+// Variation keys of a trade, default first ([""] when the trade has none).
+const variantsOf = (trade) => { const vs = ((CINE_KIT[trade] && CINE_KIT[trade].variants) || []).map((v) => v.key); return vs.length ? vs : [""]; };
+// Where a slot's picture lives: library/<trade>/<id>.webp, and "metal/s1" means library/<trade>/metal/s1.webp.
+const slotDir = (trade, id) => join(libDir, trade, ...id.split("/").slice(0, -1));
+const slotBase = (id) => id.split("/").pop();
+const findExisting = (trade, id) => ["webp", "jpg", "jpeg", "png"].map((e) => join(slotDir(trade, id), `${slotBase(id)}.${e}`)).find((q) => existsSync(q));
 
 // Picture size from the file header (png, jpeg, webp) without any library.
 function sizeOf(buf) {
@@ -136,7 +146,11 @@ if (flag("--by-order")) {
   }
   const sort = val("--sort") || "mtime";
   if (!["mtime", "name"].includes(sort)) { console.error("--sort is mtime or name"); process.exit(2); }
-  const { required, optional } = slotsOf(trade);
+  const vkeys = variantsOf(trade).filter(Boolean);
+  const wantVariant = val("--variant") || "";
+  if (wantVariant && !vkeys.includes(wantVariant)) { console.error(`${trade} has ${vkeys.length ? "the variations: " + vkeys.join(", ") : "no variations"}; got --variant ${wantVariant}`); process.exit(2); }
+  const variant = wantVariant && wantVariant !== vkeys[0] ? wantVariant : "";
+  const { required, optional } = slotsOf(trade, variant);
   const slots = flag("--with-optional") ? [...required, ...optional] : required;
   const skip = new Set((val("--skip") || "").split(",").map((x) => parseInt(x, 10)).filter((n) => n > 0));
   const imgs = readdirSync(folder).filter((f) => statSync(join(folder, f)).isFile() && !f.startsWith(".") && /\.(jpe?g|png|webp)$/i.test(f))
@@ -149,7 +163,7 @@ if (flag("--by-order")) {
   keep.forEach((x, i) => { x.slot = slots[i] || null; });
   const sizeTxt = (x) => { const z = sizeOf(readFileSync(x.path)); x.px = z ? `${z.w}x${z.h}` : "?"; return x.px; };
   imgs.forEach(sizeTxt);
-  console.log(`\n${trade}: ${imgs.length} picture files in ${folder}, sorted by ${sort}${skip.size ? `, skipping position ${[...skip].sort((a, b) => a - b).join(", ")}` : ""}; ${slots.length} slots${flag("--with-optional") ? " (with optional)" : " (required only)"}`);
+  console.log(`\n${trade}${variant ? "/" + variant : ""}: ${imgs.length} picture files in ${folder}, sorted by ${sort}${skip.size ? `, skipping position ${[...skip].sort((a, b) => a - b).join(", ")}` : ""}; ${slots.length} slots${flag("--with-optional") ? " (with optional)" : " (required only)"}`);
   console.log("\npos  file                              KB      pixels      slot");
   for (const x of imgs) console.log(`${String(x.pos).padEnd(4)} ${x.f.slice(0, 33).padEnd(33)} ${String(Math.round(x.bytes / 1024)).padEnd(7)} ${x.px.padEnd(11)} ${skip.has(x.pos) ? "(skipped)" : x.slot || "(no slot left)"}`);
   const sheetOut = val("--sheet") || join(here, "test-out", `ingest-${trade}-order.jpg`);
@@ -167,16 +181,16 @@ if (flag("--by-order")) {
   }
   if (unfilled.length) console.log(`\nfewer pictures than slots: not filled: ${unfilled.join(", ")}`);
   if (!flag("--yes")) { console.log("\nDry run only. Check the table and the contact sheet, then run again with --yes to write."); process.exit(0); }
-  const dir = join(libDir, trade);
   let written = 0, left = 0;
   for (const x of keep) {
-    const existing = ["webp", "jpg", "jpeg", "png"].map((e) => join(dir, `${x.slot}.${e}`)).find((q) => existsSync(q));
+    const dir = slotDir(trade, x.slot), base = slotBase(x.slot);
+    const existing = findExisting(trade, x.slot);
     if (existing && !FORCE) { console.log(`left alone: ${trade}/${x.slot} (already in the library; use --force to replace)`); left++; continue; }
     mkdirSync(dir, { recursive: true });
     if (existing) rmSync(existing);
-    const dest = join(dir, `${x.slot}.webp`);
+    const dest = join(dir, `${base}.webp`);
     const used = await convert(x.path, dest);
-    if (used === "copy") { rmSync(dest, { force: true }); copyFileSync(x.path, join(dir, `${x.slot}${extname(x.f).toLowerCase() === ".jpeg" ? ".jpg" : extname(x.f).toLowerCase()}`)); console.log(`warning: ${x.f}: no image converter (sharp, ffmpeg, Pillow); copied as it is`); }
+    if (used === "copy") { rmSync(dest, { force: true }); copyFileSync(x.path, join(dir, `${base}${extname(x.f).toLowerCase() === ".jpeg" ? ".jpg" : extname(x.f).toLowerCase()}`)); console.log(`warning: ${x.f}: no image converter (sharp, ffmpeg, Pillow); copied as it is`); }
     console.log(`written: ${trade}/${x.slot}  <- ${x.f} (${used})`);
     written++;
   }
@@ -199,45 +213,56 @@ for (const f of files.sort()) {
     errors.push(`${f}: unknown trade "${guess}". Trades: ${TRADE_ORDER.join(", ")}`);
     continue;
   }
-  const slot = stem.slice(trade.length + 1).trim().toLowerCase().replace(/[ _]+/g, "-");
-  const { required, optional } = slotsOf(trade);
-  if (!required.includes(slot) && !optional.includes(slot)) {
-    errors.push(`${f}: unknown slot "${slot}" for ${trade}. Slots: ${required.join(", ")}${optional.length ? " (optional: " + optional.join(", ") + ")" : ""}`);
+  let slot = stem.slice(trade.length + 1).trim().toLowerCase().replace(/[ _]+/g, "-");
+  // <trade>-<variant>-<slot>: the variation key comes first. The default variation's key may be written too.
+  const vkeys = variantsOf(trade).filter(Boolean);
+  const vk = vkeys.find((v) => slot.startsWith(v + "-"));
+  let variant = "";
+  if (vk) { variant = vk; slot = slot.slice(vk.length + 1); }
+  const isDefaultVariant = !vk || vk === vkeys[0];
+  if (vk && vk === vkeys[0]) variant = "";
+  const id = vk && vk !== vkeys[0] ? `${vk}/${slot}` : slot;
+  const { required, optional } = slotsOf(trade, variant);
+  if (!required.includes(id) && !optional.includes(id)) {
+    const shown = required.map((x) => x.split("/").pop());
+    errors.push(`${f}: unknown slot "${slot}" for ${trade}${variant ? " variant " + variant : ""}. Slots: ${shown.join(", ")}${optional.length ? " (optional: " + optional.join(", ") + ")" : ""}${vkeys.length ? ". Variations: " + vkeys.join(", ") : ""}`);
     continue;
   }
   const buf = readFileSync(join(folder, f));
   const sz = sizeOf(buf);
   if (sz && Math.abs(sz.w / sz.h - 16 / 9) > 0.08) warnings.push(`${f}: ${sz.w}x${sz.h} is not 16:9 (pictures are cropped to fit; make them wide)`);
   if (buf.length > 2 * 1024 * 1024) warnings.push(`${f}: ${(buf.length / 1048576).toFixed(1)} MB is over 2 MB (it is shrunk to about ${TARGET_KB} KB)`);
-  const dir = join(libDir, trade);
-  const existing = ["webp", "jpg", "jpeg", "png"].map((e) => join(dir, `${slot}.${e}`)).find((p) => existsSync(p));
-  if (existing && !FORCE) { skipped.push(`${trade}/${slot} (already in the library; use --force to replace)`); (found[trade] = found[trade] || new Set()).add(slot); continue; }
-  if (DRY) { done.push(`${trade}/${slot} (dry run)`); (found[trade] = found[trade] || new Set()).add(slot); continue; }
+  const dir = slotDir(trade, id), base = slotBase(id);
+  const existing = findExisting(trade, id);
+  if (existing && !FORCE) { skipped.push(`${trade}/${id} (already in the library; use --force to replace)`); (found[trade] = found[trade] || new Set()).add(id); continue; }
+  if (DRY) { done.push(`${trade}/${id} (dry run)`); (found[trade] = found[trade] || new Set()).add(id); continue; }
   mkdirSync(dir, { recursive: true });
   if (existing) rmSync(existing);
-  const dest = join(dir, `${slot}.webp`);
+  const dest = join(dir, `${base}.webp`);
   const tool = await convert(join(folder, f), dest);
   if (tool === "copy") {
     // no converter: keep the original format so the library still works
     rmSync(dest, { force: true });
-    const keep = join(dir, `${slot}${ext === ".jpeg" ? ".jpg" : ext}`);
+    const keep = join(dir, `${base}${ext === ".jpeg" ? ".jpg" : ext}`);
     copyFileSync(join(folder, f), keep);
     warnings.push(`${f}: no image converter found (sharp, ffmpeg, Pillow); copied as it is, not resized`);
   }
-  done.push(`${trade}/${slot} (${tool}, ${Math.round(statSync(existsSync(dest) ? dest : join(dir, `${slot}${ext}`)).size / 1024)} KB)`);
-  (found[trade] = found[trade] || new Set()).add(slot);
+  done.push(`${trade}/${id} (${tool}, ${Math.round(statSync(existsSync(dest) ? dest : join(dir, `${base}${ext}`)).size / 1024)} KB)`);
+  (found[trade] = found[trade] || new Set()).add(id);
 }
 
-// Summary: every trade, pictures in the library now (found here or already there) and what is missing.
-console.log("\ntrade           in library   missing");
+// Summary: every trade (and every variation), pictures in the library now and what is missing.
+console.log("\ntrade / variation       in library   missing");
 let allHave = 0, allNeed = 0;
 for (const trade of TRADE_ORDER) {
-  const { required } = slotsOf(trade);
-  const dir = join(libDir, trade);
-  const present = required.filter((s) => ["webp", "jpg", "jpeg", "png"].some((e) => existsSync(join(dir, `${s}.${e}`))));
-  allHave += present.length; allNeed += required.length;
-  const missing = required.filter((s) => !present.includes(s));
-  console.log(`${trade.padEnd(15)} ${String(present.length + "/" + required.length).padEnd(12)} ${missing.length ? missing.join(", ") : "-"}`);
+  for (const v of variantsOf(trade)) {
+    const { required } = slotsOf(trade, v);
+    const present = required.filter((sl) => findExisting(trade, sl));
+    allHave += present.length; allNeed += required.length;
+    const missing = required.filter((sl) => !present.includes(sl)).map((sl) => sl.split("/").pop());
+    const label = v && v !== variantsOf(trade)[0] ? `${trade}/${v}` : variantsOf(trade).length > 1 ? `${trade}/${v}` : trade;
+    console.log(`${label.padEnd(23)} ${String(present.length + "/" + required.length).padEnd(12)} ${missing.length ? missing.join(", ") : "-"}`);
+  }
 }
 console.log(`\nlibrary: ${allHave} of ${allNeed} pictures`);
 if (done.length) console.log(`\nwritten (${done.length}):\n  ` + done.join("\n  "));

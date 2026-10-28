@@ -11,23 +11,22 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = process.cwd();
-const libDir = join(here, "library");
+const libArg = process.argv.indexOf("--library");
+const libDir = libArg > 0 ? process.argv[libArg + 1] : join(here, "library");
 const EMBED_MAX = 6 * 1024 * 1024;
 const lazyPageName = "maker-publish.html"; // the page to publish with the library files next to it
 const files = {};
 let bytes = 0, n = 0;
-if (existsSync(libDir)) {
-  for (const trade of readdirSync(libDir).sort()) {
-    const dir = join(libDir, trade);
-    if (!statSync(dir).isDirectory()) continue;
-    for (const f of readdirSync(dir).sort()) {
-      if (!/\.(webp|jpe?g|png)$/i.test(f)) continue;
-      const size = statSync(join(dir, f)).size;
-      files[`library/${trade}/${f}`] = relative(root, join(dir, f));
-      bytes += size; n++;
-    }
+const walk = (dir, rel) => {
+  for (const f of readdirSync(dir).sort()) {
+    const full = join(dir, f);
+    if (statSync(full).isDirectory()) { walk(full, `${rel}/${f}`); continue; }
+    if (!/\.(webp|jpe?g|png)$/i.test(f)) continue;
+    files[`library/${rel}/${f}`] = relative(root, full);
+    bytes += statSync(full).size; n++;
   }
-}
+};
+if (existsSync(libDir)) for (const trade of readdirSync(libDir).sort()) if (statSync(join(libDir, trade)).isDirectory()) walk(join(libDir, trade), trade);
 // A lazy build never embeds, so the library files must always be published with it.
 const lazy = true;
 const small = bytes <= EMBED_MAX;

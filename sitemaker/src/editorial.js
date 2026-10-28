@@ -14,6 +14,7 @@
 import { esc, safeImage } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
+import { kitVariant } from "./variants.js";
 import { editorialLook, editorialShape } from "./cine-look.js";
 
 // Simple silhouettes for the hero picture, as CSS polygon() points in percent.
@@ -318,7 +319,7 @@ const edText = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, 
 
 export function generateEditorial(form, d, deps) {
   const { CINE_KIT, placeholderArt } = deps;
-  const kit = CINE_KIT[d.tradeKey];
+  const kit = kitVariant(CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant);
   const th = THEMES[d.themeKey];
   const t = d.trade;
   const cine = (form && form.cine) || {};
