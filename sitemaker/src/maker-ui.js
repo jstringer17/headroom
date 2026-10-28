@@ -11,16 +11,47 @@
   let heroData = "";
   const hasCine = typeof CINE_KIT !== "undefined";
   const cineImages = {}; // trade -> slotId -> picture the user added (upload or link)
-  // Built-in pictures per trade (sitemaker/library). Used by default, the user's own pictures win.
-  const LIB = typeof PICTURE_LIBRARY !== "undefined" ? PICTURE_LIBRARY : {};
+  // Built-in pictures per trade (sitemaker/library). PICTURE_INDEX lists them; the pictures are either
+  // embedded in the page (PICTURE_LIBRARY) or fetched from files published next to the page when a
+  // trade is picked. Either way they end up here as data URIs, so Preview and Download inline them.
+  const IDX = typeof PICTURE_INDEX !== "undefined" ? PICTURE_INDEX : {};
+  const LIBDATA = {}; // trade -> slotId -> data URI
+  if (typeof PICTURE_LIBRARY !== "undefined") for (const k in PICTURE_LIBRARY) LIBDATA[k] = Object.assign({}, PICTURE_LIBRARY[k]);
+  const libLoad = {}; // trade -> promise while its pictures are being fetched
+  const libFailed = {}; // trade -> number of pictures that could not be loaded
   const libOn = {}; // trade -> false when the checkbox is off
   const libGone = {}; // trade -> { slotId: true } removed library pictures
-  const hasLib = (k) => !!LIB[k] && Object.keys(LIB[k]).length > 0;
+  const hasLib = (k) => (!!IDX[k] && Object.keys(IDX[k]).length > 0) || (!!LIBDATA[k] && Object.keys(LIBDATA[k]).length > 0);
   function libFor(key) {
     if (!hasLib(key) || libOn[key] === false) return {};
-    const gone = libGone[key] || {}, o = {};
-    for (const id in LIB[key]) if (!gone[id]) o[id] = LIB[key][id];
+    const gone = libGone[key] || {}, o = {}, data = LIBDATA[key] || {};
+    for (const id in data) if (!gone[id]) o[id] = data[id];
     return o;
+  }
+  const blobToData = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+  function libStatus(msg, bad) { const s = $("lib-status"); if (s) { s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); } }
+  // Fetch the trade's library files that are not embedded. Safe to call again: one fetch per trade.
+  function ensureLib(key) {
+    if (!IDX[key]) return Promise.resolve();
+    if (libLoad[key]) return libLoad[key];
+    const have = LIBDATA[key] || {};
+    const need = Object.keys(IDX[key]).filter((id) => !have[id]);
+    if (!need.length) return Promise.resolve();
+    libFailed[key] = 0;
+    if (tradeSel.value === key) libStatus("Loading library pictures...");
+    libLoad[key] = Promise.all(need.map(async (id) => {
+      try {
+        const r = await fetch(IDX[key][id].file);
+        if (!r.ok) throw new Error("http " + r.status);
+        (LIBDATA[key] = LIBDATA[key] || {})[id] = await blobToData(await r.blob());
+      } catch (_) { libFailed[key]++; }
+    })).then(() => {
+      if (tradeSel.value === key) {
+        libStatus(libFailed[key] ? "Some library pictures could not be loaded here. The sample drawings are used for them." : "", !!libFailed[key]);
+        buildCine(); render();
+      }
+    });
+    return libLoad[key];
   }
   const effectiveImages = (key) => Object.assign({}, libFor(key), cineImages[key] || {});
   const cineUnits = {}; // trade -> chosen unit
@@ -60,6 +91,7 @@
     if (!themeTouched) $("theme-" + t.theme).checked = true;
     $("higgs-prompt").value = t.prompt;
     buildCine();
+    ensureLib(key);
   }
 
   if (hasCine) {
@@ -228,6 +260,7 @@
 
   $("download").addEventListener("click", async () => {
     if (needName()) return;
+    await ensureLib(tradeSel.value);
     const html = generateSite(readForm());
     const name = fileName();
     if (downloads) {
@@ -254,8 +287,9 @@
     say("Download is not working here. Use Copy code instead.", true);
   });
 
-  $("copy").addEventListener("click", () => {
+  $("copy").addEventListener("click", async () => {
     if (needName()) return;
+    await ensureLib(tradeSel.value);
     const html = generateSite(readForm());
     const fallback = () => {
       $("code").value = html;
