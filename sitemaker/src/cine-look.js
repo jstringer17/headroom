@@ -795,7 +795,7 @@ const VSCENES = {
       return { art: a + shrub(300, G, 0.8), mood: "gold" };
     }
     if (key === "tile") {
-      let a = house({ roof: stage(["tileOld", "wrap", "battens", "tile"]), wall: "#ead6b4", roofH: 110, w: 720, trim: "#ead6b4" });
+      let a = house({ roof: stage(["tileOld", "wrap", "battens", "tile"]), wall: "#f3efe6", roofH: 110, w: 720, trim: "#f3efe6" });
       if (st === 1) a += range(3).map((i) => rect(700 + i * 70, 470, 56, 26, "#b8613b", C.ink, 2)).join("");
       return { art: a + palm(260, G) + palm(1380, G), mood: "gold", ground: "#d9c49a" };
     }
@@ -817,12 +817,15 @@ const VSCENES = {
     const y0 = 600, x0 = 660, x1 = 1520, n = 8, step = (x1 - x0) / n;
     const post = { vinyl: C.white, aluminum: C.char, chainlink: "#9aa0a6", splitrail: "#7a5a3a", slat: "#3a3b3d" }[key] || C.woodD;
     let a = "";
-    if (key === "vinyl") a += house({ x: 1040, w: 420, wallH: 200, roof: "new", wall: "#c3d4de" });
+    // vinyl: backyard with a small deck at left and a maple; aluminum: red-brick colonial front lawn with hedges.
+    if (key === "vinyl") a += circle(1180, G - 300, 150, "#7f9a68") + rect(1166, G - 160, 28, 160, "#6b5038");
+    if (key === "aluminum") a += house({ x: 1060, w: 520, wallH: 230, roofH: 150, roof: "new", wall: "#a8553f", trim: C.white });
     if (key === "chainlink") a += house({ x: 980, w: 560, wallH: 150, roofH: 80, roof: "new", wall: "#efe7d8" }) + rect(1360, G - 150, 140, 150, "#b9a88f", C.ink, 2);
     if (key === "slat") a += rect(760, G - 230, 620, 230, "#efece6") + rect(740, G - 250, 660, 24, C.char) + rect(840, G - 190, 420, 170, "#8fa6b3", C.ink, 3) + line(1050, G - 190, 1050, G - 20, 3);
     if (key === "splitrail") a += path(`M0 ${G - 60} C 400 ${G - 160} 900 ${G - 40} 1600 ${G - 140} L1600 ${G} L0 ${G} Z`, "#a9bf8f", "none", 0) + rect(1180, G - 210, 120, 80, "#a5523a", C.ink, 2) + circle(420, G - 260, 110, "#6f8c5a") + rect(408, G - 160, 24, 120, "#6b5038");
-    a += rect(0, G - 2, W, H - G, key === "aluminum" ? "#e5ddcc" : C.sage, "none", 0);
-    if (key === "aluminum") a += rect(60, 740, 560, 120, "#7fb8cf", C.ink, 3) + palm(1500, G - 10);
+    a += rect(0, G - 2, W, H - G, C.sage, "none", 0);
+    if (key === "vinyl") a += path(`M0 ${G + 20} L520 ${G + 20} L600 ${H} L0 ${H} Z`, C.wood) + range(8).map((i) => line(0, G + 30 + i * 22, 520 + i * 10, G + 30 + i * 22, 2, C.woodD)).join("");
+    if (key === "aluminum") a += path(`M1010 ${G} L1110 ${G} L1180 ${H} L940 ${H} Z`, "#b5735a") + range(4).map((i) => `<ellipse cx="${700 + i * 130 + (i > 1 ? 380 : 0)}" cy="${G - 10}" rx="70" ry="34" fill="#6f8c5a"/>`).join("");
     if (st === 0) return { art: a + stakes(x0, x1, y0, n), mood: "gold" };
     if (key === "chainlink" && st >= 3) a += range(n * 10).map((i) => line(x0 + i * step / 10, y0 - 120, x0 + i * step / 10 + 40, y0 + 110, 1.2, "#8c9298") + line(x0 + i * step / 10 + 40, y0 - 120, x0 + i * step / 10, y0 + 110, 1.2, "#8c9298")).join("");
     if (key === "vinyl" && st >= 3) a += range(n).map((i) => rect(x0 + i * step + 6, y0 - 120, step - 12, 230, C.white)).join("");
@@ -840,7 +843,7 @@ const VSCENES = {
     let a = "", dirt = "", clip;
     const done = [0, 1 / 3, 2 / 3, 1][st];
     if (key === "siding") {
-      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 60, W, 640, "#dcdfe0", C.ink, 3) + range(24).map((i) => line(0, 60 + i * 26, W, 60 + i * 26, 1.5, "#aab0b3")).join("");
+      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 60, W, 640, "#f4f3ef", C.ink, 3) + range(24).map((i) => line(0, 60 + i * 26, W, 60 + i * 26, 1.5, "#c3c2bc")).join("");
       a += rect(980, 200, 300, 300, "#9fb2bd", C.ink, 4) + rect(960, 180, 340, 340, "none", "#f6f3ec", 14) + rect(0, 700, W, 200, C.sage, "none", 0) + shrub(300, 700) + shrub(600, 700, 0.8);
       dirt = rect(0, 60, W, 640, "#7f8a6a", "none", 0, 0, ' opacity=".35"') + blotches("sd-alg", 40, [0, 400, W, 300], "#4f6a3f", 0.5) + range(18).map((i) => line(40 + i * 90, 70, 40 + i * 90 + 6, 230, 8, "#5c5a52", ' opacity=".35"')).join("");
       clip = [0, 60 + 640 * done, W, 640 * (1 - done)];
@@ -859,7 +862,7 @@ const VSCENES = {
       dirt = range(26).map((i) => line(330 + i * 36, 330 + Math.abs(i - 13) * 9, 334 + i * 36, 500, 12, "#141414", ' opacity=".4"')).join("");
       clip = [W * (0.2 + 0.6 * done), 0, W, H];
     } else {
-      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(160, 140, 1280, 440, "#ece4d5", C.ink, 3) + rect(140, 120, 1320, 40, C.stone);
+      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(160, 140, 1280, 440, "#b0705a", C.ink, 3) + range(16).map((i) => line(160, 160 + i * 26, 1440, 160 + i * 26, 1, "#7d4a3a", ' opacity=".45"')).join("") + rect(140, 120, 1320, 40, C.stone);
       a += range(3).map((i) => rect(220 + i * 420, 260, 340, 260, "#9fb2bd", C.ink, 3)).join("") + rect(160, 520, 1280, 60, "#d8d2c5", C.ink, 2);
       a += rect(0, 580, W, 320, C.stone, "none", 0) + range(7).map((i) => line(120 + i * 230, 660, 60 + i * 250, H, 5, st === 3 ? "#ffffff" : "#e6e3dc")).join("");
       dirt = rect(0, 520, W, 380, "#5d5a53", "none", 0, 0, ' opacity=".55"') + blotches("sf-gum", 50, [0, 520, W, 380], "#1c1a16", 0.55);

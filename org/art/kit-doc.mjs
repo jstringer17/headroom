@@ -66,7 +66,7 @@ ${VT.map((t) => `| ${name(t)} | ${cineVariants(t).map((v) => v.label + (v.defaul
 1. Same rules as the main kit: wide 16:9, no people, no faces, no text, no logos.
 2. Each variant is one scene: make s1 new, then use **Edit** on the newest picture for s2, s3 and s4.
 3. Make "before" new, then use **Edit** on it for "after".
-4. Save each file as \`<trade>-<variant>-<slot>.jpg\` (like \`roofing-metal-s1.jpg\`). The ingest script puts it at library/<trade>/<variant>/<slot>.webp.
+4. Save each file as \`<trade>-<variant>-<slot>.jpg\` (like \`roofing-metal-s1.jpg\`). Its place in the library is library/<trade>/<variant>/<slot>.webp (cine-engine is adding variant folders to the ingest script).
 
 `;
 for (const t of VT) {
