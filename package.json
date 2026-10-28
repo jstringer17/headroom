@@ -9,7 +9,8 @@
     "check": "node src/check-sites.mjs",
     "score": "node src/score.mjs",
     "find": "node src/scrape.mjs && node src/check-sites.mjs && node src/score.mjs",
-    "dashboard": "node src/server.mjs"
+    "dashboard": "node src/server.mjs",
+    "test:sitemaker": "node sitemaker/test-all.mjs"
   },
   "dependencies": {
     "playwright": "1.56.1"
