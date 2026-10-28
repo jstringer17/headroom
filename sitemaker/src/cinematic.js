@@ -157,6 +157,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-motion .prog-bar{display:block;position:absolute;left:0;right:0;bottom:0;height:4px;z-index:4;background:rgba(255,255,255,.18)}
 .prog-bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);will-change:transform}
 .cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
+.facts{background:var(--cream2);color:var(--ink)}
+.facts ul{list-style:none;margin:0;padding:18px 0;display:flex;flex-wrap:wrap;gap:10px 28px}
+.facts li{display:flex;align-items:center;gap:10px;font:600 15px/1.3 var(--sans)}
+.facts svg{flex:none;color:var(--accent)}
 /* sections on cream */
 .sec{padding-block:72px}
 .sec h2{font-size:clamp(38px,7vw,72px)}
@@ -495,6 +499,13 @@ export function generateCinematic(form, d, deps) {
   </div>
 </section>`;
 
+  // At a glance: only facts the owner typed or ticked.
+  const factList = [];
+  if (d.years) factList.push(`${d.years} year${d.years === 1 ? "" : "s"} in business`);
+  if (d.emergency) factList.push("Open 24/7 for emergencies");
+  if (d.insured) factList.push("Licensed and insured");
+  const factsSec = factList.length ? `<section class="facts" aria-label="At a glance"><div class="wrap"><ul>${factList.map((f) => `<li class="rv">${svgIcon('<path d="M5 12.5l4.5 4.5L19 7"/>', 18)}<span>${esc(f)}</span></li>`).join("")}</ul></div></section>` : "";
+
   // 2. Pick your style
   const stylesSec = styles.length ? `<section class="sec" id="styles"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Pick your <em>style</em>.</h2></div>
@@ -618,6 +629,7 @@ ${look && look.css ? look.css : ""}
 </div></header>
 <main id="top">
 ${storySec}
+${factsSec}
 ${stylesSec}
 ${hvacSec}
 ${baSec}
@@ -626,7 +638,7 @@ ${services}
 ${reviews}
 ${contact}
 </main>
-<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div><p>&copy; ${esc(d.year)} ${name} &middot; Sample site</p></div></footer>
+<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${factList.length ? `<p>${esc(factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; Sample site</p></div></footer>
 <div class="mobile-call">${callBtn("btn btn-accent")}</div>
 <script>
 ${ENGINE_JS}
