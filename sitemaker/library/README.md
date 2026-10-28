@@ -34,6 +34,27 @@ What it does:
 
 Then rebuild and test: `node sitemaker/build.mjs && npm run test:sitemaker`.
 
+## Adding pictures that kept their default names (by order)
+
+When the downloads cannot be renamed, hand the whole folder to one trade and let the script assign the
+pictures to that trade's slots in the picture book's order (`org/art/higgsfield-kit.md`: story pictures,
+style pictures, before, after; the optional service pictures only with `--with-optional`):
+
+```
+node sitemaker/ingest.mjs --trade roofing --by-order path/to/folder            # table and contact sheet only
+node sitemaker/ingest.mjs --trade roofing --by-order path/to/folder --yes      # write them
+```
+
+- Files are sorted by modification time, oldest first (`--sort name` sorts by file name instead). Check the
+  order: the script always prints a table first (position, file, size in KB, pixels, assigned slot) and writes
+  a **contact sheet** picture (`sitemaker/test-out/ingest-<trade>-order.jpg`, or `--sheet <file>`) with each
+  thumbnail labelled by position and slot (needs Pillow, or ffmpeg without labels).
+- `--skip 3,7` drops rejected downloads by their position in the sorted list (positions start at 1).
+- The count must match the slots. Too many files: refused, use `--skip`. Too few: refused with the missing
+  slots listed, unless `--allow-fewer` (the first slots are filled).
+- Nothing is written without `--yes`. A picture already in the library is left alone unless `--force`.
+- Resizing and the 16:9 / 2 MB warnings are the same as in the by-name mode.
+
 ## How the maker gets the pictures
 
 `maker.html` always carries an index of the library (names and sizes). The pictures themselves travel one of two ways:
