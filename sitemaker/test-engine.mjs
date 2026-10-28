@@ -238,6 +238,68 @@ for (const trade of TRADE_ORDER) {
   await page.close();
 }
 
+// Colors: the four swatches must change Editorial and Cinematic (button, accent word, dark sections)
+// and stay readable; an untouched swatch keeps the trade's own palette; the Hero picture box wins.
+{
+  const lum = (c) => { const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const measure = async (html, look) => {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+    await page.route("**/*", (q) => (/^(data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+    await page.setContent(html, { waitUntil: "load" });
+    const r = await page.evaluate((look) => {
+      const cs = (e, k) => (e ? getComputedStyle(e)[k] : ""), q = (s) => document.querySelector(s);
+      if (look === "editorial") return { btn: cs(q(".ed-hero .ed-btn"), "backgroundColor"), ink: cs(q(".ed-hero .ed-btn"), "color"), em: cs(q(".ed-sec h2 em"), "color"), paper: cs(document.body, "backgroundColor"), dark: cs(q("#services"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
+      return { btn: cs(q(".btn-accent"), "backgroundColor"), ink: cs(q(".btn-accent"), "color"), em: cs(q("#styles h2 em") || q("h2 em"), "color"), paper: cs(document.body, "backgroundColor"), dark: cs(q("#contact"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
+    }, look);
+    await page.close();
+    return r;
+  };
+  for (const trade of ["roofing", "pressure", "hvac"]) for (const look of ["editorial", "cinematic"]) {
+    const seen = new Set(), darks = new Set();
+    for (const theme of ["navy", "forest", "steel", "sky"]) {
+      const r = await measure(generateSite({ company: "X", trade, cinematic: true, look, theme, themePicked: true, phone: "9185550100" }), look);
+      const tag = `${trade}/${look}/${theme}`;
+      seen.add(r.btn); darks.add(r.dark);
+      ok(cr(r.ink, r.btn) >= 4.5, `colors ${tag}: button text contrast ${cr(r.ink, r.btn).toFixed(2)} < 4.5`);
+      ok(cr(r.em, r.paper) >= 4.5, `colors ${tag}: accent word on paper ${cr(r.em, r.paper).toFixed(2)} < 4.5`);
+      ok(cr(r.hi, r.dark) >= 4.5, `colors ${tag}: accent on dark ${cr(r.hi, r.dark).toFixed(2)} < 4.5`);
+    }
+    ok(seen.size === 4, `colors ${trade}/${look}: the 4 swatches give ${seen.size} different button colors`);
+    ok(darks.size === 4, `colors ${trade}/${look}: the 4 swatches give ${darks.size} different dark sections`);
+    const own = await measure(generateSite({ company: "X", trade, cinematic: true, look, phone: "9185550100" }), look);
+    const navy = await measure(generateSite({ company: "X", trade, cinematic: true, look, theme: "navy", themePicked: true, phone: "9185550100" }), look);
+    if (trade === "pressure" || trade === "hvac") ok(own.dark !== navy.dark || own.btn !== navy.btn, `colors ${trade}/${look}: untouched swatch lost the trade palette`);
+  }
+  // The real maker: choosing a swatch changes the preview, and the checked swatch is visibly marked.
+  const makerFile = new URL("./maker.html", import.meta.url).href;
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await page.goto(makerFile, { waitUntil: "load" });
+  await page.fill("#company", "Ridge Roofing"); await page.waitForTimeout(400);
+  const before = await page.$eval("#frame", (f) => f.srcdoc);
+  // clicking the swatch that is already selected (the trade's own) still counts as a choice
+  await page.click('label[for="theme-navy"]'); await page.waitForTimeout(500);
+  ok((await page.$eval("#frame", (f) => f.srcdoc)).includes("--ed-btn:#f27a1f"), "maker: clicking the already-selected swatch did not apply it");
+  await page.click('label[for="theme-steel"]'); await page.waitForTimeout(500);
+  const after = await page.$eval("#frame", (f) => f.srcdoc);
+  ok(before !== after && after.includes("--ed-btn:#cf2f27"), "maker: picking a swatch did not recolor the Editorial preview");
+  const mark = await page.$eval('label[for="theme-steel"] span', (e) => getComputedStyle(e, "::after").content);
+  ok(/\u2713|✓/.test(mark), `maker: checked swatch has no visible mark (${mark})`);
+  await page.selectOption("#look", "cinematic"); await page.waitForTimeout(500);
+  const ci = await page.$eval("#frame", (f) => f.srcdoc);
+  ok(ci.includes("#cf2f27") || ci.includes("207, 47, 39") || ci.toLowerCase().includes("cf2f27"), "maker: swatch not applied to the Cinematic preview");
+  // Hero picture box wins over the library hero in every look
+  await page.selectOption("#look", "editorial"); await page.selectOption("#trade", "fencing"); await page.waitForTimeout(500);
+  await page.fill("#hero-url", "https://example.com/my-hero.jpg"); await page.waitForTimeout(600);
+  ok((await page.$eval("#frame", (f) => f.srcdoc)).includes('src="https://example.com/my-hero.jpg"'), "maker: Hero picture ignored in Editorial");
+  await page.selectOption("#look", "cinematic"); await page.waitForTimeout(500);
+  ok((await page.$eval("#frame", (f) => f.srcdoc)).includes('src="https://example.com/my-hero.jpg"'), "maker: Hero picture ignored in Cinematic");
+  await page.selectOption("#look", "classic"); await page.waitForTimeout(500);
+  ok((await page.$eval("#frame", (f) => f.srcdoc)).includes("https://example.com/my-hero.jpg"), "maker: Hero picture ignored in Classic");
+  await page.close();
+}
+
 await browser.close();
 if (fails.length) { console.log("FAIL"); fails.forEach((f) => console.log(" - " + f)); process.exit(1); }
 console.log(`PASS: engine layout checks (${TRADE_ORDER.length} trades x 2 widths)`);

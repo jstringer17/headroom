@@ -889,16 +889,17 @@ export function editorialShape(tradeKey) {
   return ED_HOUSE; // one shape for every trade: it keeps the picture's label readable
 }
 
-export function editorialLook(themeKey, tradeKey) {
-  const v = cineVars(themeKey, tradeKey);
+export function editorialLook(themeKey, tradeKey, opts = {}) {
+  const tl = opts.tradeLook !== false; // false: the owner picked a swatch, use it
+  const v = cineVars(themeKey, tradeKey, opts);
   const carbon = v.display === "grotesk";
   // One accent per trade for display words, icons and rules: at least 3:1 on the paper and on the night.
   const ONE = { carbonYellow: "#a87d00", carbonOrange: "#c25a12", woodBlueprint: "#4572c4", creamSerif: "#b5551a" };
   const BY_THEME = { navy: "#b5551a", forest: "#8f6b12", steel: "#c0392b", sky: "#3f6fb5" };
-  const one = ONE[CINE_TRADE_LOOK[tradeKey]] || BY_THEME[themeKey] || "#b5551a";
+  const one = (tl && ONE[CINE_TRADE_LOOK[tradeKey]]) || BY_THEME[themeKey] || "#b5551a";
   const p = carbon
-    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: one, dark: v.night, mark: null }
-    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: one, hi: one, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
+    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: tl ? one : v.accentText, hi: tl ? one : v.accentHi, dark: v.night, mark: null }
+    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: tl ? one : v.accentText, hi: tl ? one : v.accentHi, dark: !tl ? v.night : tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
   // Phone hero size: as large as fits, capped by the longest word of this trade's line.
   const edLine = (CINE_KIT[tradeKey] && CINE_KIT[tradeKey].editorial && CINE_KIT[tradeKey].editorial.headline) || "";
   const edLongest = Math.max(6, ...edLine.split(/\s+/).map((w) => w.replace(/[^A-Za-z]/g, "").length));

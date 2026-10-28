@@ -44,7 +44,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .swatch{cursor:pointer;display:block;position:relative}
 .swatch input{position:absolute;opacity:0;pointer-events:none}
 .swatch span{display:flex;align-items:center;gap:10px;padding:9px 10px;border:2px solid var(--line);border-radius:8px;font-size:14px;font-weight:600}
-.swatch input:checked+span{border-color:var(--accent)}
+.swatch input:checked+span{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--panel))}
+.swatch input:checked+span::after{content:"\2713";margin-left:auto;font-weight:800;color:var(--accent)}
 .chip{display:inline-flex;flex:none;width:34px;height:22px;border-radius:5px;overflow:hidden}
 .chip i{flex:1}
 details.lead{border:1px dashed var(--line);border-radius:8px;padding:10px 12px}
@@ -2352,16 +2353,17 @@ function editorialShape(tradeKey) {
   return ED_HOUSE; // one shape for every trade: it keeps the picture's label readable
 }
 
-function editorialLook(themeKey, tradeKey) {
-  const v = cineVars(themeKey, tradeKey);
+function editorialLook(themeKey, tradeKey, opts = {}) {
+  const tl = opts.tradeLook !== false; // false: the owner picked a swatch, use it
+  const v = cineVars(themeKey, tradeKey, opts);
   const carbon = v.display === "grotesk";
   // One accent per trade for display words, icons and rules: at least 3:1 on the paper and on the night.
   const ONE = { carbonYellow: "#a87d00", carbonOrange: "#c25a12", woodBlueprint: "#4572c4", creamSerif: "#b5551a" };
   const BY_THEME = { navy: "#b5551a", forest: "#8f6b12", steel: "#c0392b", sky: "#3f6fb5" };
-  const one = ONE[CINE_TRADE_LOOK[tradeKey]] || BY_THEME[themeKey] || "#b5551a";
+  const one = (tl && ONE[CINE_TRADE_LOOK[tradeKey]]) || BY_THEME[themeKey] || "#b5551a";
   const p = carbon
-    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: one, hi: one, dark: v.night, mark: null }
-    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: one, hi: one, dark: tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
+    ? { cream: v.paper, cream2: v.paper2, paper: "#fbfaf7", line: "rgba(18,18,18,.18)", accent: tl ? one : v.accentText, hi: tl ? one : v.accentHi, dark: v.night, mark: null }
+    : { cream: "#ece5dc", cream2: "#e2d9cd", paper: "#f5f0e8", line: "rgba(22,20,18,.2)", accent: tl ? one : v.accentText, hi: tl ? one : v.accentHi, dark: !tl ? v.night : tradeKey && CINE_TRADE_LOOK[tradeKey] === "woodBlueprint" ? "#13284a" : "#14110f", mark: null };
   // Phone hero size: as large as fits, capped by the longest word of this trade's line.
   const edLine = (CINE_KIT[tradeKey] && CINE_KIT[tradeKey].editorial && CINE_KIT[tradeKey].editorial.headline) || "";
   const edLongest = Math.max(6, ...edLine.split(/\s+/).map((w) => w.replace(/[^A-Za-z]/g, "").length));
@@ -2958,7 +2960,7 @@ function generateCinematic(form, d, deps) {
   const { CINE_KIT, cineLook, placeholderArt } = deps;
   const kit = CINE_KIT[d.tradeKey];
   const th = THEMES[d.themeKey];
-  const look = cineLook(d.themeKey, d.tradeKey);
+  const look = cineLook(d.themeKey, d.tradeKey, { tradeLook: !d.themePicked });
   const t = d.trade;
   const cine = (form && form.cine) || {};
   const images = cine.images || {};
@@ -2984,10 +2986,11 @@ function generateCinematic(form, d, deps) {
   const ba = kit.beforeAfter;
   const prices = offeredPrices(kit, cine.prices);
 
-  // 1. Scroll story
+  // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
+  const heroBox = safeImage(form && form.heroImage);
   const steps = story.map((s, i) => {
     const tag = i === 0 ? "h1" : "p";
-    return `<div class="step" data-step="${i}"><div class="frame">${pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
+    return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}
@@ -3208,7 +3211,7 @@ img,svg{max-width:100%}
 .ed-wrap{max-width:var(--ed-max);margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
 .ed h1,.ed h2,.ed .ed-big{font-family:var(--ed-serif);font-weight:500;letter-spacing:-.02em;line-height:.98;text-wrap:balance}
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+span,.ed-row:focus-visible{outline:3px solid var(--ed-accent);outline-offset:3px;border-radius:6px}
-.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-ink);color:var(--ed-cream);transition:transform .16s var(--ed-ease),opacity .25s}
+.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-btn,var(--ed-ink));color:var(--ed-btn-ink,var(--ed-cream));transition:transform .16s var(--ed-ease),opacity .25s}
 @media (hover:hover){.ed-btn:hover{transform:translateY(-2px)}}
 .ed-btn:active{transform:scale(.97)}
 .ed-btn.light{background:var(--ed-cream);color:var(--ed-ink)}
@@ -3557,18 +3560,19 @@ function generateEditorial(form, d, deps) {
 
   const fam = (deps.editorialShape || editorialShape)(d.tradeKey) || ED_SHAPES[ED_SHAPE_FOR[d.tradeKey] || "house"];
   const shapeName = /50% 0%, 100% 40%/.test(fam) ? "house" : "other";
-  const lookExtra = (deps.editorialLook || editorialLook)(d.themeKey, d.tradeKey) || {};
+  const lookExtra = (deps.editorialLook || editorialLook)(d.themeKey, d.tradeKey, { tradeLook: !d.themePicked }) || {};
   const fontsHref = lookExtra.fontsHref || "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Manrope:wght@400;500;600;700&display=swap";
 
   const heroWords = story.length ? story[story.length - 1] : { headline: t.headline, accent: "" };
   const eyebrow = `${esc(tradeName)}${area ? ` &middot; ${area}` : ""}`;
 
-  // Hero
+  // Hero. The form's Hero picture box wins over any library or drawn picture.
+  const heroBox = safeImage(form && form.heroImage);
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div></div>
-  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
+  <div class="ed-sil${heroBox || safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${heroBox ? `<img src="${esc(heroBox)}" data-slot="hero-box" data-real="1" alt="" fetchpriority="high">` : pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
 </div></section>`;
 
   // Trust strip: only facts the owner ticked or typed
@@ -3693,7 +3697,7 @@ function generateEditorial(form, d, deps) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${esc(fontsHref)}">
 <style>
-:root{--ed-accent:color-mix(in srgb,${th.accent} 62%,#2a1204);--ed-hi:${th.hi}}
+:root{--ed-accent:color-mix(in srgb,${th.accent} 62%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
 </style>
@@ -3736,7 +3740,7 @@ ${ED_JS}
 //   services: [names] (default: the trade's first `pick`),
 //   emergency (default false), freeEstimates (default true, false for
 //   towing, junk removal and HVAC),
-//   insured (default false), theme (default: trade default), year,
+//   insured (default false), theme (default: trade default), themePicked (true when the owner chose a swatch), year,
 //   heroImage (optional),
 //   cinematic (default false: the scroll-story site, see cinematic.js), cine,
 //   look ("cinematic" default or "editorial", see editorial.js) and editorial
@@ -3794,6 +3798,7 @@ function normalize(form) {
     freeEstimates: f.freeEstimates === undefined ? trade.freeEstimates !== false : !!f.freeEstimates,
     insured: !!f.insured,
     themeKey: THEMES[f.theme] ? f.theme : trade.theme,
+    themePicked: !!(THEMES[f.theme] && f.themePicked), // the owner chose a swatch: it overrides the trade's own palette
     year: f.year || new Date().getFullYear(),
   };
 }
@@ -4449,6 +4454,7 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
       freeEstimates: $("freeEstimates").checked,
       insured: $("insured").checked,
       theme,
+      themePicked: themeTouched,
       heroImage: heroData || $("hero-url").value.trim(),
       cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
@@ -4539,6 +4545,14 @@ const PICTURE_LIBRARY = {"fencing":{"done":"data:image/webp;base64,UklGRqAWBABXR
     img.onerror = () => { URL.revokeObjectURL(url); slotSay(slot, "Could not open that picture. Try a JPG or PNG.", true); };
     img.src = url;
   }
+  // Clicking the swatch that is already selected fires no input event, but it is still a choice.
+  themeBox.addEventListener("click", (e) => {
+    const r = e.target.closest("label.swatch");
+    if (!r) return;
+    themeTouched = true;
+    const inp = r.querySelector("input"); if (inp) inp.checked = true;
+    render();
+  });
   $("maker").addEventListener("submit", (e) => e.preventDefault());
   tradeSel.addEventListener("change", () => { setTrade(tradeSel.value); render(); });
 

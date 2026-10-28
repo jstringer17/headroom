@@ -116,6 +116,7 @@
       freeEstimates: $("freeEstimates").checked,
       insured: $("insured").checked,
       theme,
+      themePicked: themeTouched,
       heroImage: heroData || $("hero-url").value.trim(),
       cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
@@ -206,6 +207,14 @@
     img.onerror = () => { URL.revokeObjectURL(url); slotSay(slot, "Could not open that picture. Try a JPG or PNG.", true); };
     img.src = url;
   }
+  // Clicking the swatch that is already selected fires no input event, but it is still a choice.
+  themeBox.addEventListener("click", (e) => {
+    const r = e.target.closest("label.swatch");
+    if (!r) return;
+    themeTouched = true;
+    const inp = r.querySelector("input"); if (inp) inp.checked = true;
+    render();
+  });
   $("maker").addEventListener("submit", (e) => e.preventDefault());
   tradeSel.addEventListener("change", () => { setTrade(tradeSel.value); render(); });
 

@@ -456,7 +456,7 @@ export function generateCinematic(form, d, deps) {
   const { CINE_KIT, cineLook, placeholderArt } = deps;
   const kit = CINE_KIT[d.tradeKey];
   const th = THEMES[d.themeKey];
-  const look = cineLook(d.themeKey, d.tradeKey);
+  const look = cineLook(d.themeKey, d.tradeKey, { tradeLook: !d.themePicked });
   const t = d.trade;
   const cine = (form && form.cine) || {};
   const images = cine.images || {};
@@ -482,10 +482,11 @@ export function generateCinematic(form, d, deps) {
   const ba = kit.beforeAfter;
   const prices = offeredPrices(kit, cine.prices);
 
-  // 1. Scroll story
+  // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
+  const heroBox = safeImage(form && form.heroImage);
   const steps = story.map((s, i) => {
     const tag = i === 0 ? "h1" : "p";
-    return `<div class="step" data-step="${i}"><div class="frame">${pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
+    return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}

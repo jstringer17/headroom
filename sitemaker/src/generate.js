@@ -9,7 +9,7 @@
 //   services: [names] (default: the trade's first `pick`),
 //   emergency (default false), freeEstimates (default true, false for
 //   towing, junk removal and HVAC),
-//   insured (default false), theme (default: trade default), year,
+//   insured (default false), theme (default: trade default), themePicked (true when the owner chose a swatch), year,
 //   heroImage (optional),
 //   cinematic (default false: the scroll-story site, see cinematic.js), cine,
 //   look ("cinematic" default or "editorial", see editorial.js) and editorial
@@ -67,6 +67,7 @@ export function normalize(form) {
     freeEstimates: f.freeEstimates === undefined ? trade.freeEstimates !== false : !!f.freeEstimates,
     insured: !!f.insured,
     themeKey: THEMES[f.theme] ? f.theme : trade.theme,
+    themePicked: !!(THEMES[f.theme] && f.themePicked), // the owner chose a swatch: it overrides the trade's own palette
     year: f.year || new Date().getFullYear(),
   };
 }

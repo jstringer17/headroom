@@ -69,7 +69,7 @@ img,svg{max-width:100%}
 .ed-wrap{max-width:var(--ed-max);margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
 .ed h1,.ed h2,.ed .ed-big{font-family:var(--ed-serif);font-weight:500;letter-spacing:-.02em;line-height:.98;text-wrap:balance}
 a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+span,.ed-row:focus-visible{outline:3px solid var(--ed-accent);outline-offset:3px;border-radius:6px}
-.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-ink);color:var(--ed-cream);transition:transform .16s var(--ed-ease),opacity .25s}
+.ed-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;border:0;border-radius:999px;font:600 15px/1 var(--ed-sans);text-decoration:none;cursor:pointer;background:var(--ed-btn,var(--ed-ink));color:var(--ed-btn-ink,var(--ed-cream));transition:transform .16s var(--ed-ease),opacity .25s}
 @media (hover:hover){.ed-btn:hover{transform:translateY(-2px)}}
 .ed-btn:active{transform:scale(.97)}
 .ed-btn.light{background:var(--ed-cream);color:var(--ed-ink)}
@@ -418,18 +418,19 @@ export function generateEditorial(form, d, deps) {
 
   const fam = (deps.editorialShape || editorialShape)(d.tradeKey) || ED_SHAPES[ED_SHAPE_FOR[d.tradeKey] || "house"];
   const shapeName = /50% 0%, 100% 40%/.test(fam) ? "house" : "other";
-  const lookExtra = (deps.editorialLook || editorialLook)(d.themeKey, d.tradeKey) || {};
+  const lookExtra = (deps.editorialLook || editorialLook)(d.themeKey, d.tradeKey, { tradeLook: !d.themePicked }) || {};
   const fontsHref = lookExtra.fontsHref || "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Manrope:wght@400;500;600;700&display=swap";
 
   const heroWords = story.length ? story[story.length - 1] : { headline: t.headline, accent: "" };
   const eyebrow = `${esc(tradeName)}${area ? ` &middot; ${area}` : ""}`;
 
-  // Hero
+  // Hero. The form's Hero picture box wins over any library or drawn picture.
+  const heroBox = safeImage(form && form.heroImage);
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div></div>
-  <div class="ed-sil${safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
+  <div class="ed-sil${heroBox || safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${heroBox ? `<img src="${esc(heroBox)}" data-slot="hero-box" data-real="1" alt="" fetchpriority="high">` : pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
 </div></section>`;
 
   // Trust strip: only facts the owner ticked or typed
@@ -554,7 +555,7 @@ export function generateEditorial(form, d, deps) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${esc(fontsHref)}">
 <style>
-:root{--ed-accent:color-mix(in srgb,${th.accent} 62%,#2a1204);--ed-hi:${th.hi}}
+:root{--ed-accent:color-mix(in srgb,${th.accent} 62%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
 </style>
