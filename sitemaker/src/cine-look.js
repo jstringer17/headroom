@@ -820,11 +820,14 @@ const VSCENES = {
     // vinyl: backyard with a small deck at left and a maple; aluminum: red-brick colonial front lawn with hedges.
     if (key === "vinyl") a += circle(1180, G - 300, 150, "#7f9a68") + rect(1166, G - 160, 28, 160, "#6b5038");
     if (key === "aluminum") a += house({ x: 1060, w: 520, wallH: 230, roofH: 150, roof: "new", wall: "#a8553f", trim: C.white });
-    if (key === "chainlink") a += house({ x: 980, w: 560, wallH: 150, roofH: 80, roof: "new", wall: "#efe7d8" }) + rect(1360, G - 150, 140, 150, "#b9a88f", C.ink, 2);
-    if (key === "slat") a += rect(760, G - 230, 620, 230, "#efece6") + rect(740, G - 250, 660, 24, C.char) + rect(840, G - 190, 420, 170, "#8fa6b3", C.ink, 3) + line(1050, G - 190, 1050, G - 20, 3);
+    if (key === "chainlink") a += rect(1240, G - 200, 360, 200, "#e6ddcd", C.ink, 3) + path(`M1220 ${G - 200} L1420 ${G - 290} L1600 ${G - 230} L1600 ${G - 200} Z`, C.char) + rect(1300, G - 150, 220, 150, "#f3efe7", C.ink, 2);
+    if (key === "slat") a += range(9).map((i) => path(`M${120 + i * 50} ${G} q -20 -90 -40 -130 M${120 + i * 50} ${G} q 10 -100 30 -140`, "none", "#9aa77a", 4)).join("");
     if (key === "splitrail") a += path(`M0 ${G - 60} C 400 ${G - 160} 900 ${G - 40} 1600 ${G - 140} L1600 ${G} L0 ${G} Z`, "#a9bf8f", "none", 0) + rect(1180, G - 210, 120, 80, "#a5523a", C.ink, 2) + circle(420, G - 260, 110, "#6f8c5a") + rect(408, G - 160, 24, 120, "#6b5038");
     a += rect(0, G - 2, W, H - G, C.sage, "none", 0);
     if (key === "vinyl") a += path(`M0 ${G + 20} L520 ${G + 20} L600 ${H} L0 ${H} Z`, C.wood) + range(8).map((i) => line(0, G + 30 + i * 22, 520 + i * 10, G + 30 + i * 22, 2, C.woodD)).join("");
+    if (key === "chainlink") a += rect(0, G + 70, W, 50, "#cfc6b5", "none", 0);
+    if (key === "slat") a += path(`M0 ${G + 40} L760 ${G + 40} L820 ${H} L0 ${H} Z`, "#d6d2c9") + range(4).map((i) => line(i * 200, G + 40, i * 210 + 30, H, 2, "#b4afa4")).join("") + rect(820, G + 120, W - 820, H - G - 120, "#c9c0ae", "none", 0);
+    if (key === "splitrail") a += path(`M300 ${H} C 420 ${G + 80} 560 ${G + 10} 640 ${G - 40} L670 ${G - 40} C 600 ${G + 20} 520 ${G + 90} 460 ${H} Z`, "#cbbf9f");
     if (key === "aluminum") a += path(`M1010 ${G} L1110 ${G} L1180 ${H} L940 ${H} Z`, "#b5735a") + range(4).map((i) => `<ellipse cx="${700 + i * 130 + (i > 1 ? 380 : 0)}" cy="${G - 10}" rx="70" ry="34" fill="#6f8c5a"/>`).join("");
     if (st === 0) return { art: a + stakes(x0, x1, y0, n), mood: "gold" };
     if (key === "chainlink" && st >= 3) a += range(n * 10).map((i) => line(x0 + i * step / 10, y0 - 120, x0 + i * step / 10 + 40, y0 + 110, 1.2, "#8c9298") + line(x0 + i * step / 10 + 40, y0 - 120, x0 + i * step / 10, y0 + 110, 1.2, "#8c9298")).join("");
