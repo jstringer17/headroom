@@ -261,7 +261,7 @@ ${path(`M${wx} 480 L${wx - 120} 650 L${wx + 420} 650 L${wx + 330} 480 Z`, lightO
 
 // A gable house front. roof: old | deck | wrap | new | metal | slate | frame
 // wall: paint color, or "frame" (studs) | "wrap"
-function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white, base = G, roofH = 190 } = {}) {
+function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, worn = false, windows = true, door = "#55463a", lit = false, garage = null, trim = C.white, base = G, roofH = 190, roofFill = null } = {}) {
   const x0 = x - w / 2, x1 = x + w / 2, top = base - wallH, peak = top - roofH;
   const eL = x0 - 46, eR = x1 + 46, eY = top + 6;
   const tri = `M${eL} ${eY} L${x} ${peak} L${eR} ${eY} Z`;
@@ -286,8 +286,24 @@ function house({ x = 800, w = 640, wallH = 250, roof = "new", wall = C.white, wo
     out += path(`M${eL} ${eY} L${x} ${peak} L${eR} ${eY} Z`, "none", C.woodD, 5);
     out += range(9).map((i) => { const t = (i + 1) / 10; return line(eL + (x - eL) * t, eY - (eY - peak) * t, eL + (eR - eL) * t, eY, 3, C.woodD); }).join("");
   } else {
-    const fill = { old: "#a99d89", deck: "#dcc095", wrap: "#d3d1cb", new: C.char, metal: "#5b4636", slate: C.slate }[roof] || C.char;
+    const fill = roofFill || { old: "#a99d89", deck: "#dcc095", wrap: "#d3d1cb", new: C.char, metal: "#5b4636", slate: C.slate,
+      tile: "#b8613b", tileOld: "#c99a7b", battens: "#d3d1cb", slateOld: "#8a8f94", felt: "#46423d", shake: "#b98a55", shakeOld: "#8d877c", skip: "#e4d3b5" }[roof] || C.char;
     out += path(tri, fill);
+    // Variant roof materials (tile, slate, shake), each with an aged first look.
+    if (roof === "tile" || roof === "tileOld") out += range(Math.ceil((eY - peak) / 18)).map((i) => {
+      const y = peak + 18 * (i + 1), t = (y - peak) / (eY - peak), a = x - (x - eL) * t, b = x + (eR - x) * t;
+      return range(Math.max(1, Math.floor((b - a) / 22))).map((j) => path(`M${f(a + j * 22)} ${f(y)} q 11 -16 22 0`, "none", roof === "tile" ? "#8a4426" : "#9a7a62", 1.6)).join("");
+    }).join("");
+    if (roof === "tileOld") { const r = rng("tile-old"); out += range(8).map(() => rect(x - 220 + r() * 440, peak + 40 + r() * (eY - peak - 60), 22, 14, "#5e5048", "none", 0)).join(""); }
+    if (roof === "battens") out += rows(26, C.woodD, 4);
+    if (roof === "slateOld") { out += rows(20, "#6e747a", 1.5); const r = rng("slate-old"); out += range(14).map(() => `<ellipse cx="${f(x - 200 + r() * 400)}" cy="${f(peak + 60 + r() * (eY - peak - 80))}" rx="${f(10 + r() * 22)}" ry="6" fill="#5f7a4a" opacity=".7"/>`).join("") + range(5).map(() => rect(x - 180 + r() * 360, peak + 80 + r() * (eY - peak - 110), 20, 18, "#4a4440", "none", 0)).join(""); }
+    if (roof === "felt") out += rows(40, "#5d5852", 1.2) + path(`M${x - 60} ${peak + 40} l 0 -50 l 50 0 l 0 ${f(50 + 50 * 0.6)}`, "#b8734a", "#8f5232", 3);
+    if (roof === "shake" || roof === "shakeOld") out += rows(24, roof === "shake" ? "#8a6440" : "#6b665e", 3) + range(Math.ceil((eY - peak) / 24) * 14).map((i) => {
+      const row = Math.floor(i / 14), y = peak + 24 * (row + 1), t = (y - peak) / (eY - peak), a = x - (x - eL) * t, b = x + (eR - x) * t, xx = a + (b - a) * (((i % 14) + (row % 2) * 0.5) / 14);
+      return xx < b ? line(xx, y - 22, xx, y, 1.2, roof === "shake" ? "#8a6440" : "#6b665e") : "";
+    }).join("");
+    if (roof === "shakeOld") { const r = rng("shake-old"); out += range(12).map(() => `<ellipse cx="${f(x - 200 + r() * 400)}" cy="${f(peak + 70 + r() * (eY - peak - 90))}" rx="${f(12 + r() * 20)}" ry="7" fill="#5f7a4a" opacity=".65"/>`).join(""); }
+    if (roof === "skip") out += rows(30, C.woodD, 6, 0.8);
     if (roof === "old") {
       out += rows(22, C.ink, 1.5, 0.35);
       const r = rng("roof-old");
@@ -751,6 +767,122 @@ const EXTRA = {
   },
 };
 
+// Variant pictures (kit.variants): one scene per variant, drawn at story stage
+// st (0 = first look, 3 = finished). Each variant has its own house and region.
+const pine = (x, y, s = 1) => path(`M${x} ${y - 190 * s} L${x + 46 * s} ${y - 60 * s} L${x + 26 * s} ${y - 60 * s} L${x + 60 * s} ${y} L${x - 60 * s} ${y} L${x - 26 * s} ${y - 60 * s} L${x - 46 * s} ${y - 60 * s} Z`, "#5f7a5a", C.ink, 2);
+const palm = (x, y) => path(`M${x} ${y} q 10 -120 -10 -230`, "none", "#8a6a48", 12) + range(6).map((i) => path(`M${x - 10} ${y - 230} q ${-90 + i * 36} -40 ${-120 + i * 48} ${10 + (i % 2) * 30}`, "none", "#6f8c5a", 10)).join("");
+const stakes = (x0, x1, y, n) => line(x0, y + 60, x1, y + 60, 3, C.clay) + range(n + 1).map((i) => line(x0 + i * (x1 - x0) / n, y + 50, x0 + i * (x1 - x0) / n, y + 100, 5, C.woodD)).join("");
+const VSCENES = {
+  roofing(key, st) {
+    const stage = (kinds) => kinds[st];
+    if (key === "flat") {
+      // Low modern building seen from a little above, so the roof itself shows.
+      const top = G - 260, back = G - 400, fill = ["#8f8d87", "#b9b2a5", "#e7dfc9", "#f4f4f1"][st];
+      let a = rect(380, top, 840, 260, C.paper2) + range(6).map((i) => rect(440 + i * 130, top + 70, 90, 110, "#9fb2bd")).join("") + rect(760, G - 110, 90, 110, C.char);
+      a += path(`M380 ${top} L1220 ${top} L1150 ${back} L450 ${back} Z`, fill);
+      if (st === 0) a += blotches("flat-pond", 6, [520, back + 30, 560, 90], "#3f3c37", 0.5) + range(4).map((i) => rect(500 + i * 170, back + 40 + (i % 2) * 40, 70, 30, "#a7a49c", C.ink, 1.5)).join("");
+      if (st === 1) a += range(5).map((i) => rect(520 + i * 120, back + 50, 70, 40, "#efe6cf", C.ink, 2)).join("");
+      if (st === 2) a += range(7).map((i) => line(450 + i * 100 - (i - 3) * 8, back, 380 + i * 140, top, 1.5, "#b9ad8f")).join("") + range(3).map((i) => line(430 - i * 18, back + 35 * (i + 1), 1170 + i * 18, back + 35 * (i + 1), 1.5, "#b9ad8f")).join("");
+      if (st === 3) a += range(6).map((i) => line(450 + i * 120 - (i - 3) * 8, back, 380 + i * 168, top, 2, "#d5d6d2")).join("");
+      a += rect(1000, back + 20, 90, 50, C.stone, C.ink, 2);
+      a += line(380, top, 1220, top, st === 3 ? 10 : 6, st === 3 ? "#9aa0a6" : C.ink);
+      return { art: a, mood: "day" };
+    }
+    if (key === "metal") {
+      let a = house({ roof: stage(["old", "deck", "wrap", "metal"]), roofFill: st === 3 ? "#2e2d2b" : null, wall: "#f4f1ea" });
+      a += range(15).map((i) => line(500 + i * 43, G - 250, 500 + i * 43, G, 1.2, C.ink, ' opacity=".2"')).join("");
+      a += rect(420, G - 120, 760, 14, st === 3 ? "#2e2d2b" : "#a99d89") + range(5).map((i) => line(440 + i * 180, G - 106, 440 + i * 180, G, 6, C.white)).join("");
+      return { art: a + shrub(300, G, 0.8), mood: "gold" };
+    }
+    if (key === "tile") {
+      let a = house({ roof: stage(["tileOld", "wrap", "battens", "tile"]), wall: "#f3efe6", roofH: 110, w: 720, trim: "#f3efe6" });
+      if (st === 1) a += range(3).map((i) => rect(700 + i * 70, 470, 56, 26, "#b8613b", C.ink, 2)).join("");
+      return { art: a + palm(260, G) + palm(1380, G), mood: "gold", ground: "#d9c49a" };
+    }
+    if (key === "slate") {
+      let a = house({ roof: stage(["slateOld", "deck", "felt", "slate"]), roofFill: st === 3 ? "#6d7a86" : null, wall: "#cfc8bb", roofH: 250, wallH: 270 });
+      a += rect(980, 240, 60, 120, "#a99f90", C.ink, 3);
+      if (st >= 2) a += line(980, 360, 1040, 360, 5, "#b8734a");
+      return { art: a + shrub(380, G, 1.1) + shrub(1240, G, 1), mood: "day" };
+    }
+    if (key === "shake") {
+      let a = path(`M0 ${G - 220} L260 ${G - 420} L520 ${G - 240} L820 ${G - 470} L1120 ${G - 250} L1380 ${G - 430} L1600 ${G - 260} L1600 ${G} L0 ${G} Z`, "#c3ccd2", "none", 0);
+      a += house({ roof: stage(["shakeOld", "skip", "felt", "shake"]), wall: "#8a6440", trim: "#e9dcc4" });
+      a += rect(380, G - 40, 840, 40, "#a39b8f", C.ink, 2);
+      return { art: a + pine(220, G, 1.3) + pine(1400, G, 1.4) + pine(1520, G, 1), mood: "gold" };
+    }
+    return { art: house({}), mood: "gold" };
+  },
+  fencing(key, st) {
+    const y0 = 600, x0 = 660, x1 = 1520, n = 8, step = (x1 - x0) / n;
+    const post = { vinyl: C.white, aluminum: C.char, chainlink: "#9aa0a6", splitrail: "#7a5a3a", slat: "#3a3b3d" }[key] || C.woodD;
+    let a = "";
+    // vinyl: backyard with a small deck at left and a maple; aluminum: red-brick colonial front lawn with hedges.
+    if (key === "vinyl") a += circle(1180, G - 300, 150, "#7f9a68") + rect(1166, G - 160, 28, 160, "#6b5038");
+    if (key === "aluminum") a += house({ x: 1060, w: 520, wallH: 230, roofH: 150, roof: "new", wall: "#a8553f", trim: C.white });
+    if (key === "chainlink") a += rect(1240, G - 200, 360, 200, "#e6ddcd", C.ink, 3) + path(`M1220 ${G - 200} L1420 ${G - 290} L1600 ${G - 230} L1600 ${G - 200} Z`, C.char) + rect(1300, G - 150, 220, 150, "#f3efe7", C.ink, 2);
+    if (key === "slat") a += range(9).map((i) => path(`M${120 + i * 50} ${G} q -20 -90 -40 -130 M${120 + i * 50} ${G} q 10 -100 30 -140`, "none", "#9aa77a", 4)).join("");
+    if (key === "splitrail") a += path(`M0 ${G - 60} C 400 ${G - 160} 900 ${G - 40} 1600 ${G - 140} L1600 ${G} L0 ${G} Z`, "#a9bf8f", "none", 0) + rect(1180, G - 210, 120, 80, "#a5523a", C.ink, 2) + circle(420, G - 260, 110, "#6f8c5a") + rect(408, G - 160, 24, 120, "#6b5038");
+    a += rect(0, G - 2, W, H - G, C.sage, "none", 0);
+    if (key === "vinyl") a += path(`M0 ${G + 20} L520 ${G + 20} L600 ${H} L0 ${H} Z`, C.wood) + range(8).map((i) => line(0, G + 30 + i * 22, 520 + i * 10, G + 30 + i * 22, 2, C.woodD)).join("");
+    if (key === "chainlink") a += rect(0, G + 70, W, 50, "#cfc6b5", "none", 0);
+    if (key === "slat") a += path(`M0 ${G + 40} L760 ${G + 40} L820 ${H} L0 ${H} Z`, "#d6d2c9") + range(4).map((i) => line(i * 200, G + 40, i * 210 + 30, H, 2, "#b4afa4")).join("") + rect(820, G + 120, W - 820, H - G - 120, "#c9c0ae", "none", 0);
+    if (key === "splitrail") a += path(`M300 ${H} C 420 ${G + 80} 560 ${G + 10} 640 ${G - 40} L670 ${G - 40} C 600 ${G + 20} 520 ${G + 90} 460 ${H} Z`, "#cbbf9f");
+    if (key === "aluminum") a += path(`M1010 ${G} L1110 ${G} L1180 ${H} L940 ${H} Z`, "#b5735a") + range(4).map((i) => `<ellipse cx="${700 + i * 130 + (i > 1 ? 380 : 0)}" cy="${G - 10}" rx="70" ry="34" fill="#6f8c5a"/>`).join("");
+    if (st === 0) return { art: a + stakes(x0, x1, y0, n), mood: "gold" };
+    if (key === "chainlink" && st >= 3) a += range(n * 10).map((i) => line(x0 + i * step / 10, y0 - 120, x0 + i * step / 10 + 40, y0 + 110, 1.2, "#8c9298") + line(x0 + i * step / 10 + 40, y0 - 120, x0 + i * step / 10, y0 + 110, 1.2, "#8c9298")).join("");
+    if (key === "vinyl" && st >= 3) a += range(n).map((i) => rect(x0 + i * step + 6, y0 - 120, step - 12, 230, C.white)).join("");
+    if (key === "aluminum" && st >= 3) a += range(n * 6).map((i) => line(x0 + i * step / 6, y0 - 90, x0 + i * step / 6, y0 + 100, 3, C.char)).join("");
+    if (key === "slat") a += range(st >= 3 ? 14 : 3).map((i) => rect(x0, y0 + 90 - i * 16, x1 - x0, 11, "#b98a55", "none", 0)).join("");
+    const pw = key === "splitrail" ? 22 : key === "aluminum" || key === "chainlink" ? 12 : 18;
+    const ph = key === "splitrail" ? 170 : 250;
+    a += range(n + 1).map((i) => rect(x0 + i * step - pw / 2, y0 + 110 - ph, pw, ph, post)).join("");
+    if (key === "splitrail" && st >= 2) a += (st >= 3 ? [0, 1, 2] : [1]).map((r) => line(x0, y0 - 30 + r * 45, x1, y0 - 24 + r * 45, 12, "#9a7650")).join("");
+    else if (key !== "slat" && st >= 2) a += line(x0, y0 - 100, x1, y0 - 100, 8, post) + (key === "chainlink" ? "" : line(x0, y0 + 80, x1, y0 + 80, 8, post));
+    return { art: a, mood: "gold" };
+  },
+  pressure(key, st) {
+    // The clean scene, then the grime layer over the part not washed yet.
+    let a = "", dirt = "", clip;
+    const done = [0, 1 / 3, 2 / 3, 1][st];
+    if (key === "siding") {
+      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 60, W, 640, "#f4f3ef", C.ink, 3) + range(24).map((i) => line(0, 60 + i * 26, W, 60 + i * 26, 1.5, "#c3c2bc")).join("");
+      a += rect(980, 200, 300, 300, "#9fb2bd", C.ink, 4) + rect(960, 180, 340, 340, "none", "#f6f3ec", 14) + rect(0, 700, W, 200, C.sage, "none", 0) + shrub(300, 700) + shrub(600, 700, 0.8);
+      dirt = rect(0, 60, W, 640, "#7f8a6a", "none", 0, 0, ' opacity=".35"') + blotches("sd-alg", 40, [0, 400, W, 300], "#4f6a3f", 0.5) + range(18).map((i) => line(40 + i * 90, 70, 40 + i * 90 + 6, 230, 8, "#5c5a52", ' opacity=".35"')).join("");
+      clip = [0, 60 + 640 * done, W, 640 * (1 - done)];
+    } else if (key === "deck") {
+      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(0, 0, W, 360, "#e9e6df") + rect(620, 80, 360, 280, "#3c4148", C.ink, 3);
+      a += path(`M0 360 H${W} V640 H0 Z`, "#c79e6c", "none", 0) + range(22).map((i) => line(800 + (i - 11) * 18, 360, 800 + (i - 11) * 110, 640, 2, "#8e6a43")).join("");
+      a += rect(0, 640, W, 260, "#cfc8bb", "none", 0) + range(8).map((i) => line(i * 200, 640, i * 200 - 60, H, 3, "#a49c8e")).join("") + range(3).map((i) => line(0, 700 + i * 70, W, 700 + i * 70, 3, "#a49c8e")).join("");
+      dirt = rect(0, 360, W, 280, "#6f6a60", "none", 0, 0, ' opacity=".7"') + blotches("dk-mil", 30, [0, 380, W, 240], "#2e2b25", 0.45) + rect(0, 640, W, 260, "#6d7a5a", "none", 0, 0, ' opacity=".35"');
+      clip = [W * done, 360, W * (1 - done), 540];
+    } else if (key === "fence") {
+      a = backdrop("gold") + rect(0, G, W, H - G, C.sage, "none", 0) + path(`M0 380 L${W} 470 L${W} 760 L0 800 Z`, C.wood) + range(70).map((i) => line(i * 23, 380 + i * 1.3, i * 23, 800 - i * 0.6, 1.5, C.woodD)).join("");
+      dirt = path(`M0 380 L${W} 470 L${W} 760 L0 800 Z`, "#7a776f", "none", 0, ' opacity=".75"') + blotches("fn-mil", 30, [0, 640, W, 140], "#4f6a3f", 0.6);
+      clip = [W * done, 0, W * (1 - done), H];
+    } else if (key === "roof") {
+      a = backdrop("day") + house({ roof: "new", roofFill: "#b5b6b2", wall: "#efe5d2", roofH: 160 });
+      dirt = range(26).map((i) => line(330 + i * 36, 330 + Math.abs(i - 13) * 9, 334 + i * 36, 500, 12, "#141414", ' opacity=".4"')).join("");
+      clip = [W * (0.2 + 0.6 * done), 0, W, H];
+    } else {
+      a = rect(0, 0, W, H, C.sky2, "none", 0) + rect(160, 140, 1280, 440, "#b0705a", C.ink, 3) + range(16).map((i) => line(160, 160 + i * 26, 1440, 160 + i * 26, 1, "#7d4a3a", ' opacity=".45"')).join("") + rect(140, 120, 1320, 40, C.stone);
+      a += range(3).map((i) => rect(220 + i * 420, 260, 340, 260, "#9fb2bd", C.ink, 3)).join("") + rect(160, 520, 1280, 60, "#d8d2c5", C.ink, 2);
+      a += rect(0, 580, W, 320, C.stone, "none", 0) + range(7).map((i) => line(120 + i * 230, 660, 60 + i * 250, H, 5, st === 3 ? "#ffffff" : "#e6e3dc")).join("");
+      dirt = rect(0, 520, W, 380, "#5d5a53", "none", 0, 0, ' opacity=".55"') + blotches("sf-gum", 50, [0, 520, W, 380], "#1c1a16", 0.55);
+      clip = [[0, 520, W, 380], [0, 580, W, 320], [W / 2, 580, W / 2, 320]][st];
+    }
+    if (done < 1) a += `<clipPath id="vw"><rect x="${f(clip[0])}" y="${f(clip[1])}" width="${f(Math.max(0, clip[2]))}" height="${f(Math.max(0, clip[3]))}"/></clipPath><g clip-path="url(#vw)">${dirt}</g>`;
+    return { art: a, mood: "day", raw: key !== "fence" && key !== "roof" };
+  },
+};
+// Close-up focus for a variant's before/after pair (scene x, y, zoom).
+const VFOCUS = { roofing: [800, 400, 1.7], fencing: [1090, 580, 1.8], pressure: [800, 560, 1.5] };
+function variantOf(trade, slotId) {
+  const k = CINE_KIT[trade], m = /^([a-z]+)\/(?:s(\d)|(before|after))$/.exec(slotId || "");
+  const v = m && k && (k.variants || []).find((x) => !x.default && x.key === m[1]);
+  return v ? { key: v.key, v, part: m[2] || m[3] } : null;
+}
+
 // Which stage and variant a slot draws.
 function stageFor(trade, slotId) {
   const k = CINE_KIT[trade];
@@ -788,7 +920,17 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
     const scene = SCENES[trade];
     let body, mood = "day";
     const extra = k && k.editorial && (k.editorial.extra || []).find((x) => x.id === slotId);
-    if (extra && EXTRA[trade] && EXTRA[trade][extra.mod]) {
+    const vr = VSCENES[trade] && variantOf(trade, slotId);
+    if (vr) {
+      // Variant slots: quiet drawn style, one scene per variant; before/after is a close-up.
+      opts = { ...opts, quiet: true };
+      const pair = vr.part === "before" || vr.part === "after";
+      const out = VSCENES[trade](vr.key, pair ? (vr.part === "after" ? 3 : 0) : Math.min(3, Number(vr.part) - 1));
+      mood = out.mood || "day";
+      body = (out.raw ? "" : backdrop(mood, out.ground || C.sage, 1250, G)) + out.art;
+      if (pair) { const [fx, fy, z] = VFOCUS[trade]; body = `<g transform="translate(800 450) scale(${z}) translate(${-fx} ${-fy})">${body}</g>`; }
+      if (!labelText || labelText === slotId) labelText = pair ? `${vr.v.label}: ${vr.part} picture` : vr.v.label;
+    } else if (extra && EXTRA[trade] && EXTRA[trade][extra.mod]) {
       body = EXTRA[trade][extra.mod]();
       if (!labelText || labelText === slotId) labelText = extra.label;
     } else if (PAIRS[trade] && (slotId === "before" || slotId === "after")) {
@@ -808,7 +950,7 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
     }
     const dark = mood === "dusk" || carbon;
     // Story frames share one label so it does not ghost during the crossfade.
-    const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : labelText;
+    const text = isStory ? `Scroll story: ${k.story.length} pictures, one scene` : vr && !/before|after/.test(vr.part) ? `${vr.v.label}. Scroll story: ${vr.v.story.length} pictures, one scene` : labelText;
     if (opts.hero) {
       // Hero crop: zoom toward the subject so the house (or fence) fills the silhouette.
       // Roof peak (scene y) -> just above the gable apex, scaled so the roof covers the triangle.

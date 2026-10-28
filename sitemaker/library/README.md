@@ -100,4 +100,4 @@ A trade can have several variations in the kit (`CINE_KIT[trade].variants`, firs
 - Only the picked variation's pictures are fetched (lazy) and inlined in Download. Library checkbox, Replace/Remove, uploads and the hero override work per variation. Slots without a picture fall back to drawings.
 - Ingest by name: `roofing-metal-s1.png` (`<trade>-<variation>-<slot>`). By order: `node sitemaker/ingest.mjs --trade roofing --variant metal --by-order <folder>`. The summary table shows found/missing per variation.
 - `node sitemaker/publish-plan.mjs` lists the files of every variation.
-- Tests: `node sitemaker/test-variants.mjs` (uses fixture variations until the real kit has them).
+- Tests: `node sitemaker/test-variants-maker.mjs` (uses fixture variations until the real kit has them).
