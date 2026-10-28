@@ -717,3 +717,49 @@ const ED_BEAT = {
   towing: "Hooked up with care and taken where you need it.",
 };
 for (const [t, note] of Object.entries(ED_BEAT)) if (CINE_KIT[t]) CINE_KIT[t].editorial = { ...(CINE_KIT[t].editorial || {}), beatNote: note };
+
+// Variants: one trade, many looks (Roofing, Fencing and Pressure washing first).
+// The first variant is the default: the trade's own story, styles and
+// beforeAfter, bare slot ids, pictures at library/<trade>/<slot>.webp. Every
+// other variant has 4 story frames (1 new picture, then 3 edits of the one
+// before) and a before/after pair: slots s1..s4, before, after. Their keys in
+// form.cine.images are "<variant>/<slot>" (metal/s1, metal/before) and their
+// pictures live at library/<trade>/<variant>/<slot>.webp. Each variant has its
+// own kind of house, yard and region so the variants never look alike.
+// Prompts and headlines come verbatim from org/art/variants-prompts.json
+// (written by the chief of staff); node org/art/variants-wire.mjs rewrites
+// the block between the VARIANTS markers below.
+// VARIANTS:BEGIN
+// VARIANTS:END
+
+// The variants of a trade (always at least the default one).
+export function cineVariants(trade) {
+  const k = CINE_KIT[trade];
+  return (k && k.variants) || (k ? [{ key: "default", label: "Default", default: true }] : []);
+}
+
+// The kit for one variant: the trade's kit with its story/beforeAfter/styles
+// swapped, plus slotPrefix ("" for the default) and variant (its key).
+export function cineVariant(trade, key) {
+  const k = CINE_KIT[trade];
+  if (!k) return null;
+  const all = cineVariants(trade);
+  const v = all.find((x) => x.key === key) || all[0];
+  if (v.default) return { ...k, variant: v.key, slotPrefix: "" };
+  return { ...k, story: v.story, beforeAfter: v.beforeAfter, styles: v.styles || k.styles, variant: v.key, slotPrefix: `${v.key}/` };
+}
+
+// Picture slots for one variant, with the library path of each picture. The
+// default variant is kitSlots(trade); other variants list their own 6 slots.
+export function variantSlots(trade, key) {
+  const all = cineVariants(trade);
+  const v = all.find((x) => x.key === key) || all[0];
+  if (!v || v.default) return kitSlots(trade).map((s) => ({ ...s, variant: v ? v.key : "", path: `library/${trade}/${s.slotId}.webp` }));
+  const n = v.story.length, p = (id) => `library/${trade}/${id}.webp`; // id is "<variant>/<slot>"
+  return [
+    ...v.story.map((s, i) => ({ slotId: s.id, kind: "story", index: i, variant: v.key,
+      label: `${v.label}, story ${i + 1} of ${n}: ${s.headline}`, prompt: s.prompt, path: p(s.id) })),
+    { slotId: v.beforeAfter.before.id, kind: "before", index: 0, variant: v.key, label: `${v.label}, before: ${v.beforeAfter.title}`, prompt: v.beforeAfter.before.prompt, path: p(v.beforeAfter.before.id) },
+    { slotId: v.beforeAfter.after.id, kind: "after", index: 0, variant: v.key, label: `${v.label}, after: ${v.beforeAfter.title}`, prompt: v.beforeAfter.after.prompt, path: p(v.beforeAfter.after.id) },
+  ];
+}

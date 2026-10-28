@@ -1,5 +1,5 @@
 // Writes org/art/higgsfield-kit.md from the kit: node org/art/kit-doc.mjs
-import { CINE_KIT, CINE_ORDER, kitSlots } from "../../sitemaker/src/cine-kit.js";
+import { CINE_KIT, CINE_ORDER, kitSlots, cineVariants, variantSlots } from "../../sitemaker/src/cine-kit.js";
 import { TRADES } from "../../sitemaker/src/trades.js";
 import { writeFileSync } from "fs";
 
@@ -48,3 +48,38 @@ for (const [i, t] of CINE_ORDER.entries()) {
 }
 writeFileSync(new URL("./higgsfield-kit.md", import.meta.url), md);
 console.log("wrote", total, "pictures");
+
+// Variants (other looks of one trade): org/art/variants-kit.md
+const VT = CINE_ORDER.filter((t) => CINE_KIT[t].variants);
+const vnew = (t) => cineVariants(t).filter((v) => !v.default);
+const vtotal = VT.reduce((n, t) => n + vnew(t).reduce((m, v) => m + variantSlots(t, v.key).length, 0), 0);
+let vmd = `# Higgsfield picture kit: variants
+Made from sitemaker/src/cine-kit.js (prompts from org/art/variants-prompts.json). Run \`node org/art/kit-doc.mjs\` after any change.
+
+**Total: ${vtotal} new pictures** for ${VT.length} trades (about ${vtotal * 2} credits at 2 per 2K picture). The first look of each trade is the main kit (higgsfield-kit.md) and is not repeated here.
+
+| Trade | Variants | New pictures |
+|---|---|---|
+${VT.map((t) => `| ${name(t)} | ${cineVariants(t).map((v) => v.label + (v.default ? " (main kit)" : "")).join(", ")} | ${vnew(t).length * 6} |`).join("\n")}
+
+## How to make them
+1. Same rules as the main kit: wide 16:9, no people, no faces, no text, no logos.
+2. Each variant is one scene: make s1 new, then use **Edit** on the newest picture for s2, s3 and s4.
+3. Make "before" new, then use **Edit** on it for "after".
+4. Save each file as \`<trade>-<variant>-<slot>.jpg\` (like \`roofing-metal-s1.jpg\`). The ingest script puts it at library/<trade>/<variant>/<slot>.webp.
+
+`;
+for (const t of VT) {
+  vmd += `## ${name(t)}\n\n`;
+  for (const v of vnew(t)) {
+    vmd += `### ${v.label} (\`${v.key}\`)\n\n`;
+    for (const s of variantSlots(t, v.key)) {
+      const slot = s.slotId.split("/")[1];
+      const tip = s.kind === "story" ? (s.index === 0 ? how.story0 : how.story) : how[s.kind];
+      vmd += `- **\`${t}-${v.key}-${slot}\`**: ${s.label.replace(/\.$/, "")}. _${tip}_\n  > ${s.prompt}\n`;
+    }
+    vmd += "\n";
+  }
+}
+writeFileSync(new URL("./variants-kit.md", import.meta.url), vmd);
+console.log("wrote", vtotal, "variant pictures");
