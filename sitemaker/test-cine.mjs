@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { here, loadPlaywright, launchOpts, SEL, buildCine, samplePage, isEditorial, defaultPathHtml, realPictures, ED, NEW_TRADES, unitFor, placeholderText, firstCell } from "./qa/lib.mjs";
 import { TRADE_ORDER, TRADES } from "./src/trades.js";
+import { generateSite } from "./src/generate.js";
 const ALL = [...TRADE_ORDER, ...NEW_TRADES.filter((k) => !TRADE_ORDER.includes(k))]; // 19 trades
 
 const outDir = join(here, "test-out-cine");
@@ -255,6 +256,25 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
     const r = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, txt: document.body.innerText }));
     check("S", `break-ui ${look}: one-letter name, no phone, no town still renders without sideways scroll`, r.sw <= r.cw && /J/.test(r.txt) && !/undefined|NaN|null/.test(r.txt), "bad render");
     await ctx.close();
+  }
+}
+
+// ---- Reviews (R): every look, a few trades, samples vs typed, rendered at 375 and 1280 ----
+{
+  const typed = [{ name: "Dana", town: "Broken Arrow", text: "They rebuilt our fence in one day and cleaned up.", stars: 5 }, { name: "Chris", town: "Tulsa", text: "Fair price, no surprises, and they came back to check on the work.", stars: 4 }, { name: "Mo", town: "Jenks", text: "Quick to answer and the gate still swings perfectly a year later.", stars: 5 }];
+  for (const trade of ["roofing", "fencing", "pressure", "plumbing", "junk"]) for (const look of ["cinematic", "editorial", "classic"]) {
+    const base = { company: "Ridge Test Co", trade, city: "Tulsa, OK", phone: "9185550142" };
+    const sampleHtml = look === "classic" ? generateSite(base) : generateSite({ ...base, cinematic: true, look, cine: { look } });
+    const typedHtml = look === "classic" ? generateSite({ ...base, reviewList: typed, reviewLink: "https://g.page/x" }) : generateSite({ ...base, cinematic: true, look, cine: { look }, reviewList: typed, reviewLink: "https://g.page/x" });
+    check("R", `${trade}/${look}: empty form shows 3 marked samples`, (sampleHtml.match(/Sample review, replace with a real one/g) || []).length === 3 && (sampleHtml.match(/<blockquote/g) || []).length === 3, "samples missing or unmarked");
+    check("R", `${trade}/${look}: typed reviews replace the samples and drop the mark`, !typedHtml.includes("Sample review, replace") && typedHtml.includes("Dana, Broken Arrow") && typedHtml.includes("See all reviews"), "typed reviews not shown cleanly");
+    if (trade === "fencing" || trade === "junk") for (const width of [375, 1280]) {
+      const { page, ctx } = await open(typedHtml, `reviews-${trade}-${look}`, { width, tag: `-${width}` });
+      const r = await page.evaluate(() => { const q = document.querySelector("#reviews blockquote"); const b = q && q.getBoundingClientRect(); return { sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, n: document.querySelectorAll("#reviews blockquote").length, fits: !!b && b.width > 80 && b.right <= innerWidth + 1, fs: q ? parseFloat(getComputedStyle(q).fontSize) : 0 }; });
+      check("R", `${trade}/${look}@${width}: three quotes, readable size, no sideways scroll`, r.n === 3 && r.fits && r.fs >= 17 && r.sw <= r.cw, JSON.stringify(r));
+      if (width === 375) { await page.locator("#reviews").scrollIntoViewIfNeeded(); await page.waitForTimeout(500); await page.screenshot({ path: join(outDir, `reviews-${trade}-${look}-375.jpg`), type: "jpeg", quality: 60 }); }
+      await ctx.close();
+    }
   }
 }
 

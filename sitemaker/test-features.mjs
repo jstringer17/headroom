@@ -2,7 +2,7 @@
 //   node sitemaker/build.mjs --test && node sitemaker/test-features.mjs
 // Drives the form like a user. Prints a table (control x look) and exits 1 on any FAIL.
 // Colors are judged by what the visitor SEES (computed colors inside the preview), not by CSS variables.
-import { mkdirSync, writeFileSync, rmSync, statSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { here, loadPlaywright, launchOpts } from "./qa/lib.mjs";
@@ -231,6 +231,54 @@ for (const look of LOOKS) { // reduced motion: nothing animates forever
   rec("Reduced motion: no endless animation in the preview", look, "fencing", n === 0, `${n} running`);
   await page.ctx.close();
 }
+// ---------- 6. Customer reviews: form group, sample vs typed, escaping, link, stars, 375px, Download and Copy ----------
+const SAMPLE_TAG = "Sample review, replace with a real one";
+for (const look of LOOKS) {
+  const page = await open(); await setup(page, { company: "Ridgeline Co", trade: "fencing", look });
+  const reviewsPart = async () => { const h = await page.html(); const i = h.indexOf('id="reviews"'); return i < 0 ? "" : h.slice(i, i + 14000).split(/id="(?:area|how|contact|faq|work)"/)[0]; };
+  let h = await page.html(), r = await reviewsPart();
+  rec("Reviews: the form has a Customer reviews group (3 entries, stars, link)", look, "fencing", await page.evaluate(() => !!document.getElementById("rvw-box") && [1, 2, 3].every((i) => ["name", "town", "text", "stars"].every((k) => document.getElementById("rvw-" + k + "-" + i))) && !!document.getElementById("rvw-link")), "group or fields missing");
+  rec("Reviews: left empty, 3 sample reviews show", look, "fencing", (r.match(/<blockquote/g) || []).length === 3, `${(r.match(/<blockquote/g) || []).length} quotes`);
+  rec("Reviews: each sample is marked 'Sample review, replace with a real one'", look, "fencing", r.split(SAMPLE_TAG).length - 1 === 3, `${r.split(SAMPLE_TAG).length - 1} tags`);
+  rec("Reviews: no link button when the link is empty", look, "fencing", !/See all reviews/.test(r), "button shown");
+  await page.fill("#rvw-name-1", "Dana"); await page.fill("#rvw-town-1", "Broken Arrow"); await page.fill("#rvw-text-1", "They rebuilt our fence in one day and cleaned up."); await page.selectOption("#rvw-stars-1", "4");
+  await page.settle(); h = await page.html(); r = await reviewsPart();
+  rec("Reviews: a typed review shows its text", look, "fencing", r.includes("They rebuilt our fence in one day and cleaned up."), "text missing");
+  rec("Reviews: name and town show with it", look, "fencing", r.includes("Dana, Broken Arrow"), "name/town missing");
+  rec("Reviews: its star choice shows (4 out of 5)", look, "fencing", r.includes('aria-label="4 out of 5 stars"'), "stars missing");
+  rec("Reviews: with one typed, only the typed review shows and the sample mark is gone", look, "fencing", (r.match(/<blockquote/g) || []).length === 1 && !r.includes(SAMPLE_TAG), `${(r.match(/<blockquote/g) || []).length} quotes, tag ${r.includes(SAMPLE_TAG)}`);
+  await page.fill("#rvw-text-2", "<b>bold</b> & \"quoted\" <script>alert(1)</script>"); await page.settle(); h = await page.html(); r = await reviewsPart();
+  rec("Reviews: review text is escaped (no tags, no script)", look, "fencing", r.includes("&lt;b&gt;bold&lt;/b&gt;") && !r.includes("<script>alert(1)") && !/<b>bold<\/b>/.test(r), "not escaped");
+  await page.fill("#rvw-text-3", "x".repeat(300)); await page.settle(); r = await reviewsPart();
+  const longest = Math.max(...[...r.matchAll(/<blockquote[^>]*>([^<]*)<\/blockquote>/g)].map((m) => m[1].length));
+  rec("Reviews: text is limited to 240 characters", look, "fencing", longest <= 240 && (await page.getAttribute("#rvw-text-3", "maxlength")) === "240", `longest ${longest}`);
+  await page.fill("#rvw-link", "https://g.page/ridgeline"); await page.settle(); r = await reviewsPart();
+  rec("Reviews: 'See all reviews' button appears with the link", look, "fencing", /<a [^>]*href="https:\/\/g\.page\/ridgeline"[^>]*>See all reviews<\/a>/.test(r) && /rel="noopener noreferrer"/.test(r), "button missing");
+  await page.fill("#rvw-link", "javascript:alert(1)"); await page.settle(); r = await reviewsPart();
+  rec("Reviews: a javascript: link is refused", look, "fencing", !/javascript:/i.test(await page.html()) && !/See all reviews/.test(r), "unsafe link kept");
+  await page.fill("#rvw-link", "https://g.page/ridgeline");
+  await page.fill("#rvw-text-2", "W".repeat(120) + " done"); await page.fill("#rvw-name-2", "N".repeat(40)); await page.settle();
+  const html = await page.html(); const out = [];
+  for (const width of [375, 1280]) {
+    const p2 = await page.ctx.newPage(); await p2.setViewportSize({ width, height: 800 }); await p2.setContent(html, { waitUntil: "load" }); await p2.waitForTimeout(500);
+    const m = await p2.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth })); if (m.sw > m.cw) out.push(`${width}px: ${m.sw}>${m.cw}`); await p2.close();
+  }
+  rec("Reviews: long words in a review do not scroll sideways at 375 and 1280", look, "fencing", out.length === 0, out.join(", "));
+  await page.click("#copy"); await page.waitForTimeout(500);
+  const clip = await page.evaluate(() => window.__clip || "");
+  rec("Reviews: Copy code includes the review text", look, "fencing", clip.includes("They rebuilt our fence in one day") && clip.includes("See all reviews"), "not in copied code");
+  const dl = page.waitForEvent("download", { timeout: 6000 }).catch(() => null); await page.click("#download"); const d = await dl;
+  let txt = ""; if (d) { const f = join(tmp, "dl-rev.html"); await d.saveAs(f); txt = readFileSync(f, "utf8"); }
+  rec("Reviews: Download includes the review text", look, "fencing", txt.includes("They rebuilt our fence in one day") && txt.includes("Dana, Broken Arrow"), "not in download");
+  await page.ctx.close();
+}
+for (const trade of ["roofing", "plumbing", "junk"]) for (const look of LOOKS) { // every layout carries the block, with the rating row when a rating is typed
+  const page = await open(); await setup(page, { trade, look }); await page.fill("#rating", "4.6"); await page.fill("#reviews", "52"); await page.settle();
+  const h = await page.html();
+  rec("Reviews: the block shows in every layout with its sample marks", look, trade, h.includes('id="reviews"') && h.includes(SAMPLE_TAG) && h.includes("4.6"), "block or rating missing");
+  await page.ctx.close();
+}
+
 rec("Reset button", "n/a", "n/a", true, "");  // there is no Reset control in the maker; listed so the gap is visible
 rows[rows.length - 1].note = "no Reset control exists in the maker (N/A)";
 

@@ -11,6 +11,7 @@
 // form.editorial = { projects: [{ name, where, job, type, time } x 3] }, all optional.
 // form.cine.images / form.cine.prices / form.cine.unit work as in cinematic mode.
 // deps = { CINE_KIT, cineLook, placeholderArt, editorialLook? (optional), editorialShape? (optional) }
+import { rvwList } from "./reviews.js";
 import { esc, safeImage } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
@@ -190,6 +191,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-stars-row svg{position:absolute;top:0}
 .ed-stars-row.off{color:var(--ed-line);width:100%}
 .ed-rev b{font:500 clamp(64px,16vw,110px)/.85 var(--ed-serif);font-variant-numeric:tabular-nums}
+.ed-rvw-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:16px}
+.ed-rvw{border:1.5px solid var(--ed-line);border-radius:var(--ed-card);padding:24px 26px;background:var(--ed-paper)}
+.ed-rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--ed-accent)}
+.ed-rvw-tag{font:600 11px/1 var(--ed-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ed-muted);border:1px solid var(--ed-line);border-radius:999px;padding:5px 10px}
+.ed-rvw-q{margin:14px 0 0;font:500 clamp(19px,4.6vw,24px)/1.35 var(--ed-serif);overflow-wrap:anywhere}
+.ed-rvw-by{margin:14px 0 0;font:600 14px/1.3 var(--ed-sans);color:var(--ed-muted);overflow-wrap:anywhere}
+.ed-rvw-more{margin:26px 0 0}
+@media (min-width:900px){.ed-rvw-list{grid-template-columns:repeat(3,1fr);gap:20px}}
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
@@ -523,9 +532,14 @@ export function generateEditorial(form, d, deps) {
   <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${edPad(i + 1)}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol></div>
 </div></section>`;
   const edStars = (r) => { const row = (c) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="26" height="26" style="left:${i * 30}px" fill="${c}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join(""); return `<span class="ed-stars" role="img" aria-label="${r} out of 5 stars"><span class="ed-stars-row off">${row("currentColor")}</span><span class="ed-stars-row" style="width:${(Math.max(0, Math.min(1, r / 5)) * 146).toFixed(1)}px">${row("currentColor")}</span></span>`; };
-  const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap"><div class="ed-rev ed-rv">
+  const reviews = `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Reviews</p><h2>What customers <em>say</em></h2></div>
+  ${d.rating ? `<div class="ed-rev ed-rv">
   <b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p class="ed-eyebrow">Google rating</p><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div>${edStars(d.rating)}
-</div></div></section>` : "";
+</div>` : ""}
+  ${rvwList(d.rv, esc, "ed-")}
+  ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
+</div></section>`;
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>

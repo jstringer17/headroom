@@ -27,9 +27,10 @@ h1{font:800 28px/1.05 var(--display);font-stretch:85%;margin:0}
 .field{display:grid;gap:6px}
 .field>span,.group>legend{font-weight:700;font-size:15px}
 .req{color:var(--muted);font-weight:400}
-input[type=text],input[type=tel],input[type=number],select,textarea{width:100%;font:400 17px/1.3 var(--body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:11px 12px;min-height:46px}
+input[type=text],input[type=tel],input[type=number],input[type=url],select,textarea{width:100%;font:400 17px/1.3 var(--body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:11px 12px;min-height:46px}
 textarea{min-height:84px;resize:vertical;font-size:15px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,.swatch input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .row3 .field>span{font-size:14px}
 .hint{font-size:14px;color:var(--muted);margin:0}
@@ -131,6 +132,34 @@ details.lead[open]{display:grid;gap:10px}
         <input type="number" id="years" name="years" min="0" step="1" inputmode="numeric" placeholder="10"></label>
     </div>
     <p class="hint">Only type real numbers from their Google page. Leave blank if you do not know.</p>
+
+    <fieldset class="group" id="rvw-box">
+      <legend>Customer reviews</legend>
+      <p class="hint">Type up to 3 real reviews, in the customer's own words. Left empty, the site shows 3 sample reviews marked "Sample review, replace with a real one".</p>
+      <div class="price-row">
+        <b>Review 1</b>
+        <div class="row2"><label class="field" for="rvw-name-1"><span>First name</span><input type="text" id="rvw-name-1" maxlength="40" placeholder="Like: Dana"></label>
+        <label class="field" for="rvw-town-1"><span>Town</span><input type="text" id="rvw-town-1" maxlength="40" placeholder="Like: Broken Arrow"></label></div>
+        <label class="field" for="rvw-text-1"><span>What they said</span><textarea id="rvw-text-1" maxlength="240" placeholder="Their words, up to 240 characters"></textarea></label>
+        <label class="field" for="rvw-stars-1"><span>Stars</span><select id="rvw-stars-1"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      </div>
+      <div class="price-row">
+        <b>Review 2</b>
+        <div class="row2"><label class="field" for="rvw-name-2"><span>First name</span><input type="text" id="rvw-name-2" maxlength="40" placeholder="Like: Dana"></label>
+        <label class="field" for="rvw-town-2"><span>Town</span><input type="text" id="rvw-town-2" maxlength="40" placeholder="Like: Broken Arrow"></label></div>
+        <label class="field" for="rvw-text-2"><span>What they said</span><textarea id="rvw-text-2" maxlength="240" placeholder="Their words, up to 240 characters"></textarea></label>
+        <label class="field" for="rvw-stars-2"><span>Stars</span><select id="rvw-stars-2"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      </div>
+      <div class="price-row">
+        <b>Review 3</b>
+        <div class="row2"><label class="field" for="rvw-name-3"><span>First name</span><input type="text" id="rvw-name-3" maxlength="40" placeholder="Like: Dana"></label>
+        <label class="field" for="rvw-town-3"><span>Town</span><input type="text" id="rvw-town-3" maxlength="40" placeholder="Like: Broken Arrow"></label></div>
+        <label class="field" for="rvw-text-3"><span>What they said</span><textarea id="rvw-text-3" maxlength="240" placeholder="Their words, up to 240 characters"></textarea></label>
+        <label class="field" for="rvw-stars-3"><span>Stars</span><select id="rvw-stars-3"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      </div>
+      <label class="field" for="rvw-link"><span>"See all reviews" link (optional)</span>
+        <input type="url" id="rvw-link" inputmode="url" placeholder="Like: https://g.page/your-business"></label>
+    </fieldset>
 
     <fieldset class="group" id="look-box">
       <legend>Look of the site</legend>
@@ -3268,7 +3297,7 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-eyebrow::before{background:var(--ed-accent)!important}
 .ed-steps b{color:var(--ed-muted)!important}
 /* rating: one compact row, no empty half */
-#reviews{padding-block:0 72px!important}
+#reviews{padding-block:56px 72px!important}
 .ed-rev{grid-template-columns:auto minmax(0,1fr) minmax(0,1.2fr);column-gap:48px;align-items:end;border-top:1px solid var(--ed-line);padding-top:40px}
 .ed-rev .ed-eyebrow{grid-column:1/-1}
 .ed-rev>b{grid-column:1}
@@ -3390,6 +3419,51 @@ function ownSlotIds(kit, wanted) {
   return ids;
 }
 
+// Customer reviews for every look. Pure functions; each look escapes and styles the result itself.
+//   form.reviewList = [{ name, town, text, stars }] (up to 3), form.reviewLink = a Google / Facebook page URL.
+// With no review text typed, three SAMPLE reviews are shown, each marked as a sample. Typed ones are shown as the
+// owner's, with no sample mark.
+const RVW_MAX = 3;
+const RVW_TEXT_MAX = 240;
+const RVW_SAMPLE_TAG = "Sample review, replace with a real one";
+const RVW_SAMPLES = [
+  { name: "Sample name", town: "Your town", text: "They showed up when they said they would, explained the price before starting and left everything tidy.", stars: 5 },
+  { name: "Sample name", town: "Your town", text: "Easy to reach, quick to answer and the work looks great. We would call them again.", stars: 5 },
+  { name: "Sample name", town: "Your town", text: "Straight talk, fair price and no surprises on the bill. Worth the call.", stars: 5 },
+];
+
+// A link only if it is a plain http(s) address.
+function rvwSafeLink(url) {
+  const u = String(url || "").trim();
+  return /^https?:\/\/[^\s"'<>]+$/i.test(u) ? u : "";
+}
+
+function reviewsOf(f) {
+  const list = Array.isArray(f && f.reviewList) ? f.reviewList : [];
+  const typed = list.slice(0, RVW_MAX).map((r) => {
+    const s = parseInt(r && r.stars, 10);
+    return {
+      name: String((r && r.name) || "").trim().slice(0, 40),
+      town: String((r && r.town) || "").trim().slice(0, 40),
+      text: String((r && r.text) || "").trim().slice(0, RVW_TEXT_MAX),
+      stars: s >= 1 && s <= 5 ? s : 5,
+    };
+  }).filter((r) => r.text);
+  const real = typed.length > 0;
+  return { real, items: real ? typed : RVW_SAMPLES.map((r) => ({ ...r })), link: rvwSafeLink(f && f.reviewLink) };
+}
+
+// n of 5 stars as a small inline SVG row (filled stars use currentColor, empty ones are faint).
+function rvwStars(n, size = 18) {
+  const star = '<path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/>';
+  return `<svg class="rvw-stars" viewBox="0 0 ${5 * 24} 24" width="${5 * size}" height="${size}" role="img" aria-label="${n} out of 5 stars">${Array.from({ length: 5 }, (_, i) => `<g transform="translate(${i * 24} 0)" fill="currentColor"${i < n ? "" : ' opacity=".22"'}>${star}</g>`).join("")}</svg>`;
+}
+
+// The review cards. p = class prefix ("" or "ed-"), esc = the look's HTML escaper.
+function rvwList(rv, esc, p = "") {
+  return `<ul class="${p}rvw-list">${rv.items.map((r) => `<li class="${p}rvw ${p}rv"><div class="${p}rvw-top">${rvwStars(r.stars)}${rv.real ? "" : `<span class="${p}rvw-tag">${RVW_SAMPLE_TAG}</span>`}</div><blockquote class="${p}rvw-q">${esc(r.text)}</blockquote>${r.name || r.town ? `<p class="${p}rvw-by">${esc([r.name, r.town].filter(Boolean).join(", "))}</p>` : ""}</li>`).join("")}</ul>`;
+}
+
 // Sample Site Maker: Cinematic mode.
 // generateCinematic(form, d, deps) builds one scroll-story site as a single
 // self-contained HTML document. `d` is normalize(form); `deps` is
@@ -3407,6 +3481,7 @@ function ownSlotIds(kit, wanted) {
 // picture shows placeholderArt with its label. The price estimator shows only
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
+
 
 
 
@@ -3641,7 +3716,15 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:#d4cbb6;width:100%}
 .rating-sub{display:block;margin-top:8px;color:var(--muted)}
-.rev-note{margin-top:20px;color:var(--muted);max-width:48ch}
+.rvw-beat{background:var(--dark2);color:#fff;padding-top:72px!important}
+.rvw-beat .rating-sub{color:rgba(255,255,255,.72)}
+.rvw-beat .stars-row.off{color:rgba(255,255,255,.22)}
+.rvw-list{list-style:none;margin:40px 0 0;padding:0;display:grid;gap:44px}
+.rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--hi)}
+.rvw-tag{font:600 12px/1 var(--sans);letter-spacing:.04em;color:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 11px}
+.rvw-q{margin:14px 0 0;font:500 clamp(24px,5.6vw,44px)/1.22 var(--serif);max-width:28ch;overflow-wrap:anywhere}
+.rvw-by{margin:14px 0 0;color:rgba(255,255,255,.72);font-weight:600;overflow-wrap:anywhere}
+.rvw-more{margin:44px 0 0}
 .final{background:var(--dark);color:#fff}
 .final .lede{color:rgba(255,255,255,.78)}
 .big-phone{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
@@ -3969,10 +4052,12 @@ function generateCinematic(form, d, deps) {
   <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>
 </div></section>`;
   const starRow = (fill, size) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("");
-  const reviews = d.rating ? `<section class="sec" id="reviews" style="padding-top:0"><div class="wrap">
+  const reviews = `<section class="sec rvw-beat" id="reviews"><div class="wrap">
   <div class="sec-head rv"><h2>What customers <em>say</em>.</h2></div>
-  <div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
-</div></section>` : "";
+  ${d.rating ? `<div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+  ${rvwList(d.rv, esc)}
+  ${d.rv.link ? `<p class="rvw-more rv"><a class="btn btn-accent" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
+</div></section>`;
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">
@@ -4055,6 +4140,7 @@ ${ENGINE_JS}
 // form.editorial = { projects: [{ name, where, job, type, time } x 3] }, all optional.
 // form.cine.images / form.cine.prices / form.cine.unit work as in cinematic mode.
 // deps = { CINE_KIT, cineLook, placeholderArt, editorialLook? (optional), editorialShape? (optional) }
+
 
 
 
@@ -4234,6 +4320,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-stars-row svg{position:absolute;top:0}
 .ed-stars-row.off{color:var(--ed-line);width:100%}
 .ed-rev b{font:500 clamp(64px,16vw,110px)/.85 var(--ed-serif);font-variant-numeric:tabular-nums}
+.ed-rvw-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:16px}
+.ed-rvw{border:1.5px solid var(--ed-line);border-radius:var(--ed-card);padding:24px 26px;background:var(--ed-paper)}
+.ed-rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--ed-accent)}
+.ed-rvw-tag{font:600 11px/1 var(--ed-sans);letter-spacing:.06em;text-transform:uppercase;color:var(--ed-muted);border:1px solid var(--ed-line);border-radius:999px;padding:5px 10px}
+.ed-rvw-q{margin:14px 0 0;font:500 clamp(19px,4.6vw,24px)/1.35 var(--ed-serif);overflow-wrap:anywhere}
+.ed-rvw-by{margin:14px 0 0;font:600 14px/1.3 var(--ed-sans);color:var(--ed-muted);overflow-wrap:anywhere}
+.ed-rvw-more{margin:26px 0 0}
+@media (min-width:900px){.ed-rvw-list{grid-template-columns:repeat(3,1fr);gap:20px}}
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
@@ -4567,9 +4661,14 @@ function generateEditorial(form, d, deps) {
   <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${edPad(i + 1)}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol></div>
 </div></section>`;
   const edStars = (r) => { const row = (c) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="26" height="26" style="left:${i * 30}px" fill="${c}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join(""); return `<span class="ed-stars" role="img" aria-label="${r} out of 5 stars"><span class="ed-stars-row off">${row("currentColor")}</span><span class="ed-stars-row" style="width:${(Math.max(0, Math.min(1, r / 5)) * 146).toFixed(1)}px">${row("currentColor")}</span></span>`; };
-  const reviews = d.rating ? `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap"><div class="ed-rev ed-rv">
+  const reviews = `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Reviews</p><h2>What customers <em>say</em></h2></div>
+  ${d.rating ? `<div class="ed-rev ed-rv">
   <b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p class="ed-eyebrow">Google rating</p><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div>${edStars(d.rating)}
-</div></div></section>` : "";
+</div>` : ""}
+  ${rvwList(d.rv, esc, "ed-")}
+  ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
+</div></section>`;
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
@@ -4655,6 +4754,7 @@ ${ED_JS}
 
 
 
+
 // Cinematic mode needs the art files' CINE_KIT, cineLook and placeholderArt.
 let CINE = null;
 function useCine(deps) { CINE = deps; }
@@ -4702,6 +4802,7 @@ function normalize(form) {
     insured: !!f.insured,
     themeKey: THEMES[f.theme] ? f.theme : trade.theme,
     themePicked: !!(THEMES[f.theme] && f.themePicked), // the owner chose a swatch: it overrides the trade's own palette
+    rv: reviewsOf(f), // review cards: typed ones, or three marked samples
     year: f.year || new Date().getFullYear(),
   };
 }
@@ -4733,7 +4834,7 @@ const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 // Section order and style per layout, so trades do not look like clones.
 const LAYOUTS = {
   band: { order: ["services", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
-  ledger: { order: ["services", "process", "area", "faq"], services: "numbered", trust: null },
+  ledger: { order: ["services", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
   split: { order: ["process", "services", "reviews", "faq", "area"], services: "columns", trust: "paper" },
   stat: { order: ["services", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
 };
@@ -4813,7 +4914,7 @@ function generateSite(form) {
     if (figs.length < 3) figs.push([area || "Your town", "<span>And nearby towns</span>"]);
     if (figs.length < 3) figs.push([d.phone ? phoneShow : "Call", `<span>${d.phone ? "Call any time we are open" : "Call to ask"}</span>`]);
     heroInner = `<div class="wrap ledger-top">${heroText}</div>${shape("ledger-art").replace("xMidYMax meet", "none")}
-    <div class="wrap"><dl class="figures">${figs.slice(0, 3).map(([v, k]) => `<div class="fig rv"><dt${v.length > 5 ? ' class="long"' : ""}>${esc(v)}</dt><dd>${k}</dd></div>`).join("")}</dl>${d.rating ? `<p class="fig-note">Real reviews go here. Customer reviews from ${name}'s Google profile get added when the site goes live.</p>` : ""}</div>`;
+    <div class="wrap"><dl class="figures">${figs.slice(0, 3).map(([v, k]) => `<div class="fig rv"><dt${v.length > 5 ? ' class="long"' : ""}>${esc(v)}</dt><dd>${k}</dd></div>`).join("")}</dl></div>`;
   } else if (lay === "stat") {
     heroInner = `<div class="wrap hero-grid">${heroText}<aside class="stat" aria-label="At a glance">
       <p class="stat-v${statBig}">${esc(stat[0])}</p><div class="stat-k">${stat[1]}</div>
@@ -4854,13 +4955,14 @@ function generateSite(form) {
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
 </div></section>`,
-    reviews: (tint) => d.rating ? `<section class="sec${tint}" id="reviews"><div class="wrap grid">
+    reviews: (tint) => `<section class="sec${tint}" id="reviews"><div class="wrap grid">
   <div class="head rv"><h2>What customers say</h2></div>
   <div class="body rev rv">
-    <div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
-    <p class="rev-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
+    ${d.rating && lay !== "ledger" ? `<div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+    ${rvwList(d.rv, esc)}
+    ${d.rv.link ? `<a class="btn btn-accent rvw-all" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a>` : ""}
   </div>
-</div></section>` : "",
+</div></section>`,
     area: (tint) => `<section class="sec sec-area${tint}" id="area"><div class="wrap area">
   <div class="area-text rv">
     <h2>Where we work</h2>
@@ -4882,7 +4984,6 @@ function generateSite(form) {
   // Alternate paper and tint backgrounds down the page.
   let alt = 0;
   const body = L.order.map((k) => {
-    if (k === "reviews" && !d.rating) return "";
     const out = sections[k](alt % 2 ? " tint" : "");
     alt++;
     return out;
@@ -5023,8 +5124,13 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:var(--line);width:100%}
-.rev-note{color:var(--muted);max-width:44ch;padding-top:22px;border-top:1px solid var(--line)}
-.rev-note strong{color:var(--ink);font-weight:600}
+.rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
+.rvw{border-top:1px solid var(--line);padding-top:18px}
+.rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--accent)}
+.rvw-tag{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.rvw-q{margin:10px 0 0;font-size:19px;line-height:1.5;overflow-wrap:anywhere}
+.rvw-by{margin:8px 0 0;color:var(--muted);font-weight:500;overflow-wrap:anywhere}
+.rvw-all{justify-self:start}
 .sec-area{padding-block:56px}
 .area{display:grid;gap:28px;align-items:center}
 .chips{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
@@ -5402,6 +5508,8 @@ const PICTURE_LIBRARY = {};
       rating: $("rating").value,
       reviews: $("reviews").value,
       years: $("years").value,
+      reviewList: [1, 2, 3].map((i) => ({ name: $("rvw-name-" + i).value, town: $("rvw-town-" + i).value, text: $("rvw-text-" + i).value, stars: $("rvw-stars-" + i).value })),
+      reviewLink: $("rvw-link").value,
       services: Array.from(svcBox.querySelectorAll("input:checked")).map((i) => i.value),
       emergency: $("emergency").checked,
       freeEstimates: $("freeEstimates").checked,

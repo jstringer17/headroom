@@ -27,9 +27,10 @@ h1{font:800 28px/1.05 var(--display);font-stretch:85%;margin:0}
 .field{display:grid;gap:6px}
 .field>span,.group>legend{font-weight:700;font-size:15px}
 .req{color:var(--muted);font-weight:400}
-input[type=text],input[type=tel],input[type=number],select,textarea{width:100%;font:400 17px/1.3 var(--body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:11px 12px;min-height:46px}
+input[type=text],input[type=tel],input[type=number],input[type=url],select,textarea{width:100%;font:400 17px/1.3 var(--body);color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:7px;padding:11px 12px;min-height:46px}
 textarea{min-height:84px;resize:vertical;font-size:15px}
 input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,summary:focus-visible,.swatch input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .row3 .field>span{font-size:14px}
 .hint{font-size:14px;color:var(--muted);margin:0}
@@ -131,6 +132,34 @@ details.lead[open]{display:grid;gap:10px}
         <input type="number" id="years" name="years" min="0" step="1" inputmode="numeric" placeholder="10"></label>
     </div>
     <p class="hint">Only type real numbers from their Google page. Leave blank if you do not know.</p>
+
+    <fieldset class="group" id="rvw-box">
+      <legend>Customer reviews</legend>
+      <p class="hint">Type up to 3 real reviews, in the customer's own words. Left empty, the site shows 3 sample reviews marked "Sample review, replace with a real one".</p>
+      <div class="price-row">
+        <b>Review 1</b>
+        <div class="row2"><label class="field" for="rvw-name-1"><span>First name</span><input type="text" id="rvw-name-1" maxlength="40" placeholder="Like: Dana"></label>
+        <label class="field" for="rvw-town-1"><span>Town</span><input type="text" id="rvw-town-1" maxlength="40" placeholder="Like: Broken Arrow"></label></div>
+        <label class="field" for="rvw-text-1"><span>What they said</span><textarea id="rvw-text-1" maxlength="240" placeholder="Their words, up to 240 characters"></textarea></label>
+        <label class="field" for="rvw-stars-1"><span>Stars</span><select id="rvw-stars-1"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      </div>
+      <div class="price-row">
+        <b>Review 2</b>
+        <div class="row2"><label class="field" for="rvw-name-2"><span>First name</span><input type="text" id="rvw-name-2" maxlength="40" placeholder="Like: Dana"></label>
+        <label class="field" for="rvw-town-2"><span>Town</span><input type="text" id="rvw-town-2" maxlength="40" placeholder="Like: Broken Arrow"></label></div>
+        <label class="field" for="rvw-text-2"><span>What they said</span><textarea id="rvw-text-2" maxlength="240" placeholder="Their words, up to 240 characters"></textarea></label>
+        <label class="field" for="rvw-stars-2"><span>Stars</span><select id="rvw-stars-2"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      </div>
+      <div class="price-row">
+        <b>Review 3</b>
+        <div class="row2"><label class="field" for="rvw-name-3"><span>First name</span><input type="text" id="rvw-name-3" maxlength="40" placeholder="Like: Dana"></label>
+        <label class="field" for="rvw-town-3"><span>Town</span><input type="text" id="rvw-town-3" maxlength="40" placeholder="Like: Broken Arrow"></label></div>
+        <label class="field" for="rvw-text-3"><span>What they said</span><textarea id="rvw-text-3" maxlength="240" placeholder="Their words, up to 240 characters"></textarea></label>
+        <label class="field" for="rvw-stars-3"><span>Stars</span><select id="rvw-stars-3"><option>5</option><option>4</option><option>3</option><option>2</option><option>1</option></select></label>
+      </div>
+      <label class="field" for="rvw-link"><span>"See all reviews" link (optional)</span>
+        <input type="url" id="rvw-link" inputmode="url" placeholder="Like: https://g.page/your-business"></label>
+    </fieldset>
 
     <fieldset class="group" id="look-box">
       <legend>Look of the site</legend>

@@ -160,6 +160,8 @@
       rating: $("rating").value,
       reviews: $("reviews").value,
       years: $("years").value,
+      reviewList: [1, 2, 3].map((i) => ({ name: $("rvw-name-" + i).value, town: $("rvw-town-" + i).value, text: $("rvw-text-" + i).value, stars: $("rvw-stars-" + i).value })),
+      reviewLink: $("rvw-link").value,
       services: Array.from(svcBox.querySelectorAll("input:checked")).map((i) => i.value),
       emergency: $("emergency").checked,
       freeEstimates: $("freeEstimates").checked,

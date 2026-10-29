@@ -1116,7 +1116,7 @@ html{scrollbar-color:var(--ed-muted) var(--ed-cream)}
 .ed-eyebrow::before{background:var(--ed-accent)!important}
 .ed-steps b{color:var(--ed-muted)!important}
 /* rating: one compact row, no empty half */
-#reviews{padding-block:0 72px!important}
+#reviews{padding-block:56px 72px!important}
 .ed-rev{grid-template-columns:auto minmax(0,1fr) minmax(0,1.2fr);column-gap:48px;align-items:end;border-top:1px solid var(--ed-line);padding-top:40px}
 .ed-rev .ed-eyebrow{grid-column:1/-1}
 .ed-rev>b{grid-column:1}

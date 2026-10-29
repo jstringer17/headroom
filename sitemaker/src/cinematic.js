@@ -15,6 +15,7 @@
 // picture shows placeholderArt with its label. The price estimator shows only
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
+import { rvwList } from "./reviews.js";
 import { esc, safeImage } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { kitVariant } from "./variants.js";
@@ -249,7 +250,15 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:#d4cbb6;width:100%}
 .rating-sub{display:block;margin-top:8px;color:var(--muted)}
-.rev-note{margin-top:20px;color:var(--muted);max-width:48ch}
+.rvw-beat{background:var(--dark2);color:#fff;padding-top:72px!important}
+.rvw-beat .rating-sub{color:rgba(255,255,255,.72)}
+.rvw-beat .stars-row.off{color:rgba(255,255,255,.22)}
+.rvw-list{list-style:none;margin:40px 0 0;padding:0;display:grid;gap:44px}
+.rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--hi)}
+.rvw-tag{font:600 12px/1 var(--sans);letter-spacing:.04em;color:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 11px}
+.rvw-q{margin:14px 0 0;font:500 clamp(24px,5.6vw,44px)/1.22 var(--serif);max-width:28ch;overflow-wrap:anywhere}
+.rvw-by{margin:14px 0 0;color:rgba(255,255,255,.72);font-weight:600;overflow-wrap:anywhere}
+.rvw-more{margin:44px 0 0}
 .final{background:var(--dark);color:#fff}
 .final .lede{color:rgba(255,255,255,.78)}
 .big-phone{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
@@ -577,10 +586,12 @@ export function generateCinematic(form, d, deps) {
   <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>
 </div></section>`;
   const starRow = (fill, size) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("");
-  const reviews = d.rating ? `<section class="sec" id="reviews" style="padding-top:0"><div class="wrap">
+  const reviews = `<section class="sec rvw-beat" id="reviews"><div class="wrap">
   <div class="sec-head rv"><h2>What customers <em>say</em>.</h2></div>
-  <div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
-</div></section>` : "";
+  ${d.rating ? `<div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+  ${rvwList(d.rv, esc)}
+  ${d.rv.link ? `<p class="rvw-more rv"><a class="btn btn-accent" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
+</div></section>`;
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">

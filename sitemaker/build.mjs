@@ -15,7 +15,7 @@ const argv0 = process.argv.slice(2);
 const opt = (n) => (argv0.includes(n) ? argv0[argv0.indexOf(n) + 1] : "");
 // Test hooks: --library <dir named library> (a library folder elsewhere), --kit-patch <file.js> (JS run right after the kit is defined).
 const kitPatch = opt("--kit-patch") ? readFileSync(opt("--kit-patch"), "utf8") : "";
-const generator = ["src/trades.js", "src/themes.js", "src/cine-kit.js", "src/cine-look.js", "src/variants.js", "src/cinematic.js", "src/editorial.js", "src/generate.js"].map((p) => plain(read(p)) + (p === "src/cine-kit.js" ? "\n" + kitPatch + "\n" : "")).join("\n");
+const generator = ["src/trades.js", "src/themes.js", "src/cine-kit.js", "src/cine-look.js", "src/variants.js", "src/reviews.js", "src/cinematic.js", "src/editorial.js", "src/generate.js"].map((p) => plain(read(p)) + (p === "src/cine-kit.js" ? "\n" + kitPatch + "\n" : "")).join("\n");
 // Picture library: library/<trade>/<slotId>.(webp|jpg|png) (see library/README.md).
 // maker.html always carries the INDEX (names and sizes). The pictures themselves are either
 //   - embedded as data URIs (small libraries, and tests that open the page from a file), or

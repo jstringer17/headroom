@@ -41,16 +41,16 @@ for (const key of TRADE_ORDER) {
   const ext = [...html.matchAll(/(?:href|src)="(https?:[^"]+)"/g)].map((m) => m[1]).filter((u) => !/fonts\.(googleapis|gstatic)\.com/.test(u));
   ok(ext.length === 0, `${key}: outside links ${ext.join(",")}`);
 }
-// no rating typed -> no stars, only the placeholder line
+// no rating typed -> no stars or count, but the reviews block shows 3 marked SAMPLE reviews
 {
   const html = generateSite({ company: "Test Co", trade: "roofing" });
-  ok(!html.includes('id="reviews"'), "no-rating: reviews section shown");
+  ok(html.includes('id="reviews"') && !html.includes("out of 5 stars\"><span class=\"stars-row") && html.includes("Sample review, replace with a real one"), "no-rating: reviews block must show marked samples and no rating");
   ok(!html.includes("24/7") && !html.includes("Open 24 hours"), "default: 24/7 claim shown");
   ok(html.includes("Ask about emergency service"), "default: emergency line missing");
   ok(html.includes("Free estimates"), "default: roofing free estimates missing");
   for (const k of ["towing", "junk", "hvac"]) ok(!generateSite({ company: "T", trade: k }).includes("Free estimates"), `default: ${k} shows free estimates`);
   const e = generateSite({ company: "T", trade: "plumbing", emergency: true, rating: "4.2" });
-  ok(e.includes("Open 24 hours") && !e.includes("Ask about emergency service") && e.includes('id="reviews"') && e.includes("Real reviews go here"), "ticked: 24/7 or reviews wrong");
+  ok(e.includes("Open 24 hours") && !e.includes("Ask about emergency service") && e.includes('id="reviews"') && e.includes("Sample review, replace with a real one"), "ticked: 24/7 or reviews wrong");
   const h2 = generateSite({ company: "<b>x</b>", trade: "hvac", rating: "4.6", reviews: "38" });
   ok(h2.includes("4.6") && h2.includes("From 38 Google reviews"), "rating: typed numbers not shown");
   ok(!h2.includes("<b>x</b>"), "escape: company name not escaped");
@@ -141,7 +141,7 @@ for (const { key, form } of sets) {
       const txt = await page.evaluate(() => document.body.innerText);
       const times = txt.split(form.rating).length - 1;
       ok(times === 1, `${key}@${width}: rating ${form.rating} shown ${times} times`);
-      ok(txt.includes("Real reviews go here"), `${key}@${width}: reviews placeholder line missing`);
+      ok(txt.includes("Sample review, replace with a real one"), `${key}@${width}: sample review tag missing`);
     }
     // Full page for the two lead trades; first screen for the rest keeps the folder small.
     const full = /^(roofing|hvac|towing)$/.test(key);

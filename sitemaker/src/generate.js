@@ -18,6 +18,7 @@ import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
+import { reviewsOf, rvwList } from "./reviews.js";
 import { CINE_KIT } from "./cine-kit.js";
 import { cineLook, placeholderArt } from "./cine-look.js";
 
@@ -68,6 +69,7 @@ export function normalize(form) {
     insured: !!f.insured,
     themeKey: THEMES[f.theme] ? f.theme : trade.theme,
     themePicked: !!(THEMES[f.theme] && f.themePicked), // the owner chose a swatch: it overrides the trade's own palette
+    rv: reviewsOf(f), // review cards: typed ones, or three marked samples
     year: f.year || new Date().getFullYear(),
   };
 }
@@ -99,7 +101,7 @@ const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 // Section order and style per layout, so trades do not look like clones.
 const LAYOUTS = {
   band: { order: ["services", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
-  ledger: { order: ["services", "process", "area", "faq"], services: "numbered", trust: null },
+  ledger: { order: ["services", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
   split: { order: ["process", "services", "reviews", "faq", "area"], services: "columns", trust: "paper" },
   stat: { order: ["services", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
 };
@@ -179,7 +181,7 @@ export function generateSite(form) {
     if (figs.length < 3) figs.push([area || "Your town", "<span>And nearby towns</span>"]);
     if (figs.length < 3) figs.push([d.phone ? phoneShow : "Call", `<span>${d.phone ? "Call any time we are open" : "Call to ask"}</span>`]);
     heroInner = `<div class="wrap ledger-top">${heroText}</div>${shape("ledger-art").replace("xMidYMax meet", "none")}
-    <div class="wrap"><dl class="figures">${figs.slice(0, 3).map(([v, k]) => `<div class="fig rv"><dt${v.length > 5 ? ' class="long"' : ""}>${esc(v)}</dt><dd>${k}</dd></div>`).join("")}</dl>${d.rating ? `<p class="fig-note">Real reviews go here. Customer reviews from ${name}'s Google profile get added when the site goes live.</p>` : ""}</div>`;
+    <div class="wrap"><dl class="figures">${figs.slice(0, 3).map(([v, k]) => `<div class="fig rv"><dt${v.length > 5 ? ' class="long"' : ""}>${esc(v)}</dt><dd>${k}</dd></div>`).join("")}</dl></div>`;
   } else if (lay === "stat") {
     heroInner = `<div class="wrap hero-grid">${heroText}<aside class="stat" aria-label="At a glance">
       <p class="stat-v${statBig}">${esc(stat[0])}</p><div class="stat-k">${stat[1]}</div>
@@ -220,13 +222,14 @@ export function generateSite(form) {
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
 </div></section>`,
-    reviews: (tint) => d.rating ? `<section class="sec${tint}" id="reviews"><div class="wrap grid">
+    reviews: (tint) => `<section class="sec${tint}" id="reviews"><div class="wrap grid">
   <div class="head rv"><h2>What customers say</h2></div>
   <div class="body rev rv">
-    <div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>
-    <p class="rev-note"><strong>Real reviews go here.</strong> Customer reviews from ${name}'s Google profile get added when the site goes live.</p>
+    ${d.rating && lay !== "ledger" ? `<div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+    ${rvwList(d.rv, esc)}
+    ${d.rv.link ? `<a class="btn btn-accent rvw-all" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a>` : ""}
   </div>
-</div></section>` : "",
+</div></section>`,
     area: (tint) => `<section class="sec sec-area${tint}" id="area"><div class="wrap area">
   <div class="area-text rv">
     <h2>Where we work</h2>
@@ -248,7 +251,6 @@ export function generateSite(form) {
   // Alternate paper and tint backgrounds down the page.
   let alt = 0;
   const body = L.order.map((k) => {
-    if (k === "reviews" && !d.rating) return "";
     const out = sections[k](alt % 2 ? " tint" : "");
     alt++;
     return out;
@@ -389,8 +391,13 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:var(--line);width:100%}
-.rev-note{color:var(--muted);max-width:44ch;padding-top:22px;border-top:1px solid var(--line)}
-.rev-note strong{color:var(--ink);font-weight:600}
+.rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
+.rvw{border-top:1px solid var(--line);padding-top:18px}
+.rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--accent)}
+.rvw-tag{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+.rvw-q{margin:10px 0 0;font-size:19px;line-height:1.5;overflow-wrap:anywhere}
+.rvw-by{margin:8px 0 0;color:var(--muted);font-weight:500;overflow-wrap:anywhere}
+.rvw-all{justify-self:start}
 .sec-area{padding-block:56px}
 .area{display:grid;gap:28px;align-items:center}
 .chips{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
