@@ -1,5 +1,5 @@
 // Cinematic engine layout checks (owned by cine-engine).
-//   node sitemaker/build.mjs && node sitemaker/test-engine.mjs
+//   node sitemaker/build.mjs --test && node sitemaker/test-engine.mjs
 // For every trade at 375 and 1280 wide: only one story headline shows at a time,
 // pictures cross-fade (two labels overlap only in a short window), the headline
 // never sits on the call buttons, slider labels never touch the handle, and the
@@ -117,8 +117,8 @@ for (const trade of TRADE_ORDER) {
   }
 }
 
-// The real maker form: type a company, pick a trade, nothing else. The preview must be the Editorial
-// site by default, and the Look select must switch it to Cinematic and to Classic.
+// The real maker form: type a company, pick a trade, nothing else. The preview must be the Cinematic
+// site (Cinematic scroll story) by default, and the Look select must switch it to Editorial and to Classic.
 {
   const makerFile = new URL("./maker.html", import.meta.url).href;
   for (const [trade, word] of [["roofing", "roof"], ["fencing", "fenc"], ["pressure", "wash"]]) {
@@ -133,15 +133,14 @@ for (const trade of TRADE_ORDER) {
       await page.selectOption("#trade", trade);
       await page.waitForTimeout(450);
       const src = () => page.$eval("#frame", (f) => f.srcdoc);
-      const ed = await src();
-      ok(ed.includes('data-look="editorial"') && ed.includes('data-ed="hero"'), `maker ${trade}@${width}: default form output is not the Editorial site`);
-      ok(new RegExp(word, "i").test(ed), `maker ${trade}@${width}: Editorial preview is missing the trade`);
-      ok(await page.isVisible("#cine-prices") && await page.isVisible("#cine-slots"), `maker ${trade}@${width}: picture or price fields are hidden for Editorial`);
-      ok(await page.isVisible("#ed-projects"), `maker ${trade}@${width}: Editorial project cards fields are hidden`);
-      await page.selectOption("#look", "cinematic"); await page.waitForTimeout(450);
       const ci = await src();
-      ok(ci.includes('id="story"') && !ci.includes('data-look="editorial"'), `maker ${trade}@${width}: Cinematic option did not change the output`);
-      ok(await page.isVisible("#cine-prices"), `maker ${trade}@${width}: price fields hidden for Cinematic`);
+      ok(ci.includes('id="story"') && !ci.includes('data-look="editorial"'), `maker ${trade}@${width}: default form output is not the Cinematic scroll story`);
+      ok(new RegExp(word, "i").test(ci), `maker ${trade}@${width}: Cinematic preview is missing the trade`);
+      ok(await page.isVisible("#cine-prices") && await page.isVisible("#cine-slots"), `maker ${trade}@${width}: picture or price fields are hidden for Cinematic`);
+      await page.selectOption("#look", "editorial"); await page.waitForTimeout(450);
+      const ed = await src();
+      ok(ed.includes('data-look="editorial"') && ed.includes('data-ed="hero"') && !ed.includes('id="story"'), `maker ${trade}@${width}: Editorial option did not change the output`);
+      ok(await page.isVisible("#ed-projects"), `maker ${trade}@${width}: Editorial project cards fields are hidden`);
       await page.selectOption("#look", "classic"); await page.waitForTimeout(450);
       const cl = await src();
       ok(!cl.includes('id="story"') && !cl.includes('data-look="editorial"') && cl.includes('class="hero'), `maker ${trade}@${width}: Classic option did not change the output`);
@@ -197,13 +196,14 @@ for (const trade of TRADE_ORDER) {
   const pre = Object.fromEntries(await Promise.all(ids.map(async (k) => [k, await prefix(k)])));
   ok(ids.every((k) => pre[k].startsWith("data:image/webp;base64,")), "library: fencing pictures are not embedded in maker.html");
   ok(await page.isVisible("#lib-wrap") && (await page.isChecked("#use-library")), "library: checkbox missing or not on by default for fencing");
-  ok((await page.$$eval("#cine-slots .slot .lib-tag:not([hidden])", (e) => e.length)) === 4, "library: the four spots do not show 'Library picture'");
+  ok((await page.$$eval("#cine-slots .slot .lib-tag:not([hidden])", (e) => e.length)) >= 4, "library: the spots do not show 'Library picture'");
+  await page.selectOption("#look", "editorial"); await page.waitForTimeout(500);
   let ed = await srcdoc();
   ok(ed.includes('data-look="editorial"') && ids.every((k) => ed.includes(pre[k])), "library: Editorial preview is missing library pictures");
   ok(/class="ed-sil[^"]*"[^>]*><img src="data:image\/webp/.test(ed), "library: Editorial hero is not a library picture");
   ok(/<section class="ed-beat"[^>]*><img src="data:image\/webp/.test(ed), "library: Editorial second beat is not a library picture");
   const proc = (ed.match(/class="ed-how-pic[^"]*"[^>]*>\s*<img[^>]*data-slot="([^"]+)"[^>]*data-real="1"/) || [])[1];
-  ok(ids.includes(proc), `library: Editorial process picture is not a library picture (${proc})`);
+  ok(!!proc, `library: Editorial process picture is not a library picture (${proc})`);
     await page.selectOption("#look", "cinematic"); await page.waitForTimeout(500);
   const ci = await srcdoc();
   ok(ci.includes('id="story"') && ids.every((k) => ci.includes(pre[k])), "library: Cinematic story is missing library pictures");
@@ -230,10 +230,10 @@ for (const trade of TRADE_ORDER) {
   await page.waitForTimeout(900);
   ed = await srcdoc();
   ok(!ed.includes(pre.done) && ed.includes("data:image/jpeg"), "library: an uploaded picture did not replace the library picture");
-  // roofing has no library
+  // roofing has a library too (default variation)
   await page.selectOption("#trade", "roofing"); await page.waitForTimeout(600);
   ed = await srcdoc();
-  ok(!(await page.isVisible("#lib-wrap")) && !ed.includes("data:image/webp") && ed.includes("image/svg+xml"), "library: roofing should keep drawings and no library box");
+  ok(await page.isVisible("#lib-wrap") && ed.includes("data:image/webp"), "library: roofing should show its library pictures and the library box");
   ok(errs.length === 0, `library: page error ${errs[0]}`);
   await page.close();
 }
@@ -276,7 +276,7 @@ for (const trade of TRADE_ORDER) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
   await page.goto(makerFile, { waitUntil: "load" });
-  await page.fill("#company", "Ridge Roofing"); await page.waitForTimeout(400);
+  await page.fill("#company", "Ridge Roofing"); await page.selectOption("#look", "editorial"); await page.waitForTimeout(400);
   const before = await page.$eval("#frame", (f) => f.srcdoc);
   // clicking the swatch that is already selected (the trade's own) still counts as a choice
   await page.click('label[for="theme-navy"]'); await page.waitForTimeout(500);

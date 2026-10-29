@@ -22,6 +22,8 @@ const generator = ["src/trades.js", "src/themes.js", "src/cine-kit.js", "src/cin
 //   - left as separate files published next to the page and fetched when a trade is picked.
 // Default: embed while the whole library is <= EMBED_MAX; --lazy never embeds; --embed always does.
 //   node sitemaker/build.mjs [--lazy | --embed] [--out maker-lazy.html]
+//   --test: only the pictures directly under library/<trade>/ (no variation folders), so the page embeds and opens from file://
+//   (the tests build with it; the full library is over 6 MB and is published with --lazy)
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
 const outName = args.includes("--out") ? args[args.indexOf("--out") + 1] : "maker.html";
@@ -42,6 +44,7 @@ if (existsSync(libDir)) {
     for (const entry of readdirSync(dir).sort()) {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) {
+        if (flag("--test")) continue; // tests: default variations only, so maker.html embeds (file:// cannot fetch)
         // library/<trade>/<variant>/<slot>.webp
         for (const f of readdirSync(full).sort()) {
           const m = /^([a-z0-9-]+)\.(webp|jpe?g|png)$/i.exec(f);

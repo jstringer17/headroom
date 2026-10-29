@@ -262,27 +262,28 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
 {
   for (const trade of ["roofing", "fencing", "pressure"]) {
     const html = await defaultPathHtml(browser, trade, `Sample ${trade} Co`);
-    check("D", `${trade}: the form's default preview is the Editorial look (data-look="editorial")`, isEditorial(html), "default output is not editorial (classic or cinematic)");
-    check("D", `${trade}: the default preview is not the classic site`, !/class="[^"]*\bhero\b/.test(html) || isEditorial(html), "classic markup");
-    if (isEditorial(html)) {
+    const isCine = /id="story"/.test(html) && !isEditorial(html);
+    check("D", `${trade}: the form's default preview is the Cinematic scroll story`, isCine, "default output is not cinematic (classic or editorial)");
+    check("D", `${trade}: the default preview is not the classic site`, isCine, "classic markup");
+    if (isCine) {
       for (const width of [375, 1280]) {
         const { page, ctx } = await open(html, `default-${trade}`, { width, tag: `-${width}` });
-        const r = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, hero: !!document.querySelector('[data-ed="hero"]') }));
-        check("D", `${trade}@${width}: default output has the Editorial hero and no sideways scroll`, r.hero && r.sw <= r.cw, JSON.stringify(r));
+        const r = await page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, hero: !!document.getElementById("story") }));
+        check("D", `${trade}@${width}: default output has the story and no sideways scroll`, r.hero && r.sw <= r.cw, JSON.stringify(r));
         await ctx.close();
       }
     }
   }
-  // Built-in picture library: typed name + trade only must already show the CEO's real pictures (fencing), drawings elsewhere.
+  // Built-in picture library: typed name + trade only must already show the CEO's real pictures (roofing, fencing, pressure), drawings elsewhere.
   {
-    const ed = await defaultPathHtml(browser, "fencing", "Sample fencing Co");
-    const cine = await defaultPathHtml(browser, "fencing", "Sample fencing Co", null, "cinematic");
+    const ed = await defaultPathHtml(browser, "fencing", "Sample fencing Co", null, "editorial");
+    const cine = await defaultPathHtml(browser, "fencing", "Sample fencing Co");
     const rf = realPictures(ed), rc = realPictures(cine);
     check("D", "fencing default (company + trade only): Editorial shows the 4 real pictures (4+ distinct)", rf.distinct >= 4, `${rf.distinct} distinct real pictures, ${rf.count} real <img> in total`);
     check("D", "fencing default: Cinematic story shows the 4 real pictures (4+ distinct)", rc.distinct >= 4, `${rc.distinct} distinct real pictures, ${rc.count} in total`);
     check("D", "fencing default: Editorial hero uses a real picture", /data-ed="hero"[\s\S]{0,1500}?<img\b[^>]*src="(?!data:image\/svg)/.test(ed) || /<img\b[^>]*src="(?!data:image\/svg)[^"]+"[^>]*>[\s\S]{0,400}data-ed="hero"/.test(ed), "hero has no real picture");
     for (const [name, h] of [["roofing", await defaultPathHtml(browser, "roofing", "Sample roofing Co")], ["pressure", await defaultPathHtml(browser, "pressure", "Sample pressure Co")]]) {
-      check("D", `${name} default still shows drawings only (no real pictures yet)`, realPictures(h).count === 0, `${realPictures(h).count} real pictures`);
+      check("D", `${name} default (company + trade only): Cinematic story shows real library pictures (4+ distinct)`, realPictures(h).distinct >= 4, `${realPictures(h).distinct} distinct real pictures`);
     }
     check("D", "default page with the fencing library stays under 6 MB", Math.max(Buffer.byteLength(ed), Buffer.byteLength(cine)) < 6 * 1048576, `${(Math.max(Buffer.byteLength(ed), Buffer.byteLength(cine)) / 1048576).toFixed(1)} MB`);
   }

@@ -19,9 +19,14 @@ const ok = (c, m) => { if (!c) fails.push(m); };
 const node = (args, o = {}) => spawnSync("node", args, { encoding: "utf8", cwd: join(here, ".."), ...o });
 
 // ---- 1. a lazy build carries the index, not the pictures
-const b = node([join(here, "build.mjs"), "--lazy", "--out", "maker-lazy.html"]);
+// fixture: a library of just the four default fencing pictures (the real one is far bigger; see test-variants-maker for variations)
+const root = join(here, "test-out", "lib4");
+rmSync(root, { recursive: true, force: true });
+mkdirSync(join(root, "library", "fencing"), { recursive: true });
+for (const id of ["stakes", "posts", "rails", "done"]) writeFileSync(join(root, "library", "fencing", id + ".webp"), readFileSync(join(here, "library", "fencing", id + ".webp")));
+const b = node([join(here, "build.mjs"), "--lazy", "--library", join(root, "library"), "--out", "test-out/lib4/maker-lazy.html"]);
 ok(b.status === 0, "lazy build failed: " + b.stderr);
-const lazyFile = join(here, "maker-lazy.html"), lazy = readFileSync(lazyFile, "utf8");
+const lazyFile = join(root, "maker-lazy.html"), lazy = readFileSync(lazyFile, "utf8");
 ok(lazy.includes("const PICTURE_INDEX = {") && lazy.includes('"library/fencing/stakes.webp"'), "lazy build: the library index is missing");
 ok(!lazy.includes("data:image/webp;base64,"), "lazy build: pictures are embedded");
 ok(statSync(lazyFile).size < 800 * 1024, `lazy build: page is ${Math.round(statSync(lazyFile).size / 1024)} KB, expected under 800 KB`);
@@ -34,8 +39,8 @@ const requests = [];
 const server = createServer((req, res) => {
   const path = decodeURIComponent(req.url.split("?")[0]);
   requests.push(path);
-  const file = join(here, path === "/" ? "maker-lazy.html" : path);
-  if (!file.startsWith(here) || !existsSync(file) || !statSync(file).isFile()) { res.writeHead(404); res.end("no"); return; }
+  const file = join(root, path === "/" ? "maker-lazy.html" : path);
+  if (!file.startsWith(root) || !existsSync(file) || !statSync(file).isFile()) { res.writeHead(404); res.end("no"); return; }
   res.writeHead(200, { "content-type": MIME[extname(file)] || "application/octet-stream" }); res.end(readFileSync(file));
 });
 await new Promise((r) => server.listen(0, "127.0.0.1", r));
@@ -57,10 +62,10 @@ const browser = await pw.chromium.launch();
   await page.waitForTimeout(400);
   const doc = await page.$eval("#frame", (f) => f.srcdoc);
   for (const id of ["stakes", "posts", "rails", "done"]) {
-    const head = readFileSync(join(here, "library", "fencing", `${id}.webp`)).toString("base64").slice(0, 120);
+    const head = readFileSync(join(root, "library", "fencing", `${id}.webp`)).toString("base64").slice(0, 120);
     ok(doc.includes(head), `lazy: ${id} picture is not inlined in the preview`);
   }
-  ok(doc.includes('data-look="editorial"'), "lazy: default look is not Editorial");
+  ok(doc.includes('id="story"'), "lazy: default look is not Cinematic");
   const dl = page.waitForEvent("download");
   await page.click("#download");
   const file = await dl;
@@ -204,8 +209,9 @@ function png(w, h, [r, g, b]) {
   const r = node([join(here, "publish-plan.mjs"), "--json"]);
   let plan = null; try { plan = JSON.parse(r.stdout); } catch (_) { /* below */ }
   ok(plan && plan.pictures >= 4 && Object.keys(plan.files).length === plan.pictures, "publish plan: not valid or the files map does not list every picture");
-  ok(plan && Object.entries(plan.files).every(([pub, src]) => /^library\/[a-z0-9]+\/[a-z0-9-]+\.(webp|jpe?g|png)$/.test(pub) && existsSync(join(here, "..", src))), "publish plan: a published path is wrong or its source is missing");
-  const libFiles = readdirSync(join(here, "library")).filter((d) => statSync(join(here, "library", d)).isDirectory()).reduce((n, d) => n + readdirSync(join(here, "library", d)).filter((f) => /\.(webp|jpe?g|png)$/.test(f)).length, 0);
+  ok(plan && Object.entries(plan.files).every(([pub, src]) => /^library\/[a-z0-9]+(\/[a-z0-9]+)?\/[a-z0-9-]+\.(webp|jpe?g|png)$/.test(pub) && existsSync(join(here, "..", src))), "publish plan: a published path is wrong or its source is missing");
+  const count = (dir) => readdirSync(dir).reduce((n, f) => n + (statSync(join(dir, f)).isDirectory() ? count(join(dir, f)) : /\.(webp|jpe?g|png)$/.test(f) ? 1 : 0), 0);
+  const libFiles = count(join(here, "library"));
   ok(plan && plan.pictures === libFiles, "publish plan: picture count differs from the library folder");
 }
 

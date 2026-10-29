@@ -4,10 +4,10 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
-const steps = [["build", "build.mjs"], ["classic", "test.mjs"], ["engine", "test-engine.mjs"], ["looks (test-cine)", "test-cine.mjs"], ["picture library (test-library)", "test-library.mjs"], ["picture variants (test-variants)", "test-variants.mjs"], ["variations in the maker (test-variants-maker)", "test-variants-maker.mjs"], ["every control (test-features)", "test-features.mjs"]];
+const steps = [["build (test library)", "build.mjs", ["--test"]], ["classic", "test.mjs"], ["engine", "test-engine.mjs"], ["looks (test-cine)", "test-cine.mjs"], ["picture library (test-library)", "test-library.mjs"], ["picture variants (test-variants)", "test-variants.mjs"], ["variations in the maker (test-variants-maker)", "test-variants-maker.mjs"], ["every control (test-features)", "test-features.mjs"], ["build (full library, lazy)", "build.mjs"]];
 let bad = 0;
-for (const [name, file] of steps) {
-  const r = spawnSync("node", [join(here, file)], { encoding: "utf8", cwd: join(here, "..") });
+for (const [name, file, extra = []] of steps) {
+  const r = spawnSync("node", [join(here, file), ...extra], { encoding: "utf8", cwd: join(here, "..") });
   const out = (r.stdout || "") + (r.stderr || "");
   const tail = out.trim().split("\n").filter((l) => /pass|PASS|FAIL|written|Criterion|fail/i.test(l)).slice(-6).join("\n   ");
   console.log(`${r.status === 0 ? "OK  " : "FAIL"} ${name}\n   ${tail}`);

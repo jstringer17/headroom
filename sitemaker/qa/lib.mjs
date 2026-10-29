@@ -83,7 +83,7 @@ k.parentElement.addEventListener('pointerdown',function(e){var r=k.parentElement
 }
 
 // Builds a cinematic site. real=true only when the engine output has the scroll story; without the cine-art files generateSite quietly returns the classic site.
-// look: "cinematic" (default) or "editorial". Passed both as form.look and form.cine.look until the engine fixes its name.
+// look: "cinematic" (the default) or "editorial". Passed both as form.look and form.cine.look until the engine fixes its name.
 export function buildCine(form, look = "cinematic") {
   let html = "";
   try { html = generateSite({ ...form, cinematic: true, look, cine: { ...(form.cine || {}), look } }); } catch { /* engine not merged yet */ }
@@ -102,7 +102,7 @@ export async function defaultPathHtml(browser, trade, company, shotPath, look) {
   await page.fill("#company", company);
   await page.selectOption("#trade", trade);
   await page.waitForTimeout(600);
-  if (look) { await page.selectOption("#look", look); await page.waitForTimeout(1200); } // only for cinematic: Editorial is the form default
+  if (look) { await page.selectOption("#look", look); await page.waitForTimeout(1200); } // only for another look: Cinematic is the form default
   const html = await page.evaluate(() => document.getElementById("frame").srcdoc);
   if (shotPath) await page.screenshot({ path: shotPath, type: "jpeg", quality: 70 });
   await ctx.close();

@@ -1,5 +1,5 @@
 // Every control of the REAL maker.html, in every look, on several trades (owner: cine-qa).
-//   node sitemaker/build.mjs && node sitemaker/test-features.mjs
+//   node sitemaker/build.mjs --test && node sitemaker/test-features.mjs
 // Drives the form like a user. Prints a table (control x look) and exits 1 on any FAIL.
 // Colors are judged by what the visitor SEES (computed colors inside the preview), not by CSS variables.
 import { mkdirSync, writeFileSync, rmSync, statSync } from "node:fs";
@@ -169,8 +169,8 @@ for (const look of ["editorial", "cinematic"]) {
 }
 { // roofing has no library: drawings only
   const page = await open(); await setup(page, { trade: "roofing", look: "editorial" });
-  rec("Roofing shows drawings only (no library yet)", "editorial", "roofing", realImgs(await page.html()) === 0, "unexpected real pictures");
-  rec("Library box is hidden for roofing", "editorial", "roofing", await page.evaluate(() => document.getElementById("lib-wrap").hidden), "box visible");
+  rec("Roofing shows the built-in library pictures by default (4+)", "editorial", "roofing", realImgs(await page.html()) >= 4, `${realImgs(await page.html())} real pictures`);
+  rec("Library box is shown for roofing", "editorial", "roofing", await page.evaluate(() => !document.getElementById("lib-wrap").hidden), "box hidden");
   await page.ctx.close();
 }
 
