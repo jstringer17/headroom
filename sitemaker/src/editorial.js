@@ -15,7 +15,7 @@ import { rvwList } from "./reviews.js";
 import { esc, safeImage } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
-import { kitVariant } from "./variants.js";
+import { kitVariant, variantCards } from "./variants.js";
 import { editorialLook, editorialShape } from "./cine-look.js";
 
 // Simple silhouettes for the hero picture, as CSS polygon() points in percent.
@@ -59,7 +59,7 @@ const edAccent = (text, accent) => {
 };
 
 const ED_CSS = `
-:root{--ed-serif:"Bodoni Moda","Playfair Display","Didot",Georgia,serif;--ed-sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ed-cream:#ece5dc;--ed-cream2:#e2d9cd;--ed-paper:#f5f0e8;--ed-ink:#161412;--ed-muted:#5d564d;--ed-line:rgba(22,20,18,.2);--ed-card:24px;--ed-dark:#14110f;--ed-ease:cubic-bezier(.23,1,.32,1);--ed-max:1240px;--ed-nav:64px;color-scheme:light}
+:root{--ed-serif:"Bodoni Moda","Playfair Display","Didot",Georgia,serif;--ed-sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ed-cream:#ece5dc;--ed-cream2:#e2d9cd;--ed-paper:#f5f0e8;--ed-ink:#161412;--ed-muted:#5d564d;--ed-line:rgba(22,20,18,.2);--ed-card:24px;--ed-dark:#14110f;--ed-ease:cubic-bezier(.23,1,.32,1);--ed-out:cubic-bezier(.22,1,.36,1);--ed-max:1240px;--ed-nav:64px;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:84px}
 section[id]{scroll-margin-top:84px}
@@ -199,6 +199,30 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-rvw-by{margin:14px 0 0;font:600 14px/1.3 var(--ed-sans);color:var(--ed-muted);overflow-wrap:anywhere}
 .ed-rvw-more{margin:26px 0 0}
 @media (min-width:900px){.ed-rvw-list{grid-template-columns:repeat(3,1fr);gap:20px}}
+.ed-all{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}
+.ed-all-card{display:grid;gap:10px;width:100%;text-align:left;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;transition:transform .2s var(--ed-ease)}
+.ed-all-card:active{transform:scale(.98)}
+@media (hover:hover){.ed-all-card:hover{transform:translateY(-3px)}}
+.ed-all-pic{position:relative;display:block;aspect-ratio:4/5;border-radius:var(--ed-card);overflow:hidden;background:var(--ed-cream2)}
+.ed-all-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
+.ed-all-name{font:500 clamp(18px,4.2vw,26px)/1.2 var(--ed-serif);overflow-wrap:anywhere}
+.ed-all-hint{font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-accent)}
+.ed-dlg{border:0;padding:0;border-radius:var(--ed-card);width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--ed-paper);color:var(--ed-ink)}
+.ed-dlg::backdrop{background:rgba(20,17,15,.62)}
+.ed-dlg-in{display:grid;gap:14px;padding:20px;justify-items:start}
+.ed-dlg-in h3{font:500 clamp(24px,5vw,32px)/1.1 var(--ed-serif);padding-right:52px}
+.ed-dlg-x{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--ed-line);background:var(--ed-cream);color:var(--ed-ink);font-size:26px;line-height:1;cursor:pointer;transition:transform .18s var(--ed-ease)}
+.ed-dlg-x:active{transform:scale(.94)}
+.ed-cmp{position:relative;justify-self:stretch;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--ed-cream2)}
+.ed-cmp>span{position:absolute;inset:0;display:block}
+.ed-cmp img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
+.ed-cmp-b{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
+.ed-cmp-r{justify-self:stretch;width:100%;min-height:44px;accent-color:var(--ed-accent)}
+.ed-cmp-cap{justify-self:stretch;display:flex;justify-content:space-between;font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-muted)}
+.ed-no-js .ed-dlg{display:block;position:static;margin:12px 0 0;width:auto;border:1px solid var(--ed-line)}
+.ed-no-js .ed-all-card{display:none}
+@media (prefers-reduced-motion:no-preference){.ed-dlg[open]{animation:ed-dlg-in .22s var(--ed-ease)}@keyframes ed-dlg-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}}
+@media (min-width:900px){.ed-all{grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 20px}}
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
@@ -214,10 +238,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px calc(104px + env(safe-area-inset-bottom,0px))}
 .ed-foot b{font:500 22px/1.2 var(--ed-serif);color:var(--ed-cream)}
 @media (prefers-reduced-motion:no-preference){
-  .ed-rise .ed-rv{transition:opacity .9s var(--ed-ease),transform .9s var(--ed-ease)}
-  .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(22px)}
+  .ed-rise .ed-rv{transition:opacity .8s var(--ed-out),transform .8s var(--ed-out);transition-delay:calc(var(--rvi,0) * 70ms)}
+  .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(26px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name,.ed-all-card,.ed-dlg-x{transition:none}}
 @media (min-width:760px){
   .ed-meta{grid-template-columns:repeat(var(--n,3),minmax(0,1fr))!important}
   #price{padding-bottom:48px}
@@ -294,6 +318,14 @@ if(rows.length){
     });
   });
 }
+/* everything we do: a tap opens the card's before and after */
+[].slice.call(document.querySelectorAll(".ed-all-card")).forEach(function(b){var dlg=document.getElementById(b.getAttribute("aria-controls"));b.addEventListener("click",function(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","")})});
+[].slice.call(document.querySelectorAll(".ed-dlg")).forEach(function(dlg){
+  var cmp=dlg.querySelector(".ed-cmp"),r=dlg.querySelector(".ed-cmp-r"),shut=function(){if(dlg.close)dlg.close();else dlg.removeAttribute("open")};
+  r.addEventListener("input",function(){cmp.style.setProperty("--pos",r.value)});
+  dlg.querySelector(".ed-dlg-x").addEventListener("click",shut);
+  dlg.addEventListener("click",function(e){if(e.target===dlg)shut()});
+});
 /* price estimator: only the ranges the owner typed */
 var dataEl=document.getElementById("est-data");
 if(dataEl){
@@ -317,6 +349,7 @@ var cta=document.getElementById("ed-cta");function past(){root.classList.toggle(
 if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".ed-rv"));
+var kids=new Map();els.forEach(function(el){var k=(kids.get(el.parentNode)||0);kids.set(el.parentNode,k+1);el.style.setProperty("--rvi",Math.min(k,5))});
 els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
 root.classList.add("ed-rise");
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
@@ -347,7 +380,10 @@ export function generateEditorial(form, d, deps) {
   const slots = cineSlots(kit);
   // Optional service pictures (kit.editorial.extra) behave like slots here.
   const extras = (kit.editorial && kit.editorial.extra) || [];
-  const slotLabel = (id) => (slots.find((s) => s.id === id) || extras.find((x) => x.id === id) || {}).label || id;
+  const varLabels = {}; // "Standing-seam metal, after" for the Everything we do pictures
+  const allCards = variantCards(CINE_KIT[d.tradeKey], cine.offer);
+  allCards.forEach((c) => { varLabels[c.after] = `${c.label}, after`; varLabels[c.before] = `${c.label}, before`; });
+  const slotLabel = (id) => varLabels[id] || (slots.find((s) => s.id === id) || extras.find((x) => x.id === id) || {}).label || id;
   // Once the owner has real photos, leftover drawn placeholders switch to a quieter style.
   const anyReal = Object.values(images).some((v) => safeImage(v));
   const src = (id, o) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id), anyReal ? { ...(o || {}), quiet: true } : o);
@@ -489,6 +525,16 @@ export function generateEditorial(form, d, deps) {
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
 </div></section>`;
 
+  // Everything we do: a card for every variation the owner offers; a tap opens its before and after
+  const allSec = allCards.length >= 2 ? `<section class="ed-sec" id="all" data-ed="all"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Everything we do</p><h2>Every kind of <em>job</em></h2></div>
+  <ul class="ed-all">${allCards.map((c, i) => `<li class="ed-rv"><button type="button" class="ed-all-card" data-ed="all-card" aria-haspopup="dialog" aria-controls="ed-dlg-${i}"><span class="ed-all-pic">${pic(c.after)}</span><span class="ed-all-name">${esc(c.label)}</span><span class="ed-all-hint">Before and after</span></button>
+  <dialog class="ed-dlg" id="ed-dlg-${i}" aria-label="${esc(c.label)}, before and after"><div class="ed-dlg-in"><button type="button" class="ed-dlg-x" aria-label="Close">&times;</button><h3>${esc(c.label)}</h3>
+    <div class="ed-cmp" style="--pos:50"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
+    <input type="range" class="ed-cmp-r" min="0" max="100" value="50" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p>
+    <a class="ed-btn" href="#contact">Ask about this</a></div></dialog></li>`).join("")}</ul>
+</div></section>` : "";
+
   // Services: large numbered rows, the open row swaps the picture
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
@@ -587,6 +633,7 @@ ${hero}
 ${trust}
 ${beat}
 ${work}
+${allSec}
 ${svc}
 ${est}
 ${process}

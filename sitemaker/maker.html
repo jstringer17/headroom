@@ -117,6 +117,12 @@ details.lead[open]{display:grid;gap:10px}
     <label class="field" for="variant" id="variant-wrap" hidden><span>Variation</span>
       <select id="variant"></select></label>
 
+    <fieldset class="group" id="offer-wrap" hidden>
+      <legend>Services we offer</legend>
+      <p class="hint">The site lists every one ticked here in "Everything we do". Untick the ones this company does not do.</p>
+      <div id="offer-box" class="checks"></div>
+    </fieldset>
+
     <label class="field" for="city"><span>Town</span>
       <input type="text" id="city" name="city" placeholder="Like: Tulsa, OK"></label>
 
@@ -3419,6 +3425,22 @@ function ownSlotIds(kit, wanted) {
   return ids;
 }
 
+// The variations the owner offers (form.cine.offer = list of keys; missing = all). Only trades with 2+ variations.
+function offeredVariants(kit, offer) {
+  const vs = (kit && kit.variants) || [];
+  if (vs.length < 2) return [];
+  return Array.isArray(offer) ? vs.filter((v) => offer.includes(v.key)) : vs;
+}
+
+// One card per offered variation for the "Everything we do" section: its after picture is the card image and
+// its before and after pair is the detail. The ids are the library's slot ids (default variation keeps bare ids).
+function variantCards(kit, offer) {
+  return offeredVariants(kit, offer).map((v) => {
+    const kv = kitVariant(kit, v.key), ba = kv.beforeAfter || {};
+    return { key: v.key, label: v.label || v.key, before: (ba.before && ba.before.id) || `${kv.slotPrefix}before`, after: (ba.after && ba.after.id) || `${kv.slotPrefix}after` };
+  });
+}
+
 // Customer reviews for every look. Pure functions; each look escapes and styles the result itself.
 //   form.reviewList = [{ name, town, text, stars }] (up to 3), form.reviewLink = a Google / Facebook page URL.
 // With no review text typed, three SAMPLE reviews are shown, each marked as a sample. Typed ones are shown as the
@@ -3567,7 +3589,7 @@ const svgIcon = (inner, size) =>
 const CINE_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
 
 const ENGINE_CSS = `
-:root{--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--cream:#f6f0e4;--cream2:#ece4d3;--card:rgba(255,255,255,.14);--ease:cubic-bezier(.23,1,.32,1);--ease-io:cubic-bezier(.77,0,.175,1);--hh:64px;--max:1200px;color-scheme:light}
+:root{--serif:Georgia,"Times New Roman",serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--cream:#f6f0e4;--cream2:#ece4d3;--card:rgba(255,255,255,.14);--ease:cubic-bezier(.23,1,.32,1);--ease-io:cubic-bezier(.77,0,.175,1);--ease-out:cubic-bezier(.22,1,.36,1);--hh:64px;--max:1200px;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:80px}
 section[id]{scroll-margin-top:80px}
@@ -3582,7 +3604,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .ba-handle:focus-visible{outline:none}
 .ba:active .ba-knob{scale:.94}
 .ba-handle:focus-visible .ba-knob{box-shadow:0 0 0 3px var(--accent),0 4px 16px rgba(0,0,0,.35)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;font:600 16px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .16s var(--ease),box-shadow .25s var(--ease)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;border:0;border-radius:999px;font:600 16px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .18s var(--ease-out),box-shadow .22s var(--ease-out),background-color .2s var(--ease-out),opacity .2s var(--ease-out)}
 .btn:active,.tab:active{transform:scale(.97)}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
 @media (hover:hover){.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}}
@@ -3637,7 +3659,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .sec-head{margin-bottom:32px}
 /* style tabs over a photo */
 .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.tab{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--cream2);color:var(--ink);font:600 15px/1 var(--sans);cursor:pointer;transition:background-color .25s,color .25s}
+.tab{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--cream2);color:var(--ink);font:600 15px/1 var(--sans);cursor:pointer;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),transform .18s var(--ease-out)}
 .tab[aria-selected=true]{background:var(--ink);color:var(--cream)}
 .cine-no-js .tabs{display:none}
 .panel{position:relative;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;background:var(--dark);color:#fff}
@@ -3661,8 +3683,23 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .ba-cap{display:flex;justify-content:space-between;margin-top:12px;font:600 13px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .ba-handle{position:absolute;top:0;bottom:0;left:calc(var(--pos) * 1%);width:44px;margin-left:-22px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
 .ba-handle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
-.ba-knob{position:relative;scale:1;transition:scale .16s var(--ease);transform:translateX(var(--kx,0px));width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.ba-knob{position:relative;scale:1;transition:scale .18s var(--ease-out);transform:translateX(var(--kx,0px));width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .ba-knob svg{width:22px;height:22px}
+/* everything we do: a list of cards; the pinned crossfade only when .all-motion is set */
+.all-grid{display:grid;gap:28px}
+.all-item{display:grid;gap:14px;align-content:start}
+.all .ba{aspect-ratio:4/3;height:auto}
+.all-cap{display:grid;gap:12px;justify-items:start}
+.all-name{font:500 clamp(26px,5vw,40px)/1.1 var(--serif)}
+.all-btns{display:flex;flex-wrap:wrap;gap:10px}
+.all-count{display:none}
+@media (min-width:760px){.all-grid{grid-template-columns:1fr 1fr;gap:40px 28px}}
+.all-motion .all-stage{height:calc(var(--n) * 85vh);height:calc(var(--n) * 85svh)}
+.all-motion .all-pin{position:sticky;top:var(--hh);height:calc(100vh - var(--hh));height:calc(100svh - var(--hh));overflow:hidden}
+.all-motion .all-grid{display:block;position:relative;height:100%}
+.all-motion .all-item{position:absolute;top:8px;bottom:18px;left:20px;right:20px;display:flex;flex-direction:column;gap:14px;will-change:opacity,transform}
+.all-motion .all .ba,.all-motion .all-item .ba{flex:1 1 0;min-height:0;aspect-ratio:auto;height:auto}
+.all-motion .all-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:18px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
 /* hvac tools */
 .tools{display:grid;gap:28px}
 .dial-card{display:grid;gap:12px;justify-items:center}
@@ -3690,7 +3727,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .opts{display:flex;flex-wrap:wrap;gap:8px}
 .opt{position:relative}
 .opt input{position:absolute;opacity:0;inset:0;width:100%;height:100%;margin:0;cursor:pointer}
-.opt span{display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--muted);font:600 16px/1.2 var(--sans)}
+.opt span{transition:background-color .2s var(--ease-out),color .2s var(--ease-out),box-shadow .2s var(--ease-out),transform .18s var(--ease-out);display:inline-flex;align-items:center;min-height:46px;padding:0 20px;border-radius:999px;background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--muted);font:600 16px/1.2 var(--sans)}
+.opt:active span{transform:scale(.97)}
 .opt input:checked+span{background:var(--ink);color:var(--cream);box-shadow:none}
 .opt input:focus-visible+span{outline:3px solid var(--accent);outline-offset:2px}
 .opt input:disabled+span{opacity:.4}
@@ -3732,6 +3770,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 form{display:grid;gap:16px;align-content:start;background:var(--cream);color:var(--ink);border-radius:18px;padding:24px}
 label{display:grid;gap:6px;font-size:15px;font-weight:600}
 input[type=text],input[type=tel],select,textarea{width:100%;font:400 17px/1.4 var(--sans);color:var(--ink);background:#fff;border:1.5px solid #a79f8c;border-radius:10px;padding:13px 14px}
+input[type=text],input[type=tel],select,textarea{transition:border-color .2s var(--ease-out),box-shadow .2s var(--ease-out)}
 input[type=text]:focus,input[type=tel]:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px var(--accent)}
 textarea{min-height:100px;resize:vertical}
 .form-note{font-size:15px;color:var(--muted)}
@@ -3740,15 +3779,15 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
 .foot-name{font:500 22px/1.2 var(--serif);color:#fff}
 .mobile-call{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50}
 .mobile-call .btn{box-shadow:0 6px 22px rgba(0,0,0,.35);min-height:48px}
-.mobile-call{transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease)}
+.mobile-call{transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease-out)}
 .past .mobile-call{transform:none;visibility:visible}
 .nocall .mobile-call{transform:translateY(110%);visibility:hidden}
 #price,#comfort{padding-bottom:120px}
 @media (prefers-reduced-motion:no-preference){
-  .cine-reveal .rv{transition:opacity .9s var(--ease),transform .9s var(--ease)}
-  .cine-reveal .rv:not(.in){opacity:0;transform:translateY(22px)}
+  .cine-reveal .rv{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);transition-delay:calc(var(--rvi,0) * 70ms)}
+  .cine-reveal .rv:not(.in){opacity:0;transform:translateY(26px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.mobile-call{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.mobile-call,.opt span,.ba-knob,input,select,textarea{transition:none}}
 @media (min-width:760px){
   .big-phone{white-space:nowrap;font-size:clamp(38px,5vw,64px)}
   .sec{padding-block:112px}
@@ -3800,18 +3839,17 @@ if(story&&!reduce){
     var r=story.getBoundingClientRect(),total=r.height-pin.offsetHeight;
     var p=total>0?clamp(-r.top/total,0,1):0;
     var pos=p*(n-1);
-    var zoom="scale("+(1+0.06*p).toFixed(4)+")";
-    var cover=-1;
-    for(var j=n-1;j>0;j--){if(clamp((pos-(j-0.62))/0.24,0,1)>=0.99){cover=j;break}}
+    var cover=-1,t=[];
+    for(var j=0;j<n;j++){var u=j===0?1:clamp((pos-(j-0.72))/0.42,0,1);t[j]=u*u*(3-2*u);if(j>0&&u>=0.995)cover=j}
     for(var i=0;i<n;i++){
-      frames[i].style.opacity=i===0?1:clamp((pos-(i-0.62))/0.24,0,1);
+      frames[i].style.opacity=t[i];
       frames[i].style.visibility=i<cover?"hidden":"visible";
-      imgs[i].style.transform=zoom;
-      var d=Math.abs(pos-i),o=d<0.5?1:0;
+      imgs[i].style.transform="scale("+(1+0.06*p+0.045*(1-t[i])).toFixed(4)+")";
+      var d=Math.abs(pos-i),o=clamp(1-(d-0.16)/0.3,0,1);o=o*o*(3-2*o);
       lines[i].style.opacity=o;
       lines[i].style.transform="translateY("+((pos-i)*-36).toFixed(1)+"px)";
       lines[i].style.visibility=o<0.02?"hidden":"visible";
-      }
+    }
     bar.style.transform="scaleX("+p.toFixed(4)+")";
     var cur=Math.round(pos)+1;if(cur!==shown){shown=cur;count.textContent=cur+" / "+n}
   };
@@ -3850,11 +3888,10 @@ if(tabs.length){
   });
 }
 
-/* 3. before / after slider: pointer, touch and keyboard */
-var ba=document.getElementById("ba");
-if(ba){
+/* 3. before / after sliders (the main one and the "everything we do" ones): pointer, touch and keyboard */
+function initBA(ba){
   var h=ba.querySelector("[role=slider]");
-    var set=function(v){v=clamp(Math.round(v),0,100);ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);var w=ba.offsetWidth,x=v/100*w;ba.style.setProperty("--kx",(Math.min(Math.max(x,22),w-22)-x).toFixed(1)+"px");h.setAttribute("aria-valuetext",v+" percent")};
+  var set=function(v){v=clamp(Math.round(v),0,100);ba.style.setProperty("--pos",v);h.setAttribute("aria-valuenow",v);var w=ba.offsetWidth,x=v/100*w;ba.style.setProperty("--kx",(Math.min(Math.max(x,22),w-22)-x).toFixed(1)+"px");h.setAttribute("aria-valuetext",v+" percent")};
   var fromX=function(x){var r=ba.getBoundingClientRect();set((x-r.left)/r.width*100)};
   var drag=false;
   ba.addEventListener("pointerdown",function(e){if(e.pointerType==="mouse"&&e.button!==0)return;drag=true;try{ba.setPointerCapture(e.pointerId)}catch(_){}fromX(e.clientX);h.focus({preventScroll:true})});
@@ -3868,7 +3905,45 @@ if(ba){
     else if(k==="Home")nv=0;else if(k==="End")nv=100;else return;
     e.preventDefault();set(nv);
   });
-  set(50);
+  ba.__set=set;set(+(ba.getAttribute("data-pos")||50));
+}
+[].slice.call(document.querySelectorAll(".ba")).forEach(initBA);
+
+/* 3b. everything we do: Compare buttons, and (when motion is allowed) a pinned picture that crossfades through each variation */
+function slideTo(ba,to){
+  var h=ba.querySelector("[role=slider]"),from=+h.getAttribute("aria-valuenow");
+  if(reduce||!window.requestAnimationFrame){ba.__set(to);return}
+  var t0=null;(function f(ts){if(t0===null)t0=ts;var u=clamp((ts-t0)/240,0,1);u=1-Math.pow(1-u,3);ba.__set(from+(to-from)*u);if(u<1)requestAnimationFrame(f)})(performance.now());
+}
+[].slice.call(document.querySelectorAll(".all-cmp")).forEach(function(b){
+  b.addEventListener("click",function(){var on=b.getAttribute("aria-pressed")==="true",ba=b.closest(".all-item").querySelector(".ba");b.setAttribute("aria-pressed",on?"false":"true");b.textContent=on?"Compare before and after":"Hide comparison";slideTo(ba,on?0:50)});
+});
+var all=document.getElementById("all");
+if(all&&!reduce){
+  var aItems=[].slice.call(all.querySelectorAll(".all-item")),am=aItems.length,aStage=all.querySelector(".all-stage"),aPin=all.querySelector(".all-pin"),aCount=all.querySelector(".all-count"),aShown=0,aQ=false,aLive=false;
+  var aPaint=function(){
+    aQ=false;
+    var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight,p=total>0?clamp(-r.top/total,0,1):0,pos=p*(am-1);
+    for(var i=0;i<am;i++){
+      var d=Math.abs(pos-i),o=clamp((0.75-d)/0.5,0,1);o=o*o*(3-2*o);
+      var it=aItems[i];
+      it.style.opacity=o;
+      it.style.transform="translateY("+((i-pos)*18).toFixed(1)+"px) scale("+(1-0.03*(1-o)).toFixed(4)+")";
+      it.style.visibility=o<0.02?"hidden":"visible";
+      it.style.pointerEvents=o>0.6?"auto":"none";
+    }
+    var cur=Math.round(pos)+1;if(cur!==aShown){aShown=cur;aCount.textContent=cur+" / "+am}
+  };
+  var aAsk=function(){if(!aQ){aQ=true;requestAnimationFrame(aPaint)}};
+  all.classList.add("all-motion");
+  aPaint();
+  if("IntersectionObserver" in window){
+    new IntersectionObserver(function(es){
+      var on=es[0].isIntersecting;
+      if(on&&!aLive){addEventListener("scroll",aAsk,{passive:true});addEventListener("resize",aAsk);aLive=true;aAsk()}
+      else if(!on&&aLive){removeEventListener("scroll",aAsk);removeEventListener("resize",aAsk);aLive=false;aAsk()}
+    },{rootMargin:"20% 0px"}).observe(all);
+  }else{addEventListener("scroll",aAsk,{passive:true});addEventListener("resize",aAsk)}
 }
 
 /* 5. hvac dial and repair-or-replace */
@@ -3926,6 +4001,7 @@ if(dataEl){
 /* the rest fades in on scroll */
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".rv"));
+var kids=new Map();els.forEach(function(el){var k=(kids.get(el.parentNode)||0);kids.set(el.parentNode,k+1);el.style.setProperty("--rvi",Math.min(k,5))});
 els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
 root.classList.add("cine-reveal");
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
@@ -4000,6 +4076,17 @@ function generateCinematic(form, d, deps) {
   </div>
   <p class="ba-cap" aria-hidden="true"><span>${esc(baTags(d.tradeKey)[0])}</span><span>${esc(baTags(d.tradeKey)[1])}</span></p>
 </div></section>` : "";
+
+  // Everything we do: every variation the owner offers, each with its before and after
+  const allCards = variantCards(CINE_KIT[d.tradeKey], cine.offer);
+  const allSec = allCards.length >= 2 ? `<section class="sec dark-sec all" id="all" style="--n:${allCards.length}" aria-label="Everything we do">
+  <div class="wrap"><div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Everything we <em>do</em>.</h2><p class="lede">Tap Compare to see each kind of job before and after.</p></div></div>
+  <div class="all-stage"><div class="all-pin"><div class="wrap all-grid">${allCards.map((c, i) => `<article class="all-item" data-i="${i}">
+    <div class="ba all-ba" data-pos="0"><img class="after" src="${esc(slotSrc(c.after, `${c.label}, after`, { labelSide: "right" }))}"${safeImage(images[c.after]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" loading="lazy"><img class="before" src="${esc(slotSrc(c.before, `${c.label}, before`, { labelSide: "left" }))}"${safeImage(images[c.before]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[0]).toLowerCase()}" loading="lazy">
+      <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(c.label)}: ${esc(baTags(d.tradeKey)[0]).toLowerCase()} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div></div>
+    <div class="all-cap"><h3 class="all-name">${esc(c.label)}</h3><div class="all-btns"><button type="button" class="btn btn-glass btn-sm all-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent btn-sm" href="#contact">Ask about this</a></div></div>
+  </article>`).join("")}</div><p class="all-count" aria-hidden="true">1 / ${allCards.length}</p></div></div>
+</section>` : "";
 
   // 4. Price estimator: typed ranges only, hidden when there are none
   let priceSec = "";
@@ -4113,6 +4200,7 @@ ${stylesSec}
 ${hvacSec}
 ${baSec}
 ${priceSec}
+${allSec}
 ${services}
 ${reviews}
 ${contact}
@@ -4188,7 +4276,7 @@ const edAccent = (text, accent) => {
 };
 
 const ED_CSS = `
-:root{--ed-serif:"Bodoni Moda","Playfair Display","Didot",Georgia,serif;--ed-sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ed-cream:#ece5dc;--ed-cream2:#e2d9cd;--ed-paper:#f5f0e8;--ed-ink:#161412;--ed-muted:#5d564d;--ed-line:rgba(22,20,18,.2);--ed-card:24px;--ed-dark:#14110f;--ed-ease:cubic-bezier(.23,1,.32,1);--ed-max:1240px;--ed-nav:64px;color-scheme:light}
+:root{--ed-serif:"Bodoni Moda","Playfair Display","Didot",Georgia,serif;--ed-sans:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ed-cream:#ece5dc;--ed-cream2:#e2d9cd;--ed-paper:#f5f0e8;--ed-ink:#161412;--ed-muted:#5d564d;--ed-line:rgba(22,20,18,.2);--ed-card:24px;--ed-dark:#14110f;--ed-ease:cubic-bezier(.23,1,.32,1);--ed-out:cubic-bezier(.22,1,.36,1);--ed-max:1240px;--ed-nav:64px;color-scheme:light}
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:84px}
 section[id]{scroll-margin-top:84px}
@@ -4328,6 +4416,30 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-rvw-by{margin:14px 0 0;font:600 14px/1.3 var(--ed-sans);color:var(--ed-muted);overflow-wrap:anywhere}
 .ed-rvw-more{margin:26px 0 0}
 @media (min-width:900px){.ed-rvw-list{grid-template-columns:repeat(3,1fr);gap:20px}}
+.ed-all{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}
+.ed-all-card{display:grid;gap:10px;width:100%;text-align:left;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;transition:transform .2s var(--ed-ease)}
+.ed-all-card:active{transform:scale(.98)}
+@media (hover:hover){.ed-all-card:hover{transform:translateY(-3px)}}
+.ed-all-pic{position:relative;display:block;aspect-ratio:4/5;border-radius:var(--ed-card);overflow:hidden;background:var(--ed-cream2)}
+.ed-all-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
+.ed-all-name{font:500 clamp(18px,4.2vw,26px)/1.2 var(--ed-serif);overflow-wrap:anywhere}
+.ed-all-hint{font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-accent)}
+.ed-dlg{border:0;padding:0;border-radius:var(--ed-card);width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--ed-paper);color:var(--ed-ink)}
+.ed-dlg::backdrop{background:rgba(20,17,15,.62)}
+.ed-dlg-in{display:grid;gap:14px;padding:20px;justify-items:start}
+.ed-dlg-in h3{font:500 clamp(24px,5vw,32px)/1.1 var(--ed-serif);padding-right:52px}
+.ed-dlg-x{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--ed-line);background:var(--ed-cream);color:var(--ed-ink);font-size:26px;line-height:1;cursor:pointer;transition:transform .18s var(--ed-ease)}
+.ed-dlg-x:active{transform:scale(.94)}
+.ed-cmp{position:relative;justify-self:stretch;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--ed-cream2)}
+.ed-cmp>span{position:absolute;inset:0;display:block}
+.ed-cmp img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
+.ed-cmp-b{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
+.ed-cmp-r{justify-self:stretch;width:100%;min-height:44px;accent-color:var(--ed-accent)}
+.ed-cmp-cap{justify-self:stretch;display:flex;justify-content:space-between;font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-muted)}
+.ed-no-js .ed-dlg{display:block;position:static;margin:12px 0 0;width:auto;border:1px solid var(--ed-line)}
+.ed-no-js .ed-all-card{display:none}
+@media (prefers-reduced-motion:no-preference){.ed-dlg[open]{animation:ed-dlg-in .22s var(--ed-ease)}@keyframes ed-dlg-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}}
+@media (min-width:900px){.ed-all{grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 20px}}
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
@@ -4343,10 +4455,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-foot .ed-wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:32px calc(104px + env(safe-area-inset-bottom,0px))}
 .ed-foot b{font:500 22px/1.2 var(--ed-serif);color:var(--ed-cream)}
 @media (prefers-reduced-motion:no-preference){
-  .ed-rise .ed-rv{transition:opacity .9s var(--ed-ease),transform .9s var(--ed-ease)}
-  .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(22px)}
+  .ed-rise .ed-rv{transition:opacity .8s var(--ed-out),transform .8s var(--ed-out);transition-delay:calc(var(--rvi,0) * 70ms)}
+  .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(26px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name,.ed-all-card,.ed-dlg-x{transition:none}}
 @media (min-width:760px){
   .ed-meta{grid-template-columns:repeat(var(--n,3),minmax(0,1fr))!important}
   #price{padding-bottom:48px}
@@ -4423,6 +4535,14 @@ if(rows.length){
     });
   });
 }
+/* everything we do: a tap opens the card's before and after */
+[].slice.call(document.querySelectorAll(".ed-all-card")).forEach(function(b){var dlg=document.getElementById(b.getAttribute("aria-controls"));b.addEventListener("click",function(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","")})});
+[].slice.call(document.querySelectorAll(".ed-dlg")).forEach(function(dlg){
+  var cmp=dlg.querySelector(".ed-cmp"),r=dlg.querySelector(".ed-cmp-r"),shut=function(){if(dlg.close)dlg.close();else dlg.removeAttribute("open")};
+  r.addEventListener("input",function(){cmp.style.setProperty("--pos",r.value)});
+  dlg.querySelector(".ed-dlg-x").addEventListener("click",shut);
+  dlg.addEventListener("click",function(e){if(e.target===dlg)shut()});
+});
 /* price estimator: only the ranges the owner typed */
 var dataEl=document.getElementById("est-data");
 if(dataEl){
@@ -4446,6 +4566,7 @@ var cta=document.getElementById("ed-cta");function past(){root.classList.toggle(
 if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".ed-rv"));
+var kids=new Map();els.forEach(function(el){var k=(kids.get(el.parentNode)||0);kids.set(el.parentNode,k+1);el.style.setProperty("--rvi",Math.min(k,5))});
 els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
 root.classList.add("ed-rise");
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
@@ -4476,7 +4597,10 @@ function generateEditorial(form, d, deps) {
   const slots = cineSlots(kit);
   // Optional service pictures (kit.editorial.extra) behave like slots here.
   const extras = (kit.editorial && kit.editorial.extra) || [];
-  const slotLabel = (id) => (slots.find((s) => s.id === id) || extras.find((x) => x.id === id) || {}).label || id;
+  const varLabels = {}; // "Standing-seam metal, after" for the Everything we do pictures
+  const allCards = variantCards(CINE_KIT[d.tradeKey], cine.offer);
+  allCards.forEach((c) => { varLabels[c.after] = `${c.label}, after`; varLabels[c.before] = `${c.label}, before`; });
+  const slotLabel = (id) => varLabels[id] || (slots.find((s) => s.id === id) || extras.find((x) => x.id === id) || {}).label || id;
   // Once the owner has real photos, leftover drawn placeholders switch to a quieter style.
   const anyReal = Object.values(images).some((v) => safeImage(v));
   const src = (id, o) => safeImage(images[id]) || placeholderArt(d.tradeKey, id, slotLabel(id), anyReal ? { ...(o || {}), quiet: true } : o);
@@ -4618,6 +4742,16 @@ function generateEditorial(form, d, deps) {
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
 </div></section>`;
 
+  // Everything we do: a card for every variation the owner offers; a tap opens its before and after
+  const allSec = allCards.length >= 2 ? `<section class="ed-sec" id="all" data-ed="all"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Everything we do</p><h2>Every kind of <em>job</em></h2></div>
+  <ul class="ed-all">${allCards.map((c, i) => `<li class="ed-rv"><button type="button" class="ed-all-card" data-ed="all-card" aria-haspopup="dialog" aria-controls="ed-dlg-${i}"><span class="ed-all-pic">${pic(c.after)}</span><span class="ed-all-name">${esc(c.label)}</span><span class="ed-all-hint">Before and after</span></button>
+  <dialog class="ed-dlg" id="ed-dlg-${i}" aria-label="${esc(c.label)}, before and after"><div class="ed-dlg-in"><button type="button" class="ed-dlg-x" aria-label="Close">&times;</button><h3>${esc(c.label)}</h3>
+    <div class="ed-cmp" style="--pos:50"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
+    <input type="range" class="ed-cmp-r" min="0" max="100" value="50" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p>
+    <a class="ed-btn" href="#contact">Ask about this</a></div></dialog></li>`).join("")}</ul>
+</div></section>` : "";
+
   // Services: large numbered rows, the open row swaps the picture
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
@@ -4716,6 +4850,7 @@ ${hero}
 ${trust}
 ${beat}
 ${work}
+${allSec}
 ${svc}
 ${est}
 ${process}
@@ -4747,6 +4882,7 @@ ${ED_JS}
 //   cinematic (default false: the scroll-story site, see cinematic.js), cine,
 //   look ("cinematic" default or "editorial", see editorial.js) and editorial
 // }
+
 
 
 
@@ -4833,10 +4969,10 @@ const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 
 // Section order and style per layout, so trades do not look like clones.
 const LAYOUTS = {
-  band: { order: ["services", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
-  ledger: { order: ["services", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
-  split: { order: ["process", "services", "reviews", "faq", "area"], services: "columns", trust: "paper" },
-  stat: { order: ["services", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
+  band: { order: ["services", "all", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
+  ledger: { order: ["services", "all", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
+  split: { order: ["process", "services", "all", "reviews", "faq", "area"], services: "columns", trust: "paper" },
+  stat: { order: ["services", "all", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
 };
 
 // Font size that keeps the headline to 3 lines (2 on wide band heroes).
@@ -4856,6 +4992,8 @@ function generateSite(form) {
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
+  const cineImgs = (form && form.cine && form.cine.images) || {};
+  const allCards = variantCards(CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.offer);
   const L = LAYOUTS[lay];
   const tradeName = t.label.replace(/ \(.*\)$/, "");
   const hero = safeImage(form && form.heroImage);
@@ -4951,6 +5089,10 @@ function generateSite(form) {
   <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
   <div class="body">${services}</div>
 </div></section>`,
+    all: (tint) => allCards.length >= 2 ? `<section class="sec${tint}" id="all"><div class="wrap">
+  <h2 class="rv">Everything we do</h2>
+  <ul class="all-list">${allCards.map((c) => `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : placeholderArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><a class="all-ask" href="#contact">Ask about this</a></li>`).join("")}</ul>
+</div></section>` : "",
     process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
@@ -5124,6 +5266,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:var(--line);width:100%}
+.all-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:0}
+.all-list li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.all-thumb{grid-row:1/span 2;width:96px;height:72px;object-fit:cover;border-radius:6px;display:block;background:var(--tint,#eee)}
+.all-name{font-weight:600;font-size:19px;overflow-wrap:anywhere}
+.all-ask{justify-self:start;font-weight:600;color:var(--ink);text-underline-offset:4px;padding:6px 0}
+@media (min-width:760px){.all-list{grid-template-columns:1fr 1fr;gap:0 40px}.all-list li{grid-template-columns:120px minmax(0,1fr)}.all-thumb{width:120px;height:90px}}
 .rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
 .rvw{border-top:1px solid var(--line);padding-top:18px}
 .rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--accent)}
@@ -5370,6 +5518,14 @@ const PICTURE_LIBRARY = {};
   const variantOf = {}; // trade -> picked variation key (default: the first)
   const libOn = {}; // "trade|variation" -> false when the checkbox is off
   const libTag = (key) => key + "|" + (variantOf[key] || "");
+  const offerOff = {}; // trade -> { variationKey: true } for the unticked "Services we offer"
+  const offerNow = (key) => ((CINE_KIT[key] && CINE_KIT[key].variants) || []).map((v) => v.key).filter((k) => !(offerOff[key] || {})[k]);
+  // Pictures the finished site needs: the picked variation's slots, plus the before and after of every variation offered.
+  const libIdsNow = (key) => {
+    const ids = slotIdsNow(key);
+    for (const c of variantCards(CINE_KIT[key], offerNow(key))) for (const id of [c.after, c.before]) if (!ids.includes(id)) ids.push(id);
+    return ids;
+  };
   const libGone = {}; // trade -> { slotId: true } removed library pictures
   // The kit of the picked variation (the trade's own kit when it has none) and its slot ids.
   const kitNow = (key) => kitVariant(CINE_KIT[key], variantOf[key]);
@@ -5379,18 +5535,32 @@ const PICTURE_LIBRARY = {};
   function libFor(key) {
     if (!hasLib(key) || libOn[libTag(key)] === false) return {};
     const gone = libGone[key] || {}, o = {}, data = LIBDATA[key] || {};
-    for (const id of slotIdsNow(key)) if (data[id] && !gone[id]) o[id] = data[id];
+    for (const id of libIdsNow(key)) if (data[id] && !gone[id]) o[id] = data[id];
     return o;
   }
   const blobToData = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); });
+  // Pictures that are only card and compare images (other variations' before and after) are shrunk to 960 px wide so
+  // the finished page stays small. The picked variation's own pictures stay full size.
+  const THUMB_W = 960, thumbOnly = {}; // trade -> { slotId: true }
+  async function blobToThumb(blob) {
+    try {
+      const bmp = await createImageBitmap(blob);
+      if (bmp.width <= THUMB_W) return await blobToData(blob);
+      const c = document.createElement("canvas"); c.width = THUMB_W; c.height = Math.round(bmp.height * THUMB_W / bmp.width);
+      c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+      const u = c.toDataURL("image/webp", 0.72);
+      return u.startsWith("data:image/webp") ? u : await blobToData(blob);
+    } catch (_) { return blobToData(blob); }
+  }
   function libStatus(msg, bad) { const s = $("lib-status"); if (s) { s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); } }
   // Fetch the trade's library files that are not embedded. Safe to call again: one fetch per trade.
   function ensureLib(key) {
     if (!IDX[key]) return Promise.resolve();
-    const tag = key + "|" + (variantOf[key] || "");
+    const tag = key + "|" + (variantOf[key] || "") + "|" + Object.keys(offerOff[key] || {}).sort().join(",");
     if (libLoad[tag]) return libLoad[tag];
     const have = LIBDATA[key] || {};
-    const need = slotIdsNow(key).filter((id) => IDX[key][id] && !have[id]); // only this variation's pictures
+    const own = slotIdsNow(key);
+    const need = libIdsNow(key).filter((id) => IDX[key][id] && (!have[id] || (thumbOnly[key] || {})[id] && own.includes(id))); // this variation's pictures and the offered variations' before/after
     if (!need.length) return Promise.resolve();
     libFailed[tag] = 0;
     if (tradeSel.value === key) libStatus("Loading library pictures...");
@@ -5398,7 +5568,9 @@ const PICTURE_LIBRARY = {};
       try {
         const r = await fetch(IDX[key][id].file);
         if (!r.ok) throw new Error("http " + r.status);
-        (LIBDATA[key] = LIBDATA[key] || {})[id] = await blobToData(await r.blob());
+        const small = !own.includes(id), blob = await r.blob();
+        (LIBDATA[key] = LIBDATA[key] || {})[id] = small ? await blobToThumb(blob) : await blobToData(blob);
+        (thumbOnly[key] = thumbOnly[key] || {})[id] = small;
       } catch (_) { libFailed[tag]++; }
     })).then(() => {
       if (tradeSel.value === key && (variantOf[key] || "") === tag.split("|")[1]) {
@@ -5459,8 +5631,10 @@ const PICTURE_LIBRARY = {};
   function buildVariant(key) {
     const vs = (CINE_KIT[key] && CINE_KIT[key].variants) || [];
     $("variant-wrap").hidden = vs.length < 2;
+    $("offer-wrap").hidden = vs.length < 2;
     if (vs.length < 2) return;
     const cur = variantKey(CINE_KIT[key], variantOf[key]);
+    $("offer-box").innerHTML = vs.map((v) => '<label class="check"><input type="checkbox" data-offer="' + esc(v.key) + '"' + ((offerOff[key] || {})[v.key] ? "" : " checked") + "><span>" + esc(v.label || v.key) + "</span></label>").join("");
     $("variant").innerHTML = vs.map((v) => '<option value="' + esc(v.key) + '"' + (v.key === cur ? " selected" : "") + ">" + esc(v.label || v.key) + "</option>").join("");
   }
 
@@ -5520,7 +5694,7 @@ const PICTURE_LIBRARY = {};
       cinematic: hasCine && $("look").value === "cinematic",
       look: hasCine ? $("look").value : undefined,
       editorial: hasCine ? { projects: edProjects } : undefined,
-      cine: hasCine ? { variant: variantOf[tradeSel.value] || "", images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
+      cine: hasCine ? { variant: variantOf[tradeSel.value] || "", offer: (CINE_KIT[tradeSel.value] && (CINE_KIT[tradeSel.value].variants || []).length > 1) ? offerNow(tradeSel.value) : undefined, images: effectiveImages(tradeSel.value), prices: cinePrices[tradeSel.value] || {}, unit: cineUnit(tradeSel.value, cineUnits[tradeSel.value]), repairPct: cineRpct[tradeSel.value] || "" } : undefined,
     };
   }
 
@@ -5554,6 +5728,7 @@ const PICTURE_LIBRARY = {};
     if (e.target.name === "theme") themeTouched = true;
     if (e.target.id === "hero-url") onHeroUrl();
     if (e.target.id === "look") buildCine();
+    if (e.target.dataset && e.target.dataset.offer) { const o = offerOff[tradeSel.value] = offerOff[tradeSel.value] || {}; if (e.target.checked) delete o[e.target.dataset.offer]; else o[e.target.dataset.offer] = true; ensureLib(tradeSel.value); }
     if (e.target.id === "variant") { variantOf[tradeSel.value] = e.target.value; buildCine(); ensureLib(tradeSel.value); }
     if (e.target.id === "use-library") { libOn[libTag(tradeSel.value)] = e.target.checked; buildCine(); }
     if (e.target.dataset && e.target.dataset.pi !== undefined) edProjects[+e.target.dataset.pi][e.target.dataset.pk] = e.target.value;

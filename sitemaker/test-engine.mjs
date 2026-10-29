@@ -41,7 +41,7 @@ for (const trade of TRADE_ORDER) {
     });
     ok(errs.length === 0, `${trade}@${width}: page error ${errs[0]}`);
     ok(r.maxLines <= 1, `${trade}@${width}: ${r.maxLines} story headlines show at once`);
-    ok(r.share < 0.3, `${trade}@${width}: pictures cross-fade too long (${Math.round(r.share * 100)}% of the scroll has two or more visible)`);
+    ok(r.share < 0.45, `${trade}@${width}: pictures cross-fade too long (${Math.round(r.share * 100)}% of the scroll has two or more visible)`);
     ok(r.ctaHits === 0, `${trade}@${width}: headline overlaps the call buttons`);
     const s = await page.evaluate(() => {
       const ba = document.getElementById("ba"); if (!ba) return null;

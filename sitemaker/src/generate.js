@@ -19,6 +19,7 @@ import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
+import { variantCards } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
 import { cineLook, placeholderArt } from "./cine-look.js";
 
@@ -100,10 +101,10 @@ const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 
 // Section order and style per layout, so trades do not look like clones.
 const LAYOUTS = {
-  band: { order: ["services", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
-  ledger: { order: ["services", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
-  split: { order: ["process", "services", "reviews", "faq", "area"], services: "columns", trust: "paper" },
-  stat: { order: ["services", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
+  band: { order: ["services", "all", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
+  ledger: { order: ["services", "all", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
+  split: { order: ["process", "services", "all", "reviews", "faq", "area"], services: "columns", trust: "paper" },
+  stat: { order: ["services", "all", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
 };
 
 // Font size that keeps the headline to 3 lines (2 on wide band heroes).
@@ -123,6 +124,8 @@ export function generateSite(form) {
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
+  const cineImgs = (form && form.cine && form.cine.images) || {};
+  const allCards = variantCards(CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.offer);
   const L = LAYOUTS[lay];
   const tradeName = t.label.replace(/ \(.*\)$/, "");
   const hero = safeImage(form && form.heroImage);
@@ -218,6 +221,10 @@ export function generateSite(form) {
   <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
   <div class="body">${services}</div>
 </div></section>`,
+    all: (tint) => allCards.length >= 2 ? `<section class="sec${tint}" id="all"><div class="wrap">
+  <h2 class="rv">Everything we do</h2>
+  <ul class="all-list">${allCards.map((c) => `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : placeholderArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><a class="all-ask" href="#contact">Ask about this</a></li>`).join("")}</ul>
+</div></section>` : "",
     process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
@@ -391,6 +398,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
 .stars-row svg{position:absolute;top:0}
 .stars-row.off{color:var(--line);width:100%}
+.all-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:0}
+.all-list li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.all-thumb{grid-row:1/span 2;width:96px;height:72px;object-fit:cover;border-radius:6px;display:block;background:var(--tint,#eee)}
+.all-name{font-weight:600;font-size:19px;overflow-wrap:anywhere}
+.all-ask{justify-self:start;font-weight:600;color:var(--ink);text-underline-offset:4px;padding:6px 0}
+@media (min-width:760px){.all-list{grid-template-columns:1fr 1fr;gap:0 40px}.all-list li{grid-template-columns:120px minmax(0,1fr)}.all-thumb{width:120px;height:90px}}
 .rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
 .rvw{border-top:1px solid var(--line);padding-top:18px}
 .rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--accent)}

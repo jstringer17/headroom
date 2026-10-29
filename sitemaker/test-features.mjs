@@ -279,6 +279,28 @@ for (const trade of ["roofing", "plumbing", "junk"]) for (const look of LOOKS) {
   await page.ctx.close();
 }
 
+// ---------- 7. Everything we do: Services we offer (variations), in every look ----------
+for (const trade of ["roofing", "fencing", "pressure"]) for (const look of LOOKS) {
+  const page = await open(); await setup(page, { trade, look });
+  const n = await page.$$eval("#offer-box input", (e) => e.length);
+  const cnt = (h) => look === "cinematic" ? (h.match(/class="all-item"/g) || []).length : look === "editorial" ? (h.match(/data-ed="all-card"/g) || []).length : (h.match(/class="all-thumb"/g) || []).length;
+  rec("Services we offer: a checkbox for every variation, all ticked", look, trade, n >= 5 && (await page.$$eval("#offer-box input:checked", (e) => e.length)) === n && await page.isVisible("#offer-wrap"), `${n} boxes`);
+  let h = await page.html();
+  rec("Everything we do lists every variation", look, trade, h.includes('id="all"') && cnt(h) === n, `${cnt(h)} of ${n}`);
+  await page.uncheck("#offer-box input >> nth=1"); await page.settle(); h = await page.html();
+  rec("Unticking a service removes it from Everything we do", look, trade, cnt(h) === n - 1, `${cnt(h)} left of ${n}`);
+  for (let i = 2; i < n; i++) await page.uncheck(`#offer-box input >> nth=${i}`);
+  await page.settle(); h = await page.html();
+  rec("With fewer than two services ticked the section is hidden", look, trade, !h.includes('id="all"'), "section still shown");
+  await page.ctx.close();
+}
+for (const look of LOOKS) { // trades without variations have no group and no section
+  const page = await open(); await setup(page, { trade: "hvac", look });
+  const h = await page.html();
+  rec("Trade without variations: no Services we offer group and no Everything we do", look, "hvac", !(await page.isVisible("#offer-wrap")) && !h.includes('id="all"'), "shown for hvac");
+  await page.ctx.close();
+}
+
 rec("Reset button", "n/a", "n/a", true, "");  // there is no Reset control in the maker; listed so the gap is visible
 rows[rows.length - 1].note = "no Reset control exists in the maker (N/A)";
 

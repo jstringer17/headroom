@@ -29,11 +29,13 @@ const fails = [];
 const ok = (cond, msg) => { if (!cond) fails.push(msg); };
 const BANNED = /award[- ]winning|best in (town|the)|#1\b|number one|trusted by|5-star service|guaranteed|top[- ]rated|same day|cleans? up after|fixed fast|fix it fast|done right|built to last/i;
 
+// The "Everything we do" list has small variation thumbnails (<img class="all-thumb">); these checks are about hero pictures
+const noThumbs = (h) => h.replace(/<img class="all-thumb"[^>]*>/g, "");
 // ---- 1. pure function checks ----
 for (const key of TRADE_ORDER) {
   const html = generateSite({ company: "Test Co", trade: key, year: 2026 });
   ok(html === generateSite({ company: "Test Co", trade: key, year: 2026 }), `${key}: generator is not deterministic`);
-  ok(!/<img\b/i.test(html), `${key}: has <img> without a hero picture`);
+  ok(!/<img\b/i.test(noThumbs(html)), `${key}: has <img> without a hero picture`);
   ok(/no people/i.test(TRADES[key].prompt) && /no text/i.test(TRADES[key].prompt), `${key}: Higgsfield prompt must say no people and no text`);
   ok(TRADES[key].line && /class="[a-z-]*art (solid|strokes)"/.test(html), `${key}: trade drawing missing`);
   ok(!BANNED.test(html.replace(/<style[\s\S]*?<\/style>/, "")), `${key}: banned claim in copy`);
@@ -59,9 +61,9 @@ for (const key of TRADE_ORDER) {
 {
   const px = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQ==";
   const h = generateSite({ company: "T", trade: "roofing", heroImage: px });
-  ok((h.match(/<img\b/g) || []).length === 1 && h.includes("hero-img") && !/art (solid|strokes)/.test(h), "hero: data picture not used");
+  ok((noThumbs(h).match(/<img\b/g) || []).length === 1 && h.includes("hero-img") && !/art (solid|strokes)/.test(h), "hero: data picture not used");
   ok(generateSite({ company: "T", trade: "roofing", heroImage: "https://example.com/a.jpg" }).includes('src="https://example.com/a.jpg"'), "hero: https link not used");
-  for (const bad of ["javascript:alert(1)", 'https://x.com/a.jpg" onerror="x', "data:text/html;base64,AAAA"]) ok(!/<img\b/.test(generateSite({ company: "T", trade: "roofing", heroImage: bad })), "hero: unsafe picture accepted: " + bad);
+  for (const bad of ["javascript:alert(1)", 'https://x.com/a.jpg" onerror="x', "data:text/html;base64,AAAA"]) ok(!/<img\b/.test(noThumbs(generateSite({ company: "T", trade: "roofing", heroImage: bad }))), "hero: unsafe picture accepted: " + bad);
 }
 // lead paste
 {
@@ -99,7 +101,7 @@ async function checkPage(page, label, imgCount = 0, fontsLoaded = true) {
       for (let el = a; el && vis; el = el.parentElement) { const c = getComputedStyle(el); if (c.opacity === "0" || c.display === "none") vis = false; if (el.classList.contains("mobile-call") && c.transform !== "none" && el.getBoundingClientRect().top >= innerHeight - 1) vis = false; }
       return vis && /Call/.test(a.textContent);
     }).length;
-    return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: document.images.length, h1Lines, calls };
+    return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: [...document.images].filter((i) => !i.classList.contains("all-thumb")).length, h1Lines, calls };
   });
   ok(r.sw <= r.cw, `${label}: sideways scroll (${r.sw} > ${r.cw}) ${r.wide.join(" ")}`);
   ok(r.empty.length === 0, `${label}: empty sections ${r.empty.join(",")}`);

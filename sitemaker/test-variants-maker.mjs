@@ -10,7 +10,7 @@ import { deflateSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { dirname, join, extname } from "node:path";
 import { CINE_KIT } from "./src/cine-kit.js";
-import { ownSlotIds, kitSlotIds, kitVariant } from "./src/variants.js";
+import { ownSlotIds, kitSlotIds, kitVariant, variantCards } from "./src/variants.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -37,7 +37,8 @@ for (const t of TRADES) for (const v of CINE_KIT[t].variants) {
     const rel = id.includes("/") ? id : id; // variant slots carry their folder in the id
     const dest = join(root, "library", t, rel + ".webp");
     mkdirSync(dirname(dest), { recursive: true });
-    copyFileSync(sampleWebp, dest);
+    const real = join(here, "library", t, id + ".webp");
+    copyFileSync(existsSync(real) ? real : sampleWebp, dest); // the real picture when the library has it, so sizes are honest
   }
 }
 const b = node([join(here, "build.mjs"), "--lazy", "--library", join(root, "library"), "--kit-patch", patch, "--out", "test-out/var/maker.html"]);
@@ -75,6 +76,8 @@ for (const t of TRADES) {
     await page.waitForFunction((n) => document.querySelectorAll("#cine-slots .slot .lib-tag:not([hidden])").length >= n, own.length, { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(400);
     const lib = requests.filter((r) => r.startsWith(`/library/${t}/`));
+    // picking the trade already fetched shrunk copies of every offered variation's before and after (for "Everything we do"); picking one re-fetches its own set at full size
+    const cardIds = new Set(variantCards(CINE_KIT[t]).flatMap((c) => [c.before, c.after]));
     const want = own.map((id) => `/library/${t}/${id}.webp`).sort();
     const loaded = (v === vs[0] ? lib : lib).sort();
     // lazy loading for this variation: only its own files (a default repeat is served from memory, so allow zero re-fetches)
@@ -117,6 +120,75 @@ for (const t of TRADES) {
   await page.waitForTimeout(400);
   ok(await page.isChecked("#use-library"), "variant state: library checkbox is not back on for another variation");
   await page.close();
+}
+// "Everything we do": every offered variation on the finished site, in all three looks; unticking one hides it
+for (const t of TRADES) for (const look of ["cinematic", "editorial", "classic"]) {
+  const vs = CINE_KIT[t].variants, cards = variantCards(CINE_KIT[t]);
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  const errs = []; page.on("pageerror", (e) => errs.push(e.message));
+  await page.goto(`${base}/maker.html`, { waitUntil: "load" });
+  await page.fill("#company", "Variant Test Co");
+  await page.selectOption("#trade", t);
+  await page.selectOption("#look", look);
+  await page.waitForFunction((n) => document.querySelectorAll("#offer-box input:checked").length === n, vs.length, { timeout: 15000 }).catch(() => {});
+  await page.waitForTimeout(1200);
+  ok(await page.isVisible("#offer-wrap") && (await page.$$eval("#offer-box input", (e) => e.length)) === vs.length && (await page.$$eval("#offer-box input:checked", (e) => e.length)) === vs.length, `${t}/${look}: Services we offer is not shown with every variation ticked`);
+  const count = (h) => look === "cinematic" ? (h.match(/class="all-item"/g) || []).length : look === "editorial" ? (h.match(/data-ed="all-card"/g) || []).length : (h.match(/class="all-thumb"/g) || []).length;
+  let doc = await page.$eval("#frame", (f) => f.srcdoc);
+  ok(doc.includes('id="all"') && count(doc) === vs.length, `${t}/${look}: Everything we do should list all ${vs.length} variations, found ${count(doc)}`);
+  for (const c of cards) ok(doc.includes(c.label.replace(/&/g, "&amp;")) || doc.includes(c.label), `${t}/${look}: "${c.label}" is missing from Everything we do`);
+  const imgs = (doc.match(/data:image\/webp;base64,/g) || []).length;
+  ok(imgs >= vs.length, `${t}/${look}: only ${imgs} library pictures in the site, expected one per variation or more`);
+  // untick the second variation
+  await page.uncheck(`#offer-box input[data-offer="${vs[1].key}"]`);
+  await page.waitForTimeout(500);
+  doc = await page.$eval("#frame", (f) => f.srcdoc);
+  ok(count(doc) === vs.length - 1 && !doc.includes(`aria-label="${vs[1].label}`) && !new RegExp(`>${vs[1].label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}<`).test(doc), `${t}/${look}: unticking ${vs[1].key} did not remove it (${count(doc)} left)`);
+  // Download is one file and inlines the pictures
+  const dl = page.waitForEvent("download"); await page.click("#download"); const file = await dl;
+  const text = readFileSync(await file.path(), "utf8");
+  const mb = text.length / 1048576;
+  ok(!/src="library\//.test(text) && text.includes('id="all"') && mb < 6, `${t}/${look}: download is ${mb.toFixed(2)} MB or still points at library files`);
+  ok(errs.length === 0, `${t}/${look}: page errors ${errs.join("; ")}`);
+  await page.close();
+}
+// a viewer at 375: no sideways scroll in any look, and the pinned crossfade changes the picture shown as the page scrolls
+{
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  const errs = []; page.on("pageerror", (e) => errs.push(e.message)); page.on("console", (m) => { if (m.type() === "error") errs.push(m.text()); });
+  await page.goto(`${base}/maker.html`, { waitUntil: "load" });
+  await page.fill("#company", "Variant Test Co"); await page.selectOption("#trade", "roofing"); await page.waitForTimeout(1500);
+  const html = await page.$eval("#frame", (f) => f.srcdoc);
+  const p2 = await browser.newPage({ viewport: { width: 375, height: 812 } });
+  const e2 = []; p2.on("pageerror", (e) => e2.push(e.message)); p2.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|fonts/.test(m.text())) e2.push(m.text()); });
+  await p2.route("**/*", (q) => (/^(data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await p2.setContent(html, { waitUntil: "load" });
+  await p2.waitForTimeout(400);
+  const sw = await p2.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  ok(sw.sw <= sw.cw, `cinematic@375: sideways scroll ${sw.sw}>${sw.cw}`);
+  ok(await p2.evaluate(() => document.getElementById("all").classList.contains("all-motion")), "cinematic: the pinned Everything we do did not switch on");
+  const seen = new Set();
+  const top = await p2.evaluate(() => document.getElementById("all").getBoundingClientRect().top + scrollY);
+  const tall = await p2.evaluate(() => document.querySelector("#all .all-stage").offsetHeight);
+  for (let i = 0; i <= 5; i++) {
+    await p2.evaluate((y) => scrollTo(0, y), top + 200 + (tall - 812) * (i / 5) * 0.98);
+    await p2.waitForTimeout(250);
+    seen.add(await p2.evaluate(() => { let b = -1, bo = 0; document.querySelectorAll("#all .all-item").forEach((it, k) => { const o = parseFloat(it.style.opacity); if (o > bo) { bo = o; b = k; } }); return b; }));
+  }
+  ok(seen.size >= 4, `cinematic: scrolling Everything we do shows only ${seen.size} different variations: ${[...seen].join(",")}`);
+  // Compare button opens the slider
+  await p2.evaluate(() => scrollTo(0, document.getElementById("all").getBoundingClientRect().top + scrollY + 200)); await p2.waitForTimeout(300);
+  await p2.click("#all .all-item:first-child .all-cmp"); await p2.waitForTimeout(500);
+  ok((await p2.$eval("#all .all-item:first-child [role=slider]", (e) => e.getAttribute("aria-valuenow"))) === "50", "cinematic: Compare did not move the slider to 50");
+  ok(e2.length === 0 && errs.length === 0, `cinematic@375: errors ${[...e2, ...errs].join("; ")}`);
+  // reduced motion: a plain list, no pin
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, reducedMotion: "reduce" });
+  const p3 = await ctx.newPage(); await p3.route("**/*", (q) => (/^(data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await p3.setContent(html, { waitUntil: "load" }); await p3.waitForTimeout(300);
+  ok(!(await p3.evaluate(() => document.getElementById("all").classList.contains("all-motion"))), "reduced motion: Everything we do is still pinned");
+  const sw3 = await p3.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
+  ok(sw3.sw <= sw3.cw, "reduced motion@375: sideways scroll");
+  await ctx.close(); await p3.close(); await p2.close(); await page.close();
 }
 await browser.close();
 server.close();

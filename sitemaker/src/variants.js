@@ -55,3 +55,19 @@ export function ownSlotIds(kit, wanted) {
   if (v.beforeAfter) ids.push((v.beforeAfter.before && v.beforeAfter.before.id) || `${key}/before`, (v.beforeAfter.after && v.beforeAfter.after.id) || `${key}/after`);
   return ids;
 }
+
+// The variations the owner offers (form.cine.offer = list of keys; missing = all). Only trades with 2+ variations.
+export function offeredVariants(kit, offer) {
+  const vs = (kit && kit.variants) || [];
+  if (vs.length < 2) return [];
+  return Array.isArray(offer) ? vs.filter((v) => offer.includes(v.key)) : vs;
+}
+
+// One card per offered variation for the "Everything we do" section: its after picture is the card image and
+// its before and after pair is the detail. The ids are the library's slot ids (default variation keeps bare ids).
+export function variantCards(kit, offer) {
+  return offeredVariants(kit, offer).map((v) => {
+    const kv = kitVariant(kit, v.key), ba = kv.beforeAfter || {};
+    return { key: v.key, label: v.label || v.key, before: (ba.before && ba.before.id) || `${kv.slotPrefix}before`, after: (ba.after && ba.after.id) || `${kv.slotPrefix}after` };
+  });
+}
