@@ -127,7 +127,7 @@ for (const trade of TRADE_ORDER) {
       const errs = []; page.on("pageerror", (e) => errs.push(e.message));
       await page.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
       await page.goto(makerFile, { waitUntil: "load" });
-      ok((await page.inputValue("#look")) === "editorial", `maker@${width}: Look defaults to ${await page.inputValue("#look")}, not editorial`);
+      ok((await page.inputValue("#look")) === "cinematic", `maker@${width}: Look defaults to ${await page.inputValue("#look")}, not cinematic`);
       ok(await page.isVisible("#look"), `maker@${width}: Look select is hidden`);
       await page.fill("#company", "Ridge Top Roofing");
       await page.selectOption("#trade", trade);
