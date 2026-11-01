@@ -1,5 +1,6 @@
-// host-core tests: router by host, publishSite safety, /api/lead (store, email, spam), SEO files, media, notify.
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+// host-core tests (node --test): router by host, publishSite safety, /api/lead (store, email, spam), SEO files, media, notify.
+import { describe, it, beforeEach, afterEach, mock } from "node:test";
+import { expect } from "./expect.js";
 import { mockEnv, mockFetch } from "./mock-env.js";
 import { createApp } from "../src/router.js";
 import { saveSite, getSite, setStatus, clearHostCache, getSiteByHost } from "../src/db.js";
@@ -11,7 +12,7 @@ import { robotsTxt } from "../src/seo.js";
 const FORM_A = { company: "Acme Roofing", trade: "roofing", city: "Austin, TX", phone: "512-555-1234", look: "editorial" };
 const FORM_B = { company: "Best Fence Co", trade: "fencing", city: "Round Rock", phone: "(512) 555-9876", cinematic: true };
 
-let env, app, fetchMock;
+let env, app, fetchMock, realFetch;
 const ctx = { waitUntil() {}, passThroughOnException() {} };
 const get = (url, init) => app.fetch(new Request(url, init), env, ctx);
 const postLead = (host, body, headers = {}) => get(`https://${host}/api/lead`, {
@@ -31,7 +32,8 @@ async function makeSite(form, domain, extra = {}) {
 beforeEach(() => {
   env = mockEnv({ RESEND_API_KEY: "re_test", TURNSTILE_SECRET: "ts_secret" });
   fetchMock = mockFetch();
-  vi.stubGlobal("fetch", fetchMock);
+  realFetch = globalThis.fetch;
+  globalThis.fetch = fetchMock;
   clearHostCache();
   app = createApp({
     adminApp: async () => new Response("admin mock"),
@@ -39,7 +41,7 @@ beforeEach(() => {
     deskApp: async () => new Response("desk mock"),
   });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { globalThis.fetch = realFetch; });
 
 describe("db", () => {
   it("saves, reads and finds a site by host (www and port ignored)", async () => {
@@ -279,13 +281,13 @@ describe("media", () => {
 
 describe("notify", () => {
   it("logs only and sends nothing without keys", async () => {
-    const quiet = vi.spyOn(console, "log").mockImplementation(() => {});
+    const quiet = mock.method(console, "log", () => {});
     const e = await sendEmail({}, { to: "a@b.test", subject: "x", text: "y" });
     const s = await sendSms({}, { to: "+15125550000", text: "y" });
     expect(e).toMatchObject({ ok: false, skipped: true });
     expect(s).toMatchObject({ ok: false, skipped: true });
     expect(fetchMock.calls.email).toHaveLength(0);
-    quiet.mockRestore();
+    quiet.mock.restore();
   });
 });
 

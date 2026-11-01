@@ -1,5 +1,6 @@
 // Shared D1 helpers (host-core owns this file; owner-admin and billing-desk import it).
-// env.DB is the D1 binding. Times are Date.now() milliseconds.
+// env.DB is the D1 binding. Times are ISO text (new Date().toISOString()), see schema.sql.
+export const iso = (ms = Date.now()) => new Date(ms).toISOString();
 
 export const STATUSES = ["draft", "live", "paused", "off"];
 
@@ -44,7 +45,7 @@ export async function getSiteByHost(env, host) {
 
 // Insert or update. site = { id?, form?, ...columns }. Returns the id.
 export async function saveSite(env, site) {
-  const now = Date.now();
+  const now = iso();
   const s = { ...site };
   if (s.form !== undefined) s.form_json = JSON.stringify(s.form || {});
   if (s.domain !== undefined) s.domain = s.domain ? cleanHost(s.domain) : null;
@@ -67,7 +68,7 @@ export async function saveSite(env, site) {
 
 export async function setStatus(env, id, status) {
   if (!STATUSES.includes(status)) throw new Error(`bad status: ${status}`);
-  const r = await env.DB.prepare("UPDATE sites SET status = ?, updated_at = ? WHERE id = ?").bind(status, Date.now(), String(id)).run();
+  const r = await env.DB.prepare("UPDATE sites SET status = ?, updated_at = ? WHERE id = ?").bind(status, iso(), String(id)).run();
   clearHostCache();
   await logEvent(env, id, "status", { status });
   return (r.meta && r.meta.changes) > 0;
@@ -75,7 +76,7 @@ export async function setStatus(env, id, status) {
 
 export async function addLead(env, lead) {
   const r = await env.DB.prepare("INSERT INTO leads (site_id, name, phone, email, service, message, page, created_at, emailed, texted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0)")
-    .bind(lead.site_id, lead.name || "", lead.phone || "", lead.email || "", lead.service || "", lead.message || "", lead.page || "", lead.created_at || Date.now()).run();
+    .bind(lead.site_id, lead.name || "", lead.phone || "", lead.email || "", lead.service || "", lead.message || "", lead.page || "", lead.created_at || iso()).run();
   return r.meta && r.meta.last_row_id;
 }
 
@@ -86,8 +87,8 @@ export async function markLead(env, id, { emailed, texted }) {
 
 export async function logEvent(env, siteId, kind, data) {
   try {
-    await env.DB.prepare("INSERT INTO events (site_id, kind, data, at) VALUES (?, ?, ?, ?)")
-      .bind(siteId == null ? null : String(siteId), kind, data == null ? null : JSON.stringify(data), Date.now()).run();
+    await env.DB.prepare("INSERT INTO events (id, site_id, kind, data, at) VALUES (?, ?, ?, ?, ?)")
+      .bind(`ev_${crypto.randomUUID()}`, siteId == null ? null : String(siteId), kind, data == null ? null : JSON.stringify(data), iso()).run();
   } catch (e) {
     console.log("logEvent failed", kind, e && e.message);
   }

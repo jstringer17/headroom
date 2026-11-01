@@ -1,5 +1,6 @@
 -- Hosted backend database (Cloudflare D1). Shared contract: org/plan.md "Hosted backend".
--- All times are integers: milliseconds since 1970 (Date.now()). paid_through and expires_at too.
+-- All times are ISO 8601 text in UTC: new Date().toISOString() (sorts and compares as text). paid_through and expires_at too.
+-- events.id is text: a random id, or the Stripe event id (billing uses it to handle each Stripe event once).
 -- Booleans are 0/1. Apply locally: npx wrangler d1 execute headroom --local --file schema.sql
 
 CREATE TABLE IF NOT EXISTS sites (
@@ -17,9 +18,9 @@ CREATE TABLE IF NOT EXISTS sites (
   plan TEXT,
   stripe_customer TEXT,
   stripe_sub TEXT,
-  paid_through INTEGER,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
+  paid_through TEXT,
+  created_at TEXT,
+  updated_at TEXT
 );
 CREATE INDEX IF NOT EXISTS sites_status ON sites(status);
 
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS leads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   site_id TEXT NOT NULL REFERENCES sites(id),
   name TEXT, phone TEXT, email TEXT, service TEXT, message TEXT, page TEXT,
-  created_at INTEGER NOT NULL,
+  created_at TEXT,
   emailed INTEGER NOT NULL DEFAULT 0,
   texted INTEGER NOT NULL DEFAULT 0
 );
@@ -38,7 +39,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   site_id TEXT NOT NULL REFERENCES sites(id),
   source TEXT NOT NULL CHECK (source IN ('google','manual')),
   author TEXT, stars INTEGER, text TEXT,
-  posted_at INTEGER, fetched_at INTEGER,
+  posted_at TEXT, fetched_at TEXT,
   show INTEGER NOT NULL DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS reviews_site ON reviews(site_id, show);
@@ -47,7 +48,7 @@ CREATE TABLE IF NOT EXISTS logins (
   token_hash TEXT PRIMARY KEY,
   site_id TEXT NOT NULL REFERENCES sites(id),
   email TEXT,
-  expires_at INTEGER NOT NULL,
+  expires_at TEXT NOT NULL,
   used INTEGER NOT NULL DEFAULT 0
 );
 
@@ -60,15 +61,15 @@ CREATE TABLE IF NOT EXISTS addons (
 );
 
 CREATE TABLE IF NOT EXISTS events (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id TEXT PRIMARY KEY,
   site_id TEXT,
   kind TEXT NOT NULL,
   data TEXT,
-  at INTEGER NOT NULL
+  at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS events_site ON events(site_id, at);
 
--- Form rate limit (host-core): one row per lead attempt, key = hashed visitor IP. Old rows are swept by cron.
+-- Form rate limit (host-core): one row per lead attempt, key = hashed visitor IP, at = Date.now() ms. Swept by cron.
 CREATE TABLE IF NOT EXISTS hits (
   key TEXT NOT NULL,
   at INTEGER NOT NULL

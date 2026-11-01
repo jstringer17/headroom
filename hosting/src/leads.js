@@ -1,5 +1,5 @@
 // POST /api/lead: the live site's form. Checks (size, honeypot, lengths, rate limit, Turnstile), stores, tells the owner.
-import { addLead, markLead, logEvent } from "./db.js";
+import { addLead, markLead, logEvent, iso } from "./db.js";
 import { sendEmail, sendSms } from "./notify.js";
 
 export const THANKS = "Thanks, we got it. We will call you soon.";
@@ -131,7 +131,7 @@ export async function handleLead(request, env, site) {
     return answer(isJson, 403, false, "Please try again, the spam check did not pass.");
   }
 
-  const id = await addLead(env, { site_id: site.id, ...lead, created_at: now });
+  const id = await addLead(env, { site_id: site.id, ...lead, created_at: iso(now) });
   const to = site.notify_email || site.owner_email;
   const mail = leadEmail(site, lead);
   const e = to ? await sendEmail(env, { to, ...mail, replyTo: lead.email || undefined }) : { ok: false, error: "no owner email" };
