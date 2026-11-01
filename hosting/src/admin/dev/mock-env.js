@@ -1,11 +1,10 @@
 // Local stand-ins for tests and the screenshot server (never deployed, not imported by index.js).
 // D1 on node:sqlite with the Shared contract tables (hosting/schema.sql is used instead once it exists),
-// R2 in memory, and host-core's publishSite/sendEmail mocked with the contract's names.
+// R2 in memory, and host-core's real render.publishSite (sendEmail still captured in an outbox).
 import { DatabaseSync } from "node:sqlite";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { generateSite, esc } from "../../../../sitemaker/src/generate.js";
-import { siteReviews, googleReviewsHtml, ratingJsonLd } from "../../reviews/index.js";
+import { publishSite } from "../../render.js";
 
 const SCHEMA_FILE = fileURLToPath(new URL("../../../schema.sql", import.meta.url));
 export const CONTRACT_SCHEMA = `
@@ -49,26 +48,10 @@ export function makeR2() {
   };
 }
 
-// Stand-in for host-core's render.publishSite: stored form + shown reviews -> generateSite -> R2.
-// It also adds the Google pieces the way render.js is meant to (credit block, rating in JSON-LD).
-export async function mockPublishSite(env, siteId) {
-  const row = await env.DB.prepare("SELECT * FROM sites WHERE id = ?").bind(siteId).first();
-  const form = JSON.parse(row.form_json || "{}");
-  const sr = await siteReviews(env, siteId);
-  let page = generateSite({ ...form, reviewList: sr.manualReviews, live: { siteId, leadUrl: "/api/lead", canonical: `https://${row.domain}/` } });
-  const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", name: form.company, telephone: form.phone, address: { "@type": "PostalAddress", addressLocality: form.city } };
-  const agg = ratingJsonLd(sr.google);
-  if (agg) ld.aggregateRating = agg;
-  page = page.replace("</head>", `<script type="application/ld+json">${JSON.stringify(ld).replace(/</g, "\\u003c")}</script></head>`)
-    .replace("</main>", `${googleReviewsHtml(sr, esc)}</main>`);
-  await env.R2.put(`sites/${siteId}/index.html`, page, { httpMetadata: { contentType: "text/html; charset=utf-8" } });
-  env.published.push(siteId);
-}
-
 export function makeEnv(extra = {}) {
   const env = { DB: makeD1(), R2: makeR2(), SESSION_KEY: "test-session-key-0123456789", AGENCY_DOMAIN: "agency.test", FROM_EMAIL: "hello@agency.test", outbox: [], published: [], ...extra };
   const deps = {
-    render: { publishSite: (e, id) => mockPublishSite(e, id) },
+    render: { publishSite: async (e, id) => { const r = await publishSite(e, id); e.published.push(id); return r; } },
     notify: { sendEmail: async (e, msg) => { e.outbox.push(msg); return { ok: true }; } },
   };
   return { env, deps };

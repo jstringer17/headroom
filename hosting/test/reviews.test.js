@@ -4,8 +4,9 @@ import { test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { refreshReviews, findPlace, siteReviews, ratingJsonLd, googleCreditHtml, DETAILS_MASK, REFRESH_DAYS } from "../src/reviews/index.js";
+import { publishSite } from "../src/render.js";
 import { esc } from "../../sitemaker/src/generate.js";
-import { makeEnv, addSite, mockPublishSite } from "../src/admin/dev/mock-env.js";
+import { makeEnv, addSite } from "../src/admin/dev/mock-env.js";
 
 const DETAILS = JSON.parse(readFileSync(new URL("./fixtures/places-details.json", import.meta.url), "utf8"));
 const SEARCH = JSON.parse(readFileSync(new URL("./fixtures/places-search.json", import.meta.url), "utf8"));
@@ -48,7 +49,7 @@ test("Places fixture -> 5 Google reviews stored as sent, rating/count kept, one 
 
 test("published page: Google credit and link shown, rating in JSON-LD, Google text escaped", async () => {
   await refreshReviews(env, { now: Date.now() });
-  await mockPublishSite(env, "site-a");
+  await publishSite(env, "site-a");
   const html = await (await env.R2.get("sites/site-a/index.html")).text();
   assert.match(html, /Reviews from <a href="https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:ChIJtestPlace0001abcdEFGH"[^>]*>Google<\/a>/);
   assert.match(html, /4\.8 out of 5 from 127 reviews/);
