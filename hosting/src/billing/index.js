@@ -78,6 +78,11 @@ export async function stripeWebhook(request, env) {
 }
 const json = (b) => new Response(JSON.stringify(b), { headers: { 'content-type': 'application/json' } });
 
+// Only the main plan subscription may change the site's status or paid_through. Anything else is an add-on.
+const subOf = (type, obj) => (type.startsWith('customer.subscription.') ? obj.id : obj.subscription);
+const isAddonSub = (site, type, obj) => !!obj.metadata?.addon || (!!site.stripe_sub && subOf(type, obj) !== site.stripe_sub);
+const setAddon = (env, siteId, sub, status) => env.DB.prepare('UPDATE addons SET status = ? WHERE site_id = ? AND stripe_item = ?').bind(status, siteId, sub).run();
+
 async function goLive(env, d, site, fields = {}) {
   const wasLive = site.status === 'live';
   await patchSite(env, site.id, { status: 'live', ...fields }, d.now());
@@ -100,6 +105,7 @@ async function handle(env, d, type, obj, site) {
       return;
     }
     case 'invoice.paid': {
+      if (isAddonSub(site, type, obj)) return setAddon(env, site.id, obj.subscription, 'active');
       const end = (obj.lines?.data || []).map((l) => l.period?.end).filter(Boolean).sort().pop();
       const through = end ? iso(end * 1000) : iso(now + 31 * DAY);
       const fields = { paid_through: through };
@@ -108,6 +114,12 @@ async function handle(env, d, type, obj, site) {
       return;
     }
     case 'invoice.payment_failed': { // still live: the grace period runs from paid_through
+      if (isAddonSub(site, type, obj)) { // an add-on card problem never threatens the website
+        await setAddon(env, site.id, obj.subscription, 'past_due');
+        let l = ''; try { l = await portalLink(env, site.id); } catch { /* no link */ }
+        if (site.owner_email) await d.sendEmail(env, { to: site.owner_email, subject: 'An add-on payment did not go through', text: `Hi ${site.owner_name || 'there'},\n\nWe could not take the payment for one of your add-ons. Your website is not affected.${l ? `\n\nUpdate your card here: ${l}` : ''}`, html: '' });
+        return;
+      }
       let link = '';
       try { link = await portalLink(env, site.id); } catch { /* send the email without a link */ }
       if (site.owner_email) {
@@ -119,6 +131,7 @@ async function handle(env, d, type, obj, site) {
     }
     case 'customer.subscription.updated': {
       const s = obj.status;
+      if (isAddonSub(site, type, obj)) return setAddon(env, site.id, obj.id, s === 'active' ? 'active' : s === 'past_due' ? 'past_due' : 'canceled');
       const lapsed = Date.parse(site.paid_through || 0) + graceDays(env) * DAY < now;
       if (s === 'canceled' || s === 'unpaid' || s === 'incomplete_expired') return goOff(env, d, site);
       if (s === 'past_due') return lapsed ? goOff(env, d, site) : null;
@@ -126,7 +139,7 @@ async function handle(env, d, type, obj, site) {
       return;
     }
     case 'customer.subscription.deleted': {
-      if (obj.metadata?.addon) { await env.DB.prepare("UPDATE addons SET status = 'canceled' WHERE site_id = ? AND stripe_item = ?").bind(site.id, obj.id).run(); return; }
+      if (isAddonSub(site, type, obj)) return setAddon(env, site.id, obj.id, 'canceled');
       return goOff(env, d, site);
     }
   }

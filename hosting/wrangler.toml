@@ -16,6 +16,20 @@ CF_ACCESS_TEAM = ""                    # desk: Cloudflare Access team name (bill
 CF_ACCESS_AUD = ""                     # desk: Access application audience tag (billing-desk)
 DESK_EMAILS = ""                       # desk: CEO + partner emails, comma list (CEO)
 GRACE_DAYS = "14"                      # billing: days after a failed payment before the site goes off (CEO)
+# Billing (billing-desk). Non-secret. Empty = not set: checkout buttons say what is missing, desk MRR counts 0.
+STRIPE_PRICE_MONTHLY = ""              # price_... of the monthly plan (Stripe > Product catalog)
+STRIPE_PRICE_SETUP = ""                # price_... one-time setup fee (empty = no setup fee line)
+STRIPE_PRICE_SMS = ""                  # add-on prices, recurring: SMS alerts, SEO pack, ads management, monthly report
+STRIPE_PRICE_SEO = ""
+STRIPE_PRICE_ADS = ""
+STRIPE_PRICE_REPORT = ""
+MONTHLY_CENTS = ""                     # monthly plan price in cents (desk MRR only), e.g. "9900"
+ADDON_CENTS_SMS = ""                   # add-on prices in cents (desk MRR only)
+ADDON_CENTS_SEO = ""
+ADDON_CENTS_ADS = ""
+ADDON_CENTS_REPORT = ""
+MONTHLY_REPORT = "0"                   # "1" = e-mail the monthly lead report to owners who have the report add-on (off by default)
+ADMIN_LOOK = ""                        # owner-admin: "on" lets owners change the site look (default off)
 
 [[d1_databases]]
 binding = "DB"

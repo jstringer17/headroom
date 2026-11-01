@@ -52,7 +52,7 @@ export async function deskApp(request, env) {
       const hash = hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
       await env.DB.prepare('INSERT INTO logins (token_hash, site_id, email, expires_at, used) VALUES (?, ?, ?, ?, 0)')
         .bind(hash, site.id, site.owner_email, new Date(d.now() + 15 * 60e3).toISOString()).run();
-      const link = `https://${site.domain}/admin/login?token=${token}`;
+      const link = `https://${site.domain}/admin/login?t=${token}`;
       await d.sendEmail(env, { to: site.owner_email, subject: 'Your website login link', text: `Tap to sign in (works once, for 15 minutes):\n${link}`, html: `<p>Tap to sign in (works once, for 15 minutes):</p><p><a href="${link}">Sign in</a></p>` });
       await claimEvent(env, crypto.randomUUID(), site.id, 'desk.login_link', { by: email }, d.now());
       return respond({ ok: true, sentTo: site.owner_email });

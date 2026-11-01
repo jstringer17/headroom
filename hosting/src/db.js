@@ -23,9 +23,9 @@ function withForm(row) {
   return { ...row, form };
 }
 
-// Host -> site cache, per isolate. Short TTL so a status change shows up fast everywhere.
+// Host -> site cache, per isolate. Short TTL (5 s) so a status change made by another isolate shows up fast.
 const hostCache = new Map();
-const HOST_TTL = 30_000;
+const HOST_TTL = 5_000; // a switched-off site must stop being served within seconds on every isolate
 export function clearHostCache() { hostCache.clear(); }
 
 export async function getSite(env, id) {

@@ -100,11 +100,22 @@ test('checkout/portal links and owner login link', async () => {
   const r = await deskApp(await req('/api/sites/a/login-link', { method: 'POST', headers: { 'x-desk': '1' } }), env);
   assert.equal(r.status, 200);
   const mail = calls.emails.at(-1);
-  const token = mail.text.match(/token=([0-9a-f]{64})/)[1];
-  const hash = Buffer.from(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))).toString('hex');
-  const row = await env.DB.prepare('SELECT * FROM logins WHERE token_hash = ?').bind(hash).first();
-  assert.equal(row.site_id, 'a');
-  assert.ok(!JSON.stringify(await r.clone().json()).includes(token)); // token only goes to the owner
+  const link = mail.text.match(/https:\/\/\S+/)[0];
+  assert.match(link, /^https:\/\/a\.net\/admin\/login\?t=[A-Za-z0-9_-]{20,}$/);
+  assert.ok(!JSON.stringify(await r.clone().json()).includes(link)); // link only goes to the owner
+  // follow it like the owner would, on the real router + admin: open link -> confirm -> logged in
+  const worker = (await import('../src/index.js')).default, ctx = { waitUntil() {} };
+  const token = new URL(link).searchParams.get('t');
+  const open = await worker.fetch(new Request(link), env, ctx);
+  assert.equal(open.status, 200);
+  const confirm = await worker.fetch(new Request('https://a.net/admin/login/confirm', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://a.net' }, body: `t=${token}` }), env, ctx);
+  assert.equal(confirm.status, 303);
+  const cookie = confirm.headers.get('set-cookie').split(';')[0];
+  const admin = await worker.fetch(new Request('https://a.net/admin', { headers: { cookie } }), env, ctx);
+  assert.equal(admin.status, 200);
+  assert.doesNotMatch(await admin.text(), /log in link|Send me a link/i);
+  const again = await worker.fetch(new Request('https://a.net/admin/login/confirm', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://a.net' }, body: `t=${token}` }), env, ctx);
+  assert.equal(again.status, 400); // one use only
 });
 
 test('import-lead: dry run prints the row and writes nothing without --apply', () => {

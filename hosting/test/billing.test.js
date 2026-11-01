@@ -150,3 +150,71 @@ test('monthly lead report: off by default, sends once per month when on', async 
   assert.match(calls.emails[0].text, /3 leads in 2026-11/); assert.match(calls.emails[0].text, /Roof repair: 2/);
   assert.deepEqual((await monthlyLeadReport(env)).sent, []);
 });
+
+// ---- add-on subscriptions must only touch the add-on, never the site ----------------------------
+const addonEvent = (id, type, object) => ({ id, type, data: { object: { customer: 'cus_A', ...object } } });
+async function withAddon(o = {}) {
+  const x = makeEnv(); await live(x.env, o);
+  await x.env.DB.prepare("INSERT INTO addons VALUES ('site-a','sms','active','sub_SMS')").run();
+  return x;
+}
+const addonRow = (env) => env.DB.prepare("SELECT * FROM addons WHERE site_id = 'site-a' AND kind = 'sms'").first();
+
+test('add-on invoice.paid does not turn a switched-off site on or change paid_through', async () => {
+  const old = new Date(NOW - 30 * DAY).toISOString();
+  const { env, calls } = await withAddon({ status: 'off', paid_through: old });
+  const r = await send(env, addonEvent('evt_ap', 'invoice.paid', { id: 'in_9', subscription: 'sub_SMS', lines: { data: [{ period: { end: 1792592000 } }] } }));
+  assert.equal(r.status, 200);
+  const s = await getSiteRow(env);
+  assert.equal(s.status, 'off'); assert.equal(s.paid_through, old);
+  assert.deepEqual(calls.published, []);
+});
+
+test('add-on payment_failed does not say the site will be switched off', async () => {
+  const { env, calls } = await withAddon({ paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  await send(env, addonEvent('evt_af', 'invoice.payment_failed', { id: 'in_10', subscription: 'sub_SMS' }));
+  assert.equal((await getSiteRow(env)).status, 'live');
+  assert.ok(calls.emails.every((m) => !/switched off/i.test(m.text)));
+  assert.equal((await addonRow(env)).status, 'past_due');
+});
+
+test('add-on subscription canceled/deleted ends the add-on only', async () => {
+  const a = await withAddon({ paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  await send(a.env, addonEvent('evt_au', 'customer.subscription.updated', { id: 'sub_SMS', status: 'canceled' }));
+  assert.equal((await getSiteRow(a.env)).status, 'live');
+  assert.equal((await addonRow(a.env)).status, 'canceled');
+  const b = await withAddon({ paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  await send(b.env, addonEvent('evt_ad', 'customer.subscription.deleted', { id: 'sub_SMS', status: 'canceled' }));
+  assert.equal((await getSiteRow(b.env)).status, 'live');
+  assert.equal((await addonRow(b.env)).status, 'canceled');
+});
+
+test('main plan still works with an add-on present; invoice.paid before checkout still lands', async () => {
+  const a = await withAddon({ status: 'off', paid_through: new Date(NOW - 30 * DAY).toISOString() });
+  await send(a.env, fixture('invoice-paid'));
+  assert.equal((await getSiteRow(a.env)).status, 'live');
+  const b = makeEnv(); await addSite(b.env, { stripe_customer: 'cus_A' }); // checkout event not seen yet: no stripe_sub saved
+  await send(b.env, fixture('invoice-paid'));
+  assert.equal((await getSiteRow(b.env)).paid_through, new Date(1792592000 * 1000).toISOString());
+});
+
+test('unset prices: desk MRR does not break, checkout says what is missing', async () => {
+  const { loadCustomers } = await import('../src/desk/data.js');
+  const { env } = makeEnv({ MONTHLY_CENTS: undefined, ADDON_CENTS_SMS: undefined, STRIPE_PRICE_MONTHLY: undefined });
+  await live(env);
+  assert.equal((await loadCustomers(env, NOW)).totals.mrrCents, 0);
+  await assert.rejects(checkoutLink(env, 'site-a'), /STRIPE_PRICE_MONTHLY is not set/);
+});
+
+test('a switched-off site stops being served within 5 seconds, even on an isolate that cached it', async () => {
+  const { env } = makeEnv(); await live(env, { paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  const worker = (await import('../src/index.js')).default;
+  await env.R2.put('sites/site-a/index.html', '<html>LIVE PAGE</html>');
+  assert.match(await (await worker.fetch(new Request('https://site-a.example.net/'), env, { waitUntil() {} })).text(), /LIVE PAGE/); // fills this isolate's host cache
+  await env.DB.prepare("UPDATE sites SET status = 'off' WHERE id = 'site-a'").run();         // another isolate switched it off
+  const real = Date.now; Date.now = () => real() + 6000;
+  try {
+    const page = await worker.fetch(new Request('https://site-a.example.net/'), env, { waitUntil() {} });
+    assert.match(await page.text(), /not active/i);
+  } finally { Date.now = real; }
+});

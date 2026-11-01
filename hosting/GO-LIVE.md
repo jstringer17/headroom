@@ -21,6 +21,58 @@ The chief of staff runs these steps, not a workstream session.
 8. **Privacy page**: the CEO approves the wording in `hosting/src/notactive.js` (`privacyPage`) before the first paying site.
 9. **Deploy**: `cd hosting && npm test && node ../sitemaker/test-all.mjs && npx wrangler deploy`.
 
+## A2. Billing and the Customer Desk (billing-desk). Do after A, before the first paying site
+
+Replace `<agency>` with the agency domain. Do Stripe in TEST mode first (toggle top right in the Stripe dashboard). Switching Stripe to live needs the CEO's ok.
+
+**Settings (non-secret, `wrangler.toml` [vars]; all are in the file already, empty until you fill them)**
+
+| Var | What | Default if empty |
+|---|---|---|
+| `STRIPE_PRICE_MONTHLY` | price id of the monthly plan | checkout link fails with "STRIPE_PRICE_MONTHLY is not set" |
+| `STRIPE_PRICE_SETUP` | price id of the one-time setup fee | no setup line on checkout |
+| `STRIPE_PRICE_SMS` / `_SEO` / `_ADS` / `_REPORT` | price ids of the add-ons | that add-on link says "no price set" |
+| `MONTHLY_CENTS`, `ADDON_CENTS_SMS/SEO/ADS/REPORT` | prices in cents, only for the desk MRR number | counted as 0 |
+| `GRACE_DAYS` | days a site stays on after a failed payment | 14 |
+| `MONTHLY_REPORT` | "1" sends the monthly lead report e-mail (add-on) | "0" off |
+| `ADMIN_LOOK` | "on" lets owners change the look | off |
+| `CF_ACCESS_TEAM`, `CF_ACCESS_AUD`, `DESK_EMAILS` | desk lock, see below | desk answers 403 to everyone |
+
+Secrets: `npx wrangler secret put STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
+
+**1. Stripe products (dashboard > Product catalog > Add product)**
+1. "Website hosting": Pricing = Recurring, Monthly, the monthly price. Save. Open it, copy the Price ID (`price_...`) into `STRIPE_PRICE_MONTHLY`.
+2. "Setup fee": Pricing = One-off, the setup price. Copy its Price ID into `STRIPE_PRICE_SETUP`. (Skip if there is no setup fee.)
+3. Add-ons (only the ones we sell): one Recurring Monthly product each; copy the Price ID into `STRIPE_PRICE_SMS` / `SEO` / `ADS` / `REPORT`.
+4. Developers > API keys > Secret key (starts `sk_test_`) > Reveal > copy. `npx wrangler secret put STRIPE_SECRET_KEY`.
+5. Settings (gear) > Billing > Customer portal > Activate. Turn on: Update payment methods, Cancel subscriptions (at end of billing period), Invoice history. Save.
+
+**2. Attach the two hostnames to the Worker**
+Cloudflare dashboard > Workers & Pages > `headroom-sites` > Settings > Domains & Routes > Add > Custom domain. Add `desk.<agency>`, then add `hooks.<agency>` the same way. (Certificate is automatic.)
+
+**3. Lock the desk with Cloudflare Access (free)**
+1. Dashboard left menu > Zero Trust. First time: pick a team name (this is `CF_ACCESS_TEAM`, the `<team>` in `<team>.cloudflareaccess.com`), choose the Free plan, finish. (Card needed even for $0.)
+2. Access > Applications > Add an application > Self-hosted.
+3. Application name: `Customer Desk`. Session duration: 24 hours. Add public hostname: Subdomain `desk`, Domain `<agency>`, Path empty.
+4. Add policy: name `CEO and partner`, Action = Allow, Include > Selector = Emails > type the CEO email and the partner email (press Enter after each). Save the policy, then Next > Save/Add application.
+5. Open the new application > Overview (or Basic information) > copy **Application Audience (AUD) Tag**. Put it in `CF_ACCESS_AUD`.
+6. `wrangler.toml`: `CF_ACCESS_TEAM = "<team>"`, `CF_ACCESS_AUD = "<tag>"`, `DESK_EMAILS = "ceo@...,partner@..."` (same two emails). `npx wrangler deploy`.
+7. Check: open `https://desk.<agency>` in a private window. You get the Access login, type an allowed email, get a 6-digit code by email, and see the Customer Desk. An email not on the list gets no code. If you see "Forbidden" after logging in, one of the three vars is wrong (the desk checks the token itself and refuses on any mismatch).
+
+**4. Stripe webhook (must NOT sit behind Access)**
+We use `hooks.<agency>`, which has no Access app, so Stripe can reach it. Do not put the webhook on `desk.<agency>`: Access would block Stripe. (Alternative if ever needed: a second Access application for `desk.<agency>` with Path `api/stripe` and a policy with Action = Bypass, Include = Everyone. Not used.) The Worker answers `/api/stripe` on any attached hostname and checks Stripe's signature itself.
+1. Stripe dashboard (test mode) > Developers > Webhooks > Add endpoint (newer dashboards: Add destination > Your account > Webhook endpoint).
+2. Endpoint URL: `https://hooks.<agency>/api/stripe`.
+3. Select events (exactly these five): `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`.
+4. Add endpoint. Open it > Signing secret > Reveal (`whsec_...`). `npx wrangler secret put STRIPE_WEBHOOK_SECRET`.
+5. Check: on the endpoint page press Send test webhook (any event). Delivery shows 200 with "ignored" (no matching site) or 400 if the secret is wrong.
+6. Test card for the pilot: 4242 4242 4242 4242, any future date, any CVC. A failing renewal: 4000 0000 0000 0341.
+
+**5. Pilot check list**
+- [ ] Desk > "Checkout link" on a draft site, open it, pay with the test card: the site goes live, the desk shows live with Paid through ~1 month out.
+- [ ] Stripe > Customers > the customer > Cancel subscription (immediately): the site shows "This site is not active" within about 5 seconds.
+- [ ] Desk "Send login link": the owner e-mail arrives and the link opens the editor.
+
 ## B. Each new customer site
 
 1. **Make the row** from the maker form (the form JSON the maker exports):
