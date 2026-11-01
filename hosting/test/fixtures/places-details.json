@@ -1,0 +1,51 @@
+{
+  "rating": 4.8,
+  "userRatingCount": 127,
+  "reviews": [
+    {
+      "name": "places/ChIJtestPlace0001abcdEFGH/reviews/r1",
+      "relativePublishTimeDescription": "2 weeks ago",
+      "rating": 5,
+      "text": { "text": "Fixed our leak the same day & cleaned up after. <b>Great</b> crew!", "languageCode": "en" },
+      "originalText": { "text": "Fixed our leak the same day & cleaned up after. <b>Great</b> crew!", "languageCode": "en" },
+      "authorAttribution": { "displayName": "Dana R.", "uri": "https://www.google.com/maps/contrib/1", "photoUri": "https://lh3.googleusercontent.com/a/x" },
+      "publishTime": "2026-10-12T15:04:05Z"
+    },
+    {
+      "name": "places/ChIJtestPlace0001abcdEFGH/reviews/r2",
+      "relativePublishTimeDescription": "a month ago",
+      "rating": 4,
+      "text": { "text": "Fair price, showed up on time. Took a little longer than planned but the new roof looks good and they explained every step of the job before starting, which we really appreciated as first-time home owners who did not know much about roofs at all. Would hire again without thinking twice about it.", "languageCode": "en" },
+      "authorAttribution": { "displayName": "Luis M.", "uri": "https://www.google.com/maps/contrib/2" },
+      "publishTime": "2026-09-30T10:00:00Z"
+    },
+    {
+      "name": "places/ChIJtestPlace0001abcdEFGH/reviews/r3",
+      "rating": 5,
+      "text": { "text": "Honest and quick.", "languageCode": "en" },
+      "authorAttribution": { "displayName": "Pat K." },
+      "publishTime": "2026-09-01T09:00:00Z"
+    },
+    {
+      "name": "places/ChIJtestPlace0001abcdEFGH/reviews/r4",
+      "rating": 5,
+      "text": { "text": "Second time using them, still great.", "languageCode": "en" },
+      "authorAttribution": { "displayName": "Sam T." },
+      "publishTime": "2026-08-20T09:00:00Z"
+    },
+    {
+      "name": "places/ChIJtestPlace0001abcdEFGH/reviews/r5",
+      "rating": 3,
+      "text": { "text": "Good work, hard to reach by phone.", "languageCode": "en" },
+      "authorAttribution": { "displayName": "Jo B." },
+      "publishTime": "2026-08-02T09:00:00Z"
+    },
+    {
+      "name": "places/ChIJtestPlace0001abcdEFGH/reviews/r6",
+      "rating": 5,
+      "text": { "text": "A sixth review that must not be stored (max 5).", "languageCode": "en" },
+      "authorAttribution": { "displayName": "Extra E." },
+      "publishTime": "2026-07-02T09:00:00Z"
+    }
+  ]
+}

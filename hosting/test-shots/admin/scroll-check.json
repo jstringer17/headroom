@@ -1,0 +1,110 @@
+[
+  {
+    "file": "01-login-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "02-check-email-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "03-tap-to-log-in-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "04-link-expired-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "05-editor-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "06-editor-published-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "07-google-listing-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "08-ask-for-review-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "09-preview-375.png",
+    "scrollWidth": 375,
+    "clientWidth": 375,
+    "sideways": false
+  },
+  {
+    "file": "01-login-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "02-check-email-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "03-tap-to-log-in-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "04-link-expired-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "05-editor-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "06-editor-published-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "07-google-listing-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "08-ask-for-review-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  },
+  {
+    "file": "09-preview-1280.png",
+    "scrollWidth": 1280,
+    "clientWidth": 1280,
+    "sideways": false
+  }
+]

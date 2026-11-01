@@ -1,0 +1,6 @@
+{
+  "places": [
+    { "id": "ChIJtestPlace0001abcdEFGH", "displayName": { "text": "Summit Roofing", "languageCode": "en" }, "formattedAddress": "120 Main St, Fresno, CA 93721, USA" },
+    { "id": "ChIJtestPlace0002ijklMNOP", "displayName": { "text": "Summit Roofing & Gutters", "languageCode": "en" }, "formattedAddress": "9 Oak Ave, Clovis, CA 93612, USA" }
+  ]
+}
