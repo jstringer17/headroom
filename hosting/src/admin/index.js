@@ -131,7 +131,7 @@ export async function adminApp(request, env, ctx) {
   // ---- JSON API used by the editor ----
   if (path === "/admin/api/draft" && method === "GET") return json({ draft: await draftOf() });
   if (path === "/admin/api/draft" && method === "PUT") {
-    const draft = applyEdits(await draftOf(), await formBody(request), { siteId: id, allowLook: env.ADMIN_LOOK === "on" });
+    const draft = applyEdits(await draftOf(), await formBody(request), { siteId: id, allowLook: env.ADMIN_LOOK === "on", hosts: [site.domain, url.host] });
     await db.saveDraft(env, id, draft);
     return json({ ok: true, draft });
   }
@@ -140,14 +140,17 @@ export async function adminApp(request, env, ctx) {
     const { render } = await getDeps();
     const before = db.formOf(site);
     const draft = clean(await draftOf());
-    await db.savePrevious(env, id, before);
+    const oldPrev = await db.getPrevious(env, id);
+    // publishSite renders from the stored form, so the form is written first and put back if the page is refused.
     await db.setPublishedForm(env, id, draft);
-    try {
-      await render.publishSite(env, id);
-    } catch (e) {
+    let res = null;
+    try { res = await render.publishSite(env, id); } catch (e) { res = null; }
+    if (!res || !res.ok) {
       await db.setPublishedForm(env, id, before);
-      return json({ error: "Could not publish" }, 500);
+      if (res) return json({ error: plainProblem(res.problems) }, 422);
+      return json({ error: "Could not publish. Nothing was changed. Try again." }, 500);
     }
+    await db.savePrevious(env, id, before);
     await db.logEvent(env, id, "owner_publish", { email: owner });
     return json({ ok: true });
   }
@@ -248,4 +251,11 @@ async function preview(env, site, draft) {
   const bar = `<div style="position:sticky;top:0;z-index:99999;background:#16202a;color:#fff;font:600 16px/1.4 system-ui,sans-serif;padding:10px 16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between"><span>Preview. Visitors do not see this until you tap Publish.</span><a href="/admin" style="color:#fff">Back to editing</a></div>`;
   page = String(page).replace(/<body[^>]*>/i, (m) => m + bar);
   return new Response(page, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex", "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer" } });
+}
+
+// Plain words for the owner when the page was refused.
+function plainProblem(problems) {
+  const p = (problems || []).join(" ");
+  if (/phone/i.test(p)) return "Add your phone number first.";
+  return "The page could not be published. Nothing was changed. Check your text and try again.";
 }

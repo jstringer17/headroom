@@ -28,14 +28,16 @@ export function photoSlots(form) {
 }
 
 // A picture URL the owner may set: one of this site's own uploads.
-export function ownMediaUrl(url, siteId) {
+export function ownMediaUrl(url, siteId, hosts = []) {
   const u = String(url || "");
-  const m = /^https:\/\/[a-z0-9.-]+(:\d+)?\/media\/([^/]+)\/[A-Za-z0-9._-]+\.(jpg|png|webp)$/.exec(u);
-  return m && m[2] === String(siteId) ? u : "";
+  const m = /^https:\/\/([a-z0-9.-]+(?::\d+)?)\/media\/([^/]+)\/[A-Za-z0-9._-]+\.(jpg|png|webp)$/.exec(u);
+  if (!m || m[2] !== String(siteId)) return "";
+  const ok = hosts.filter(Boolean).flatMap((h) => { const x = String(h).toLowerCase(); return [x, "www." + x.replace(/^www\./, ""), x.replace(/^www\./, "")]; });
+  return ok.includes(m[1].toLowerCase()) ? u : "";
 }
 
 // base = the current draft (or published form). input = what the browser sent. Returns the new draft.
-export function applyEdits(base, input, { siteId, allowLook = false } = {}) {
+export function applyEdits(base, input, { siteId, allowLook = false, hosts = [] } = {}) {
   const f = clone(base);
   const i = input && typeof input === "object" ? input : {};
   const trade = TRADES[tradeOf(f)];
@@ -73,13 +75,13 @@ export function applyEdits(base, input, { siteId, allowLook = false } = {}) {
         if (!(s.id in i.cine.images) || s.id === "hero") continue;
         const v = i.cine.images[s.id];
         if (v === "" || v === null) delete f.cine.images[s.id];
-        else if (ownMediaUrl(v, siteId)) f.cine.images[s.id] = v;
+        else if (ownMediaUrl(v, siteId, hosts)) f.cine.images[s.id] = v;
       }
     }
   }
   if ("heroImage" in i) {
     if (i.heroImage === "" || i.heroImage === null) delete f.heroImage;
-    else if (ownMediaUrl(i.heroImage, siteId)) f.heroImage = i.heroImage;
+    else if (ownMediaUrl(i.heroImage, siteId, hosts)) f.heroImage = i.heroImage;
   }
   if (i.editorial && Array.isArray(i.editorial.projects)) {
     f.editorial = f.editorial && typeof f.editorial === "object" ? f.editorial : {};

@@ -295,3 +295,30 @@ test("admin pages load no outside scripts; the editor's inline script carries th
   assert.equal((page.match(/<script/g) || []).length, 1);
   for (const label of ["Phone number", "Prices", "Services", "Photos", "Reviews", "Colors", "Preview", "Publish"]) assert.match(page, new RegExp(label));
 });
+
+// ---------- publish is atomic; picture URLs ----------
+test("publish with an empty phone: 422 in plain words, live page, stored form and undo copy untouched", async () => {
+  const cookie = await login("summitroofing.test", "owner@summit.test");
+  await call("summitroofing.test", "/admin/api/draft", { method: "PUT", cookie, body: { company: "Changed Name", phone: "(559) 555-0150" } });
+  assert.equal((await call("summitroofing.test", "/admin/api/publish", { method: "POST", body: {}, cookie })).status, 200);
+  const liveBefore = await publishedHtml("site-a");
+  const formBefore = sql("SELECT form_json FROM sites WHERE id = 'site-a'")[0].form_json;
+  const prevBefore = await (await env.R2.get("history/site-a/previous.json"))?.text();
+  await call("summitroofing.test", "/admin/api/draft", { method: "PUT", cookie, body: { company: "Should Not Land", phone: "" } });
+  const r = await call("summitroofing.test", "/admin/api/publish", { method: "POST", body: {}, cookie });
+  assert.equal(r.status, 422);
+  assert.match((await r.json()).error, /phone number/i);
+  assert.equal(await publishedHtml("site-a"), liveBefore);
+  assert.equal(sql("SELECT form_json FROM sites WHERE id = 'site-a'")[0].form_json, formBefore);
+  assert.equal(await (await env.R2.get("history/site-a/previous.json"))?.text(), prevBefore);
+});
+
+test("picture URL must be this site's own upload on this site's host", async () => {
+  const good = "https://summitroofing.test/media/site-a/a1.jpg";
+  const base = {};
+  const ok = applyEdits(base, { heroImage: good }, { siteId: "site-a", hosts: ["summitroofing.test"] });
+  assert.equal(ok.heroImage, good);
+  for (const bad of ["https://evil.example/media/site-a/a1.jpg", "https://summitroofing.test/media/site-b/a1.jpg", "https://summitroofing.test.evil.example/media/site-a/a1.jpg"]) {
+    assert.ok(!applyEdits(base, { heroImage: bad }, { siteId: "site-a", hosts: ["summitroofing.test"] }).heroImage, bad);
+  }
+});
