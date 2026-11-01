@@ -29,3 +29,9 @@ Inputs: none to build (Places fixture is a hand-made JSON in the documented shap
 Depends on: host-core (db.js, render.js, notify.js, schema.sql, router mounting /admin). Answers to: chief of staff; bugs in shared files go to host-core via the chief of staff.
 CEO-only questions: may owners change the look and colors themselves, or only text/phone/prices/photos/reviews (suggest: yes to colors, look change by request)?
 End with a handoff of at most 10 lines: done, evidence, left, decision needed.
+
+## Result (2026-11-01)
+Done: admin + reviews built (a74b310, rebased). QA: criteria 2,3,5,6 PASS; 4 PASS on mock only; 1 now has `npm test` via host-core's package.json.
+Evidence: admin/reviews suites 23/23 alone; full hosting suite 61/64 after rebase.
+Left: (1) host-core render.js must call googleReviewsHtml / ratingJsonLd / siteReviews (reviews.test.js:49 fails until then); serve /media/*; import maker-typed reviews as manual. (2) billing-desk: 2 failing tests (billing.test.js:107 UNIQUE sites.domain; desk.test.js:110 import-lead dry run). (3) Minor polish: color labels wrap mid-word at 375; price unit text confusing; no browser autosave test.
+Decision needed (CEO): owners change colors themselves, look by request (built that way; ADMIN_LOOK=on enables look change).
