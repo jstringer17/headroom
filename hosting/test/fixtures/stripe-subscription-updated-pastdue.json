@@ -1,0 +1,1 @@
+{"id":"evt_pastdue_1","type":"customer.subscription.updated","data":{"object":{"id":"sub_A","object":"subscription","customer":"cus_A","status":"past_due","metadata":{"siteId":"site-a"}}}}

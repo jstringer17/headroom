@@ -1,0 +1,1 @@
+{"id":"evt_paid_1","type":"invoice.paid","data":{"object":{"id":"in_1","object":"invoice","customer":"cus_A","subscription":"sub_A","lines":{"data":[{"period":{"start":1790000000,"end":1792592000}}]}}}}

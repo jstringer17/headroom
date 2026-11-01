@@ -28,3 +28,9 @@ Inputs: none to build. Pilot later needs STRIPE_SECRET_KEY (test), STRIPE_WEBHOO
 Depends on: host-core (db.js, notify.js, render.js, schema.sql, router). Answers to: chief of staff.
 CEO-only questions: monthly price and setup fee; add-on prices; grace days (suggest 14); partner's email for the desk.
 End with a handoff of at most 10 lines: done, evidence, left, decision needed.
+
+## RESULT (2026-11-01, billing-desk lead)
+Done: billing (Checkout, webhook, portal, grace sweep, add-ons, monthly report off by default), Customer Desk with Access JWT check, import-lead.mjs. Files only under hosting/ (billing, desk, scripts/import-lead.mjs, test/).
+Evidence: `cd hosting && node --test test/*.test.js` = 22/22 pass (all 5 done-criteria); screenshots hosting/test-shots/desk/desk-375.png and desk-1280.png, no sideways scroll.
+Left: host-core not landed, so db/notify/render are reached via hosting/src/billing/deps.js (own SQL on contract tables; lazy-imports ../notify.js, ../render.js). Visitor-sees-not-active test auto-runs once hosting/src/index.js exists. e2e-local not run.
+Decision needed: (1) host-core package.json test script must be `node --test test/*.test.js` (tests use node:test + node:sqlite, not vitest; needs Node 22+). (2) CEO: monthly price + setup fee (vars MONTHLY_CENTS, STRIPE_PRICE_*), add-on prices, grace days (default 14), partner email (DESK_EMAILS). (3) Add vars CF_ACCESS_TEAM, CF_ACCESS_AUD to wrangler.toml. (4) owner-admin must read logins as sha256-hex token_hash, link /admin/login?token=, 15 min. (5) Webhook events.id = Stripe event id; publish events expected as kind 'publish*'.

@@ -1,0 +1,1 @@
+{"id":"evt_failed_1","type":"invoice.payment_failed","data":{"object":{"id":"in_2","object":"invoice","customer":"cus_A","subscription":"sub_A"}}}

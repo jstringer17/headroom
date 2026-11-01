@@ -1,0 +1,1 @@
+{"id":"evt_deleted_1","type":"customer.subscription.deleted","data":{"object":{"id":"sub_A","object":"subscription","customer":"cus_A","status":"canceled","metadata":{"siteId":"site-a"}}}}
