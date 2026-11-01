@@ -189,13 +189,10 @@ test('add-on subscription canceled/deleted ends the add-on only', async () => {
   assert.equal((await addonRow(b.env)).status, 'canceled');
 });
 
-test('main plan still works with an add-on present; invoice.paid before checkout still lands', async () => {
+test('main plan still works with an add-on present', async () => {
   const a = await withAddon({ status: 'off', paid_through: new Date(NOW - 30 * DAY).toISOString() });
   await send(a.env, fixture('invoice-paid'));
   assert.equal((await getSiteRow(a.env)).status, 'live');
-  const b = makeEnv(); await addSite(b.env, { stripe_customer: 'cus_A' }); // checkout event not seen yet: no stripe_sub saved
-  await send(b.env, fixture('invoice-paid'));
-  assert.equal((await getSiteRow(b.env)).paid_through, new Date(1792592000 * 1000).toISOString());
 });
 
 test('unset prices: desk MRR does not break, checkout says what is missing', async () => {
@@ -217,4 +214,55 @@ test('a switched-off site stops being served within 5 seconds, even on an isolat
     const page = await worker.fetch(new Request('https://site-a.example.net/'), env, { waitUntil() {} });
     assert.match(await page.text(), /not active/i);
   } finally { Date.now = real; }
+});
+
+// ---- Stripe API >= 2025-03-31.basil: invoices carry the subscription under parent.subscription_details ----
+const basilInvoice = (id, type, sub, over = {}) => ({ id, type, data: { object: { id: `in_${id}`, customer: 'cus_A', parent: { type: 'subscription_details', subscription_details: { subscription: sub, ...(over.meta ? { metadata: over.meta } : {}) } }, lines: { data: [{ period: { end: 1792592000 } }] } } } });
+
+test('basil-shaped main invoice.paid extends paid_through and revives an off site', async () => {
+  const { env } = await withAddon({ status: 'off', paid_through: new Date(NOW - 30 * DAY).toISOString() });
+  await send(env, basilInvoice('b1', 'invoice.paid', 'sub_A'));
+  const s = await getSiteRow(env);
+  assert.equal(s.status, 'live'); assert.equal(s.paid_through, new Date(1792592000 * 1000).toISOString());
+});
+
+test('basil-shaped main payment_failed warns about switch-off; add-on one (metadata under subscription_details) does not', async () => {
+  const a = await withAddon({ paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  await send(a.env, basilInvoice('b2', 'invoice.payment_failed', 'sub_A'));
+  assert.match(a.calls.emails.at(-1).text, /switched off/i);
+  const b = await withAddon({ paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  await send(b.env, basilInvoice('b3', 'invoice.payment_failed', 'sub_SMS', { meta: { addon: 'sms' } }));
+  assert.ok(b.calls.emails.every((m) => !/switched off/i.test(m.text)));
+  const c = await withAddon({ status: 'off', paid_through: new Date(NOW - 30 * DAY).toISOString() });
+  await send(c.env, basilInvoice('b4', 'invoice.paid', 'sub_SMS'));
+  assert.equal((await getSiteRow(c.env)).status, 'off'); // add-on by sub id alone
+});
+
+test('a late invoice.paid after the subscription was deleted does not switch the site back on', async () => {
+  const { env, calls } = makeEnv(); await live(env, { paid_through: new Date(NOW + 5 * DAY).toISOString() });
+  await send(env, fixture('subscription-deleted'));
+  assert.equal((await getSiteRow(env)).status, 'off');
+  await send(env, { ...fixture('invoice-paid'), id: 'evt_late_paid' });
+  assert.equal((await getSiteRow(env)).status, 'off');
+  assert.deepEqual(calls.published, []);
+  // a brand new subscription (new sub id) still works
+  await send(env, { id: 'evt_resub', type: 'checkout.session.completed', data: { object: { id: 'cs_9', client_reference_id: 'site-a', customer: 'cus_A', subscription: 'sub_NEW', metadata: { siteId: 'site-a' } } } });
+  assert.equal((await getSiteRow(env)).status, 'live');
+});
+
+test('no main subscription on file: add-on invoice.paid never switches the site on; it is logged', async () => {
+  const { env } = makeEnv(); await addSite(env, { status: 'off', stripe_customer: 'cus_A', paid_through: new Date(NOW - 30 * DAY).toISOString() });
+  await send(env, basilInvoice('n3', 'invoice.paid', 'sub_SMS'));
+  const s = await getSiteRow(env);
+  assert.equal(s.status, 'off'); assert.equal(s.paid_through, new Date(NOW - 30 * DAY).toISOString());
+  const ev = await env.DB.prepare("SELECT * FROM events WHERE kind = 'billing.unknown_sub'").first();
+  assert.ok(ev);
+});
+
+test('Stripe calls pin the API version', async () => {
+  const { env, calls } = makeEnv(); await live(env);
+  await checkoutLink(env, 'site-a'); await portalLink(env, 'site-a');
+  for (const f of calls.fetches) assert.equal(f.init.headers['stripe-version'], '2025-09-30.clover');
+  env.STRIPE_API_VERSION = '2026-01-01.test'; await portalLink(env, 'site-a');
+  assert.equal(calls.fetches.at(-1).init.headers['stripe-version'], '2026-01-01.test');
 });

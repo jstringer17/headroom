@@ -38,7 +38,7 @@ Replace `<agency>` with the agency domain. Do Stripe in TEST mode first (toggle 
 | `ADMIN_LOOK` | "on" lets owners change the look | off |
 | `CF_ACCESS_TEAM`, `CF_ACCESS_AUD`, `DESK_EMAILS` | desk lock, see below | desk answers 403 to everyone |
 
-Secrets: `npx wrangler secret put STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`.
+Secrets: first run `npx wrangler login` once (browser opens, allow), then `npx wrangler secret put STRIPE_SECRET_KEY` and `npx wrangler secret put STRIPE_WEBHOOK_SECRET` (each asks you to paste the value). Same login is needed for step A3 and every `wrangler` command.
 
 **1. Stripe products (dashboard > Product catalog > Add product)**
 1. "Website hosting": Pricing = Recurring, Monthly, the monthly price. Save. Open it, copy the Price ID (`price_...`) into `STRIPE_PRICE_MONTHLY`.
@@ -62,11 +62,13 @@ Cloudflare dashboard > Workers & Pages > `headroom-sites` > Settings > Domains &
 **4. Stripe webhook (must NOT sit behind Access)**
 We use `hooks.<agency>`, which has no Access app, so Stripe can reach it. Do not put the webhook on `desk.<agency>`: Access would block Stripe. (Alternative if ever needed: a second Access application for `desk.<agency>` with Path `api/stripe` and a policy with Action = Bypass, Include = Everyone. Not used.) The Worker answers `/api/stripe` on any attached hostname and checks Stripe's signature itself.
 1. Stripe dashboard (test mode) > Developers > Webhooks > Add endpoint (newer dashboards: Add destination > Your account > Webhook endpoint).
-2. Endpoint URL: `https://hooks.<agency>/api/stripe`.
+2. Endpoint URL: `https://hooks.<agency>/api/stripe`. If the form asks for an **API version**, pick `2025-09-30.clover` (the version the Worker pins for its own Stripe calls; set var `STRIPE_API_VERSION` to change both together). The Worker reads both the old and the new (`basil` and later) invoice shapes, so an older endpoint version also works.
 3. Select events (exactly these five): `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`, `customer.subscription.updated`, `customer.subscription.deleted`.
 4. Add endpoint. Open it > Signing secret > Reveal (`whsec_...`). `npx wrangler secret put STRIPE_WEBHOOK_SECRET`.
 5. Check: on the endpoint page press Send test webhook (any event). Delivery shows 200 with "ignored" (no matching site) or 400 if the secret is wrong.
-6. Test card for the pilot: 4242 4242 4242 4242, any future date, any CVC. A failing renewal: 4000 0000 0000 0341.
+6. No dashboard button? Stripe CLI fallback (install from stripe.com/docs/stripe-cli, then `stripe login`): `stripe listen --forward-to https://hooks.<agency>/api/stripe` prints a temporary `whsec_...` (use it only while testing; it replaces the dashboard one for that run), and `stripe trigger invoice.paid` sends a sample. Samples belong to a fake customer, so the Worker answers 200 `ignored: no matching site`. That proves the signature and route; the full test is the real test checkout in the pilot list below. Local (`npx wrangler dev`): forward to `http://localhost:8787/api/stripe` and set `STRIPE_WEBHOOK_SECRET` in `.dev.vars`.
+7. **Going live later (CEO ok first):** switch the Stripe dashboard to live mode and repeat steps 1 and 4 there. Live mode has its own secret key (`sk_live_`), its own price ids (recreate the products), its own portal settings, its own webhook endpoint and a DIFFERENT `whsec_`. Update `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` and every `STRIPE_PRICE_*` var, then `npx wrangler deploy`.
+8. Test card for the pilot: 4242 4242 4242 4242, any future date, any CVC. A failing renewal: 4000 0000 0000 0341.
 
 **5. Pilot check list**
 - [ ] Desk > "Checkout link" on a draft site, open it, pay with the test card: the site goes live, the desk shows live with Paid through ~1 month out.

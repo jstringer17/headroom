@@ -48,10 +48,10 @@ export async function portalLink(env, siteId) {
 
 // ---- webhook -----------------------------------------------------------------------------
 async function resolveSite(env, type, obj) {
-  const meta = obj.metadata || obj.subscription_details?.metadata || {};
+  const meta = obj.metadata || obj.subscription_details?.metadata || obj.parent?.subscription_details?.metadata || {};
   if (type === 'checkout.session.completed') return getSite(env, obj.client_reference_id || meta.siteId);
   return (meta.siteId && (await getSite(env, meta.siteId)))
-    || (await siteByCustomer(env, obj.customer)) || (await siteBySub(env, obj.subscription || obj.id));
+    || (await siteByCustomer(env, obj.customer)) || (await siteBySub(env, subIdOf(type, obj)));
 }
 
 export async function stripeWebhook(request, env) {
@@ -78,9 +78,19 @@ export async function stripeWebhook(request, env) {
 }
 const json = (b) => new Response(JSON.stringify(b), { headers: { 'content-type': 'application/json' } });
 
-// Only the main plan subscription may change the site's status or paid_through. Anything else is an add-on.
-const subOf = (type, obj) => (type.startsWith('customer.subscription.') ? obj.id : obj.subscription);
-const isAddonSub = (site, type, obj) => !!obj.metadata?.addon || (!!site.stripe_sub && subOf(type, obj) !== site.stripe_sub);
+// Only the main plan subscription may change the site's status or paid_through.
+// Stripe moved the invoice's subscription id to parent.subscription_details (API 2025-03-31.basil): read both places.
+const subIdOf = (type, obj) => (type.startsWith('customer.subscription.') ? obj.id : (obj.subscription || obj.parent?.subscription_details?.subscription || null));
+const addonOf = (obj) => obj.metadata?.addon || obj.subscription_details?.metadata?.addon || obj.parent?.subscription_details?.metadata?.addon || null;
+// 'main' | 'addon' | 'unknown' (no main subscription on file and no add-on mark: change nothing).
+function classify(site, type, obj) {
+  if (addonOf(obj)) return 'addon';
+  if (!site.stripe_sub) return 'unknown';
+  return subIdOf(type, obj) === site.stripe_sub ? 'main' : 'addon';
+}
+const canceledId = (sub) => `canceled:${sub}`;
+const wasCanceled = async (env, sub) => !!sub && !!(await env.DB.prepare('SELECT 1 AS x FROM events WHERE id = ?').bind(canceledId(sub)).first());
+const markCanceled = (env, site, sub, now) => (sub ? claimEvent(env, canceledId(sub), site.id, 'billing.sub_canceled', { sub }, now) : null);
 const setAddon = (env, siteId, sub, status) => env.DB.prepare('UPDATE addons SET status = ? WHERE site_id = ? AND stripe_item = ?').bind(status, siteId, sub).run();
 
 async function goLive(env, d, site, fields = {}) {
@@ -101,21 +111,26 @@ async function handle(env, d, type, obj, site) {
           .bind(site.id, addon, 'active', obj.subscription || '').run();
         return;
       }
+      if (await wasCanceled(env, obj.subscription)) return; // checkout event arrived after that subscription was canceled
       await goLive(env, d, site, { stripe_customer: obj.customer, stripe_sub: obj.subscription, plan: 'monthly', paid_through: iso(now + 31 * DAY) });
       return;
     }
     case 'invoice.paid': {
-      if (isAddonSub(site, type, obj)) return setAddon(env, site.id, obj.subscription, 'active');
+      const kind = classify(site, type, obj), sub = subIdOf(type, obj);
+      if (kind === 'addon') return setAddon(env, site.id, sub, 'active');
+      if (kind === 'unknown') return claimEvent(env, `unknown:${obj.id}`, site.id, 'billing.unknown_sub', { type, sub }, now);
       const end = (obj.lines?.data || []).map((l) => l.period?.end).filter(Boolean).sort().pop();
       const through = end ? iso(end * 1000) : iso(now + 31 * DAY);
       const fields = { paid_through: through };
-      if (site.status === 'off') await goLive(env, d, site, fields); // paid after being switched off
+      if (site.status === 'off' && !(await wasCanceled(env, sub))) await goLive(env, d, site, fields); // paid after being switched off (not after a cancel)
       else await patchSite(env, site.id, fields, now);
       return;
     }
     case 'invoice.payment_failed': { // still live: the grace period runs from paid_through
-      if (isAddonSub(site, type, obj)) { // an add-on card problem never threatens the website
-        await setAddon(env, site.id, obj.subscription, 'past_due');
+      const kind = classify(site, type, obj), sub = subIdOf(type, obj);
+      if (kind === 'unknown') return claimEvent(env, `unknown:${obj.id}`, site.id, 'billing.unknown_sub', { type, sub }, now);
+      if (kind === 'addon') { // an add-on card problem never threatens the website
+        await setAddon(env, site.id, sub, 'past_due');
         let l = ''; try { l = await portalLink(env, site.id); } catch { /* no link */ }
         if (site.owner_email) await d.sendEmail(env, { to: site.owner_email, subject: 'An add-on payment did not go through', text: `Hi ${site.owner_name || 'there'},\n\nWe could not take the payment for one of your add-ons. Your website is not affected.${l ? `\n\nUpdate your card here: ${l}` : ''}`, html: '' });
         return;
@@ -131,15 +146,21 @@ async function handle(env, d, type, obj, site) {
     }
     case 'customer.subscription.updated': {
       const s = obj.status;
-      if (isAddonSub(site, type, obj)) return setAddon(env, site.id, obj.id, s === 'active' ? 'active' : s === 'past_due' ? 'past_due' : 'canceled');
+      const kind = classify(site, type, obj);
+      if (kind === 'addon') return setAddon(env, site.id, obj.id, s === 'active' ? 'active' : s === 'past_due' ? 'past_due' : 'canceled');
+      if (kind === 'unknown') return claimEvent(env, `unknown:${obj.id}:${s}`, site.id, 'billing.unknown_sub', { type, sub: obj.id }, now);
+      if (s === 'canceled') await markCanceled(env, site, obj.id, now);
       const lapsed = Date.parse(site.paid_through || 0) + graceDays(env) * DAY < now;
       if (s === 'canceled' || s === 'unpaid' || s === 'incomplete_expired') return goOff(env, d, site);
       if (s === 'past_due') return lapsed ? goOff(env, d, site) : null;
-      if (s === 'active' && site.status === 'off') await goLive(env, d, site);
+      if (s === 'active' && site.status === 'off' && !(await wasCanceled(env, obj.id))) await goLive(env, d, site);
       return;
     }
     case 'customer.subscription.deleted': {
-      if (isAddonSub(site, type, obj)) return setAddon(env, site.id, obj.id, 'canceled');
+      const kind = classify(site, type, obj);
+      if (kind === 'addon') return setAddon(env, site.id, obj.id, 'canceled');
+      if (kind === 'unknown') return claimEvent(env, `unknown:${obj.id}:deleted`, site.id, 'billing.unknown_sub', { type, sub: obj.id }, now);
+      await markCanceled(env, site, obj.id, now);
       return goOff(env, d, site);
     }
   }

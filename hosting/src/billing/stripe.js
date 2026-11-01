@@ -41,12 +41,15 @@ export function encodeForm(obj, prefix = '', out = []) {
   return out;
 }
 
+// Pinned so Stripe's own default can never change the payloads under us. Override with var STRIPE_API_VERSION.
+export const STRIPE_API_VERSION = '2025-09-30.clover';
+
 export async function stripeApi(env, fetchFn, method, path, params = {}) {
   if (!env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not set');
   const body = encodeForm(params).join('&');
   const res = await fetchFn(`https://api.stripe.com/v1${path}`, {
     method,
-    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded' },
+    headers: { authorization: `Bearer ${env.STRIPE_SECRET_KEY}`, 'content-type': 'application/x-www-form-urlencoded', 'stripe-version': env.STRIPE_API_VERSION || STRIPE_API_VERSION },
     body: method === 'GET' ? undefined : body,
   });
   const json = await res.json().catch(() => ({}));

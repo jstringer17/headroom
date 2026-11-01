@@ -9,7 +9,7 @@ import { notActivePage, notFoundPage, privacyPage } from "./notactive.js";
 
 const PAGE_HEADERS = {
   "content-type": "text/html; charset=utf-8",
-  "cache-control": "public, max-age=60",
+  "cache-control": "public, max-age=10",
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
   "x-frame-options": "SAMEORIGIN",
@@ -44,7 +44,7 @@ export function createApp(mods = {}) {
     const path = url.pathname;
     const agency = cleanHost(env.AGENCY_DOMAIN || "");
 
-    // Stripe and ops first: Stripe's webhook URL is https://desk.<agency>/api/stripe.
+    // Stripe and ops first, on any attached host. Stripe's webhook URL is https://hooks.<agency>/api/stripe (not the desk host: Access would block Stripe).
     if (path === "/api/stripe") return stripeWebhook(request, env, ctx);
     if (path === "/api/ops/publish") return ops(request, env);
     if (agency && host === `desk.${agency}`) return deskApp(request, env, ctx);
