@@ -44,9 +44,10 @@ export function createApp(mods = {}) {
     const path = url.pathname;
     const agency = cleanHost(env.AGENCY_DOMAIN || "");
 
-    if (agency && host === `desk.${agency}`) return deskApp(request, env, ctx);
+    // Stripe and ops first: Stripe's webhook URL is https://desk.<agency>/api/stripe.
     if (path === "/api/stripe") return stripeWebhook(request, env, ctx);
     if (path === "/api/ops/publish") return ops(request, env);
+    if (agency && host === `desk.${agency}`) return deskApp(request, env, ctx);
 
     const site = await getSiteByHost(env, host);
     if (!site) return notFoundPage(false);

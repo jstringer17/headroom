@@ -12,6 +12,10 @@ workers_dev = false
 AGENCY_DOMAIN = "agency.example"       # CEO: the agency domain
 FROM_EMAIL = "Leads <leads@agency.example>"
 TURNSTILE_SITE_KEY = ""                # public site key; secret goes in TURNSTILE_SECRET
+CF_ACCESS_TEAM = ""                    # desk: Cloudflare Access team name (billing-desk)
+CF_ACCESS_AUD = ""                     # desk: Access application audience tag (billing-desk)
+DESK_EMAILS = ""                       # desk: CEO + partner emails, comma list (CEO)
+GRACE_DAYS = "14"                      # billing: days after a failed payment before the site goes off (CEO)
 
 [[d1_databases]]
 binding = "DB"

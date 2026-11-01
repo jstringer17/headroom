@@ -91,6 +91,7 @@ describe("two sites on two hosts", () => {
     expect(await (await get("https://acme.test/admin/edit")).text()).toBe("admin mock");
     expect(await (await get("https://acme.test/api/stripe", { method: "POST", body: "{}" })).text()).toBe("stripe mock");
     expect(await (await get("https://desk.agency.test/")).text()).toBe("desk mock");
+    expect(await (await get("https://desk.agency.test/api/stripe", { method: "POST", body: "{}" })).text()).toBe("stripe mock");
     expect((await get("https://nobody.test/admin")).status).toBe(404);
   });
 
@@ -308,5 +309,43 @@ describe("ops publish and cron", () => {
     expect(ran).toEqual(["reviews", "billing"]);
     expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM hits").first()).n).toBe(0);
     expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM events WHERE kind = 'cron_failed'").first()).n).toBe(1);
+  });
+});
+
+describe("scripts", () => {
+  it("golive.mjs dry run prints the plan, makes no network call and changes nothing", async () => {
+    const { spawnSync } = await import("node:child_process");
+    const { fileURLToPath } = await import("node:url");
+    const script = fileURLToPath(new URL("../scripts/golive.mjs", import.meta.url));
+    // Any network use would throw: fetch is poisoned in the child.
+    const r = spawnSync(process.execPath, ["--import", "data:text/javascript,globalThis.fetch=()=>{throw new Error('NETWORK USED')}", script, "abc123", "--domain", "example.com"], { encoding: "utf8", env: { PATH: process.env.PATH } });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain("DRY RUN");
+    expect(r.stdout).toContain("PUT https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/domains");
+    expect(r.stdout).toContain('"hostname":"www.example.com"');
+    expect(r.stdout).toContain("/rum/site_info");
+    expect(r.stdout).not.toContain("NETWORK USED");
+    expect(r.stderr).toBe("");
+    const { plan } = await import("../scripts/golive.mjs");
+    let threw = false;
+    try { plan({ siteId: "abc123", domain: "bad domain!" }); } catch { threw = true; }
+    expect(threw).toBe(true);
+  });
+
+  it("new-site.mjs makes a row that publishes, with pictures moved out to R2 files", async () => {
+    const { extractPictures, siteSql } = await import("../scripts/new-site.mjs");
+    const { mkdtempSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const dir = mkdtempSync(`${tmpdir()}/newsite-`);
+    const png = "data:image/png;base64,iVBORw0KGgo=";
+    const { form, files } = extractPictures({ ...FORM_B, heroImage: png, cine: { images: { s1: png } } }, "ns1", "bestfence.test", dir);
+    expect(files).toHaveLength(2);
+    expect(form.heroImage).toBe("https://bestfence.test/media/hero.png");
+    expect(files[0].key).toBe("media/ns1/hero.png");
+    await env.DB.exec(siteSql({ id: "ns1", form, domain: "bestfence.test", status: "live", owner_email: "o'neil@bestfence.test", now: new Date().toISOString() }));
+    const s = await getSite(env, "ns1");
+    expect(s.owner_email).toBe("o'neil@bestfence.test");
+    expect((await publishSite(env, "ns1")).ok).toBe(true);
+    expect(await (await get("https://bestfence.test/")).text()).toContain("https://bestfence.test/media/hero.png");
   });
 });
