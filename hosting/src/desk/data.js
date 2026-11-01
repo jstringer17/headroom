@@ -15,7 +15,7 @@ export async function loadCustomers(env, now = Date.now()) {
     rows(env, 'SELECT * FROM sites ORDER BY created_at DESC'),
     rows(env, 'SELECT site_id, COUNT(*) AS total, SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS month, MAX(created_at) AS last FROM leads GROUP BY site_id', monthStart),
     rows(env, "SELECT site_id, COUNT(*) AS n, MAX(fetched_at) AS fetched FROM reviews WHERE source = 'google' GROUP BY site_id"),
-    rows(env, "SELECT site_id, MAX(at) AS at FROM events WHERE kind LIKE 'publish%' GROUP BY site_id"),
+    rows(env, "SELECT site_id, MAX(at) AS at FROM events WHERE kind = 'published' GROUP BY site_id"),
     rows(env, "SELECT site_id, kind, MAX(at) AS at FROM events WHERE kind IN ('stripe.invoice.payment_failed','stripe.invoice.paid') GROUP BY site_id, kind"),
     rows(env, "SELECT site_id, MIN(at) AS at FROM events WHERE kind = 'stripe.checkout.session.completed' GROUP BY site_id"),
     rows(env, "SELECT site_id, kind FROM addons WHERE status = 'active'"),

@@ -43,7 +43,7 @@ test('deleted subscription -> off, and a visitor sees the not-active page', asyn
   const router = new URL('../src/index.js', import.meta.url);
   if (!fs.existsSync(router)) return t.diagnostic('host-core router not landed: visitor check covered by e2e-local.mjs');
   const worker = (await import(router.href)).default;
-  const page = await worker.fetch(new Request('https://a.example.net/'), env, { waitUntil() {} });
+  const page = await worker.fetch(new Request('https://site-a.example.net/'), env, { waitUntil() {} });
   assert.match(await page.text(), /not active/i);
 });
 
@@ -106,8 +106,8 @@ test('add-on checkout records the add-on and leaves site status alone', async ()
 
 test('billingSweep: 15 days past paid_through (grace 14) -> off; 13 days -> live', async () => {
   const { env, calls } = makeEnv({ GRACE_DAYS: '14' });
-  await live(env, { id: 'late', slug: 'late', paid_through: new Date(NOW - 15 * DAY).toISOString() });
-  await live(env, { id: 'ok', slug: 'ok', stripe_sub: 'sub_B', paid_through: new Date(NOW - 13 * DAY).toISOString() });
+  await live(env, { id: 'late', slug: 'late', domain: 'late.example.net', paid_through: new Date(NOW - 15 * DAY).toISOString() });
+  await live(env, { id: 'ok', slug: 'ok', domain: 'ok.example.net', stripe_sub: 'sub_B', paid_through: new Date(NOW - 13 * DAY).toISOString() });
   const r = await billingSweep(env);
   assert.deepEqual(r.turnedOff, ['late']);
   assert.equal((await getSiteRow(env, 'late')).status, 'off');

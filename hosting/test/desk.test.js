@@ -39,7 +39,7 @@ async function fixtureRows(env) {
   await env.DB.prepare("INSERT INTO addons VALUES ('a','sms','active','x')").run();
   await env.DB.prepare("INSERT INTO reviews (site_id, source, stars, fetched_at, show) VALUES ('a','google',5,?,1),('b','google',5,?,1)").bind(iso(2), iso(30)).run();
   const E = (id, site, kind, d) => env.DB.prepare('INSERT INTO events VALUES (?, ?, ?, ?, ?)').bind(id, site, kind, '{}', iso(d)).run();
-  await E('e1', 'a', 'stripe.checkout.session.completed', 80); await E('e2', 'a', 'publish', 4);
+  await E('e1', 'a', 'stripe.checkout.session.completed', 80); await E('e2', 'a', 'published', 4);
   await E('e3', 'b', 'stripe.invoice.payment_failed', 1);
 }
 

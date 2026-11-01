@@ -1,3 +1,5 @@
+import { clearHostCache, logEvent } from '../db.js';
+
 // Everything outside this folder goes through here, so tests can swap it (env.__deps) and
 // the folder works before host-core lands. Real modules are loaded lazily.
 export function getDeps(env) {
@@ -22,6 +24,8 @@ export async function patchSite(env, id, fields, now) {
   const keys = Object.keys(fields);
   await env.DB.prepare(`UPDATE sites SET ${keys.map((k) => `${k} = ?`).join(', ')}, updated_at = ? WHERE id = ?`)
     .bind(...keys.map((k) => fields[k]), new Date(now).toISOString(), id).run();
+  clearHostCache(); // the router caches host -> site (incl. status) for 30 s; a status change must show at once
+  if ('status' in fields) await logEvent(env, id, 'status', { status: fields.status, by: 'billing' });
 }
 // First writer wins: returns false when this event id was already stored.
 export async function claimEvent(env, id, siteId, kind, data, now) {
