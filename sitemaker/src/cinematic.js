@@ -16,7 +16,7 @@
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
 import { rvwList } from "./reviews.js";
-import { esc, safeImage } from "./generate.js";
+import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { kitVariant, variantCards } from "./variants.js";
 
@@ -651,10 +651,10 @@ export function generateCinematic(form, d, deps) {
   <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>
 </div></section>`;
   const starRow = (fill, size) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("");
-  const reviews = `<section class="sec rvw-beat" id="reviews"><div class="wrap">
+  const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec rvw-beat" id="reviews"><div class="wrap">
   <div class="sec-head rv"><h2>What customers <em>say</em>.</h2></div>
   ${d.rating ? `<div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
-  ${rvwList(d.rv, esc)}
+  ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
   ${d.rv.link ? `<p class="rvw-more rv"><a class="btn btn-accent" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
@@ -664,12 +664,12 @@ export function generateCinematic(form, d, deps) {
     <p class="lede">Call now, or send the form and we will call you back.${d.emergency ? " Open 24/7 for emergencies." : ""}</p>
     ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : `<p class="big-phone">Phone number here</p>`}
   </div>
-  <form id="ask" class="body rv" novalidate>
+  <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
-    <button class="btn btn-accent" type="submit">Send request</button>
+    ${liveFormFields(d)}<button class="btn btn-accent" type="submit">Send request</button>
     <p class="form-note" id="f-note" aria-live="polite">We will call you back.</p>
   </form>
 </div></section>`;
@@ -691,7 +691,7 @@ export function generateCinematic(form, d, deps) {
 <title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
 <meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
 <meta name="theme-color" content="${th.dark}">
-${fonts}
+${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}`, `${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}`)}${fonts}
 <style>
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--ink:${th.ink};--muted:${th.muted}}
 ${ENGINE_CSS}
@@ -717,12 +717,12 @@ ${services}
 ${reviews}
 ${contact}
 </main>
-<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${factList.length ? `<p>${esc(factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; Sample site</p></div></footer>
+<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${factList.length ? `<p>${esc(factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
 <div class="mobile-call">${callBtn("btn btn-accent")}</div>
 <script>
-${ENGINE_JS}
+${liveScript(ENGINE_JS, d)}
 </script>
-</body>
+${liveBeacon(d)}</body>
 </html>
 `;
 }

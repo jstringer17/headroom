@@ -1,0 +1,30 @@
+# One Worker serves every sold site by domain (org/plan.md "Hosted backend").
+# Nothing here is live until the CEO says go: see GO-LIVE.md.
+name = "headroom-sites"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = false
+
+# Customer domains are attached as Workers Custom Domains by scripts/golive.mjs (one per site + www).
+
+[vars]
+AGENCY_DOMAIN = "agency.example"       # CEO: the agency domain
+FROM_EMAIL = "Leads <leads@agency.example>"
+TURNSTILE_SITE_KEY = ""                # public site key; secret goes in TURNSTILE_SECRET
+
+[[d1_databases]]
+binding = "DB"
+database_name = "headroom"
+database_id = "00000000-0000-0000-0000-000000000000"   # filled by `wrangler d1 create headroom`
+
+[[r2_buckets]]
+binding = "BUCKET"                     # sites/<id>/index.html, sites/<id>/sitemap.xml, media/<id>/<file>
+bucket_name = "headroom-sites"
+
+[triggers]
+crons = ["17 9 * * *"]                 # daily: reviews refresh, billing sweep, old rate-limit rows
+
+# Secrets (wrangler secret put NAME), never in git:
+# RESEND_API_KEY TWILIO_SID TWILIO_TOKEN TWILIO_FROM GOOGLE_PLACES_API_KEY
+# STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET TURNSTILE_SECRET SESSION_KEY OPS_KEY

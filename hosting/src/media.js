@@ -1,0 +1,20 @@
+// Photos for a site: GET /media/<file> -> R2 media/<siteId>/<file>. Only jpeg, png and webp.
+const TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+export const mediaKey = (siteId, file) => `media/${siteId}/${file}`;
+
+export async function serveMedia(request, env, site) {
+  const url = new URL(request.url);
+  const file = decodeURIComponent(url.pathname.slice("/media/".length));
+  const ext = (file.match(/\.([a-z0-9]+)$/i) || [])[1];
+  if (!/^[A-Za-z0-9][A-Za-z0-9._/-]{0,200}$/.test(file) || file.includes("..") || file.includes("//") || !ext || !TYPES[ext.toLowerCase()]) {
+    return new Response("Not found", { status: 404 });
+  }
+  const obj = await env.BUCKET.get(mediaKey(site.id, file));
+  if (!obj) return new Response("Not found", { status: 404 });
+  const type = (obj.httpMetadata && obj.httpMetadata.contentType) || TYPES[ext.toLowerCase()];
+  if (!Object.values(TYPES).includes(type)) return new Response("Not found", { status: 404 });
+  const h = new Headers({ "content-type": type, "cache-control": "public, max-age=86400", "x-content-type-options": "nosniff" });
+  if (obj.httpEtag) h.set("etag", obj.httpEtag);
+  if (request.method === "HEAD") return new Response(null, { headers: h });
+  return new Response(obj.body, { headers: h });
+}

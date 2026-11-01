@@ -1,0 +1,17 @@
+{
+  "name": "headroom-hosting",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "One Cloudflare Worker that hosts every sold contractor site by domain.",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler dev",
+    "db:local": "wrangler d1 execute headroom --local --file schema.sql",
+    "e2e": "node scripts/e2e-local.mjs"
+  },
+  "devDependencies": {
+    "vitest": "3.2.4",
+    "wrangler": "4.45.0"
+  }
+}

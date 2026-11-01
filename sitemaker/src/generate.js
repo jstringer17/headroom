@@ -21,7 +21,7 @@ import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
 import { variantCards } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
-import { cineLook, placeholderArt } from "./cine-look.js";
+import { cineLook, placeholderArt, blueprintArt } from "./cine-look.js";
 
 // Cinematic mode needs the art files' CINE_KIT, cineLook and placeholderArt.
 let CINE = null;
@@ -96,6 +96,104 @@ export function safeImage(src) {
   return "";
 }
 
+// ---------- Live mode (a sold site, hosted by hosting/) ----------
+// form.live = { siteId, leadUrl:"/api/lead", turnstileKey, analyticsToken, canonical, privacyUrl, google:{rating,count} }
+// With it: the form really sends, no sample bits render, and SEO tags go in <head>. Without it: nothing changes.
+export const LIVE_SAMPLE_SUBMIT = 'document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});';
+const liveUrl = (u) => (/^https:\/\/[^\s"'<>\\]+$/.test(String(u || "").trim()) ? String(u).trim() : "");
+const livePath = (u, dflt) => { const s = String(u || "").trim(); return /^\/[A-Za-z0-9/_.-]*$/.test(s) || liveUrl(s) ? s : dflt; };
+export function liveOf(form) {
+  const l = form && form.live;
+  if (!l || typeof l !== "object") return null;
+  const g = l.google && typeof l.google === "object" ? l.google : null;
+  const gr = g ? parseFloat(g.rating) : NaN, gc = g ? parseInt(g.count, 10) : NaN;
+  return {
+    siteId: String(l.siteId || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 64),
+    leadUrl: livePath(l.leadUrl, "/api/lead"),
+    turnstileKey: String(l.turnstileKey || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 100),
+    analyticsToken: String(l.analyticsToken || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 100),
+    canonical: liveUrl(l.canonical),
+    privacyUrl: livePath(l.privacyUrl, "/privacy"),
+    google: gr >= 1 && gr <= 5 ? { rating: Math.round(gr * 10) / 10, count: gc > 0 ? gc : null } : null,
+  };
+}
+// Live mode: real reviews only, rating only from Google data.
+function liveNormalize(d, live) {
+  d.live = live;
+  if (!d.rv.real) d.rv = { real: false, items: [], link: d.rv.link };
+  d.rating = live.google ? live.google.rating : null;
+  d.reviews = live.google ? live.google.count : null;
+  return d;
+}
+// Everything a look adds to <head> in live mode.
+export function liveHead(d, form, title, description) {
+  const L = d.live;
+  if (!L) return "";
+  const img = liveUrl(form && form.heroImage);
+  const tradeName = d.trade.label.replace(/ \(.*\)$/, "");
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "HomeAndConstructionBusiness",
+    name: d.company,
+    description: `${d.company} is a ${d.trade.noun} serving ${d.city ? `${d.city} and nearby towns` : "the local area"}.`,
+    ...(L.canonical ? { url: L.canonical } : {}),
+    ...(d.phone && d.phone.tel ? { telephone: d.phone.tel } : {}),
+    ...(d.city ? { address: { "@type": "PostalAddress", addressLocality: d.city }, areaServed: d.city } : {}),
+    ...(img ? { image: img } : {}),
+    knowsAbout: [tradeName, ...d.services.map((s) => s[0])],
+    ...(L.google && L.google.count ? { aggregateRating: { "@type": "AggregateRating", ratingValue: L.google.rating, reviewCount: L.google.count, bestRating: 5 } } : {}),
+  };
+  const json = JSON.stringify(ld).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+  return [
+    L.canonical && `<link rel="canonical" href="${esc(L.canonical)}">`,
+    `<meta property="og:type" content="website">`,
+    `<meta property="og:site_name" content="${esc(d.company)}">`,
+    `<meta property="og:title" content="${title}">`,
+    `<meta property="og:description" content="${description}">`,
+    L.canonical && `<meta property="og:url" content="${esc(L.canonical)}">`,
+    img && `<meta property="og:image" content="${esc(img)}">`,
+    `<script type="application/ld+json">${json}</script>`,
+    L.turnstileKey && `<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>`,
+  ].filter(Boolean).join("\n") + "\n";
+}
+// Extra form fields in live mode: optional email, a hidden honeypot, and the Turnstile box.
+export function liveFormFields(d) {
+  const L = d.live;
+  if (!L) return "";
+  return `<label for="f-email">Email (if you want)<input type="email" id="f-email" name="email" autocomplete="email"></label>
+    <div style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden" aria-hidden="true"><label>Leave this empty<input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+    ${L.turnstileKey ? `<div class="cf-turnstile" data-sitekey="${esc(L.turnstileKey)}" data-size="flexible"></div>` : ""}
+    `;
+}
+// The form's attributes in live mode (works with no JavaScript too: the Worker answers a plain POST).
+export function liveFormAttrs(d) {
+  return d.live ? ` action="${esc(d.live.leadUrl)}" method="post"` : "";
+}
+// Swap the sample "this form does not send" handler for the real one (plain ES5).
+export function liveScript(js, d) {
+  if (!d.live) return js;
+  const url = JSON.stringify(d.live.leadUrl).replace(/</g, "\\u003c");
+  const site = JSON.stringify(d.live.siteId);
+  const real = 'document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var f=e.target,n=document.getElementById("f-note"),b=f.querySelector("[type=submit]");' +
+    'function v(k){var x=f.elements[k];return x&&x.value!=null?String(x.value).trim():""}' +
+    'if(!v("name")||(!v("phone")&&!v("email"))){n.textContent="Please add your name and a phone number.";return}' +
+    'var t=f.querySelector("[name=\'cf-turnstile-response\']");' +
+    'var body={siteId:' + site + ',name:v("name"),phone:v("phone"),email:v("email"),service:v("job"),message:v("message"),website:v("website"),token:t?t.value:"",page:location.pathname};' +
+    'b.disabled=true;n.textContent="Sending...";' +
+    'function done(ok,msg){b.disabled=false;n.textContent=ok?"Thanks, we got it. We will call you soon.":(msg||"Sorry, that did not send. Please call us.");if(ok)f.reset();if(window.turnstile)try{turnstile.reset()}catch(_){}}' +
+    'fetch(' + url + ',{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return{}}).then(function(j){done(r.ok&&j.ok,j.error)})},function(){done(false)});});';
+  return js.replace(LIVE_SAMPLE_SUBMIT, real);
+}
+// Footer link and the free, cookie-free analytics beacon.
+export function liveFootLink(d) {
+  return d.live ? `<a href="${esc(d.live.privacyUrl)}">Privacy</a>` : "";
+}
+export function liveBeacon(d) {
+  return d.live && d.live.analyticsToken ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${esc(d.live.analyticsToken)}"}'></script>\n` : "";
+}
+// Live mode never shows labelled placeholder art: empty slots get the unlabelled blueprint drawing.
+export function liveArt(trade) { return blueprintArt(trade); }
+
 const ICON_ARROW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
 const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
 
@@ -118,9 +216,11 @@ function h1Sizes(text, layout) {
 }
 
 export function generateSite(form) {
-  const d = normalize(form);
+  const live = liveOf(form);
+  const d = live ? liveNormalize(normalize(form), live) : normalize(form);
   const editorial = form && (form.look === "editorial" || (form.cine && form.cine.look === "editorial"));
-  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, CINE);
+  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, live ? { ...CINE, placeholderArt: liveArt } : CINE);
+  const phArt = live ? liveArt : placeholderArt;
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
@@ -223,17 +323,17 @@ export function generateSite(form) {
 </div></section>`,
     all: (tint) => allCards.length >= 2 ? `<section class="sec${tint}" id="all"><div class="wrap">
   <h2 class="rv">Everything we do</h2>
-  <ul class="all-list">${allCards.map((c) => `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : placeholderArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><a class="all-ask" href="#contact">Ask about this</a></li>`).join("")}</ul>
+  <ul class="all-list">${allCards.map((c) => `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : phArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><a class="all-ask" href="#contact">Ask about this</a></li>`).join("")}</ul>
 </div></section>` : "",
     process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
 </div></section>`,
-    reviews: (tint) => `<section class="sec${tint}" id="reviews"><div class="wrap grid">
+    reviews: (tint) => d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec${tint}" id="reviews"><div class="wrap grid">
   <div class="head rv"><h2>What customers say</h2></div>
   <div class="body rev rv">
     ${d.rating && lay !== "ledger" ? `<div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
-    ${rvwList(d.rv, esc)}
+    ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
     ${d.rv.link ? `<a class="btn btn-accent rvw-all" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a>` : ""}
   </div>
 </div></section>`,
@@ -273,7 +373,7 @@ export function generateSite(form) {
 <title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
 <meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
 <meta name="theme-color" content="${th.dark}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}`, `${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}`)}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <style>
@@ -532,12 +632,12 @@ ${body}
       <div><dt>${d.emergency ? "Hours:" : "Emergencies:"}</dt><dd>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</dd></div>
     </dl>
   </div>
-  <form id="ask" class="body rv" novalidate>
+  <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
     <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input id="f-phone" name="phone" type="tel" autocomplete="tel"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
-    <button class="btn btn-accent" type="submit">Send request</button>
+    ${liveFormFields(d)}<button class="btn btn-accent" type="submit">Send request</button>
     <p class="form-note" id="f-note" aria-live="polite">We will call you back.</p>
   </form>
 </div></section>
@@ -549,11 +649,11 @@ ${body}
     <div><h3>Contact</h3><ul><li>${d.phone ? `<a href="${callHref}">${phoneShow}</a>` : "Phone number here"}</li><li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
     <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
   </div>
-  <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>Sample site</span></div>
+  <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
 </div></footer>
 <div class="mobile-call">${callBtn("btn btn-accent")}</div>
 <script>
-(function(){
+${liveScript(`(function(){
   var root=document.documentElement;root.classList.add("js");
   document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
   // The extra call buttons show only after the hero's own call button scrolls away.
@@ -567,8 +667,8 @@ ${body}
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
   els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
 })();
-</script>
-</body>
+`, d)}</script>
+${liveBeacon(d)}</body>
 </html>
 `;
 }

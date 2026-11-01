@@ -12,7 +12,7 @@
 // form.cine.images / form.cine.prices / form.cine.unit work as in cinematic mode.
 // deps = { CINE_KIT, cineLook, placeholderArt, editorialLook? (optional), editorialShape? (optional) }
 import { rvwList } from "./reviews.js";
-import { esc, safeImage } from "./generate.js";
+import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
 import { kitVariant, variantCards } from "./variants.js";
@@ -440,7 +440,7 @@ export function generateEditorial(form, d, deps) {
       let best = null, bs = 0;
       for (const c of cand) { let sc = 0; want.forEach((w) => { if (c.t.has(w)) sc++; }); if (sc > bs) { best = c; bs = sc; } }
       if (best && isUp(best.id)) return best.id;
-      rowCap[i] = "Sample photo"; // not a picture of this exact service: say so
+      rowCap[i] = d.live ? "" : "Sample photo"; // not a picture of this exact service: say so
       return svcFromUps[i % svcFromUps.length];
     }
     if (e.rows && e.rows[n] && exists(e.rows[n])) return e.rows[n];
@@ -504,10 +504,11 @@ export function generateEditorial(form, d, deps) {
 </div></section>`;
 
   // Work: three sample project cards
-  const cards = workIds.map((id, i) => {
+  // Live: only the owner's own typed projects, with no "Sample project" tags; none typed = no Work section.
+  const cards = (d.live ? workIds.slice(0, Math.min(3, typed.filter((p) => p && (edText(p.name, 28) || edText(p.job, 40))).length)) : workIds).map((id, i) => {
     const p = typed[i] || {};
     const st = styles[i % Math.max(styles.length, 1)];
-    const nm = edText(p.name, 28) || ED_NAMES[i];
+    const nm = edText(p.name, 28) || (d.live ? edText(p.job, 40) || tradeName : ED_NAMES[i]);
     const jobName = edText(p.job, 40) || (styles.find((x) => x.id === id) || {}).name || `New ${tradeName.toLowerCase()}`;
     const meta = [
       ["Where", edText(p.where, 40) || d.city || "Local"],
@@ -516,10 +517,13 @@ export function generateEditorial(form, d, deps) {
     ];
     if (edText(p.time, 40)) meta.push(["Time", edText(p.time, 40)]);
     return `<li class="ed-rv"><article><div class="ed-card" data-ed="card">${pic(id)}<h3>${esc(nm)}</h3></div>
-    <p class="ed-tags"><span class="ed-pill">Sample project</span><span class="ed-pill">${edPad(i + 1)} / 03</span></p>
+    <p class="ed-tags">${d.live ? "" : '<span class="ed-pill">Sample project</span>'}<span class="ed-pill">${edPad(i + 1)} / 03</span></p>
     <dl class="ed-meta" style="--n:${meta.length}">${meta.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></article></li>`;
   }).join("");
-  const work = `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
+  const work = d.live ? (cards ? `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">Our projects</p><h2>The <em>work</em></h2></div>
+  <ul class="ed-cards">${cards}</ul>
+</div></section>` : "") : `<section class="ed-sec" id="work" data-ed="work"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Sample projects</p><h2>The <em>work</em></h2></div>
   <ul class="ed-cards">${cards}</ul>
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
@@ -578,12 +582,12 @@ export function generateEditorial(form, d, deps) {
   <ol class="ed-steps">${steps.map(([h, p], i) => `<li class="ed-rv"><b>${edPad(i + 1)}</b><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol></div>
 </div></section>`;
   const edStars = (r) => { const row = (c) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="26" height="26" style="left:${i * 30}px" fill="${c}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join(""); return `<span class="ed-stars" role="img" aria-label="${r} out of 5 stars"><span class="ed-stars-row off">${row("currentColor")}</span><span class="ed-stars-row" style="width:${(Math.max(0, Math.min(1, r / 5)) * 146).toFixed(1)}px">${row("currentColor")}</span></span>`; };
-  const reviews = `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap">
+  const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="ed-sec" id="reviews" style="padding-top:0"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Reviews</p><h2>What customers <em>say</em></h2></div>
   ${d.rating ? `<div class="ed-rev ed-rv">
   <b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p class="ed-eyebrow">Google rating</p><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div>${edStars(d.rating)}
 </div>` : ""}
-  ${rvwList(d.rv, esc, "ed-")}
+  ${d.rv.items.length ? rvwList(d.rv, esc, "ed-") : ""}
   ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
   const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
@@ -591,17 +595,17 @@ export function generateEditorial(form, d, deps) {
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will get back to you."}</p>
     ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : ""}</div>
-  <form id="ask" class="ed-form ed-rv" novalidate>
+  <form id="ask" class="ed-form ed-rv"${liveFormAttrs(d)} novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
     <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
-    <button class="ed-btn" type="submit">Send request</button>
+    ${liveFormFields(d)}<button class="ed-btn" type="submit">Send request</button>
     <p class="ed-form-note" id="f-note" aria-live="polite">We will call you back.</p>
   </form>
 </div></section>`;
 
-  const links = [["#work", "Work"], ["#services", "Services"], prices && ["#price", "Price"], ["#contact", "Contact"]].filter(Boolean)
+  const links = [(!d.live || work) && ["#work", "Work"], ["#services", "Services"], prices && ["#price", "Price"], ["#contact", "Contact"]].filter(Boolean)
     .map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 
   return `<!doctype html>
@@ -612,7 +616,7 @@ export function generateEditorial(form, d, deps) {
 <title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
 <meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
 <meta name="theme-color" content="#ece5dc">
-<link rel="preconnect" href="https://fonts.googleapis.com">
+${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}`, `${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}`)}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${esc(fontsHref)}">
 <style>
@@ -623,7 +627,7 @@ ${lookExtra.css || ""}
 </head>
 <body class="ed">
 <header class="ed-nav" data-ed="nav"><div class="ed-wrap">
-  <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg><span class="ed-logo-t">${name}</span></a><span class="ed-pill">Sample site</span>
+  <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg><span class="ed-logo-t">${name}</span></a>${d.live ? "" : '<span class="ed-pill">Sample site</span>'}
   <nav class="ed-links" aria-label="Sections">${links}</nav>
   ${d.phone ? `<a class="ed-tel" href="${callHref}">${phoneShow}</a>` : ""}<a class="ed-btn sm" href="#contact">${askLabel}</a>
   <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(ED_PHONE, 20)}</a>
@@ -640,11 +644,11 @@ ${process}
 ${reviews}
 ${contact}
 </main>
-<footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div><p>&copy; ${esc(d.year)} ${name} &middot; Sample site</p></div></footer>
+<footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
 <script>
-${ED_JS}
+${liveScript(ED_JS, d)}
 </script>
-</body>
+${liveBeacon(d)}</body>
 </html>
 `;
 }
