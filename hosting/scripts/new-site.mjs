@@ -48,9 +48,19 @@ export function extractPictures(form, id, domain, outDir) {
   return { form: f, files };
 }
 
+// One INSERT for the site, plus the owner's maker-typed reviews as manual review rows (the live page reads reviews only from the table).
 export function siteSql({ id, form, domain, status, owner_name, owner_email, notify_sms, place_id, now }) {
-  const cols = { id, slug: domain.split(".")[0], domain, status, form_json: JSON.stringify(form), owner_name, owner_email, notify_email: owner_email, notify_sms, place_id, created_at: now, updated_at: now };
-  return `INSERT INTO sites (${Object.keys(cols).join(", ")}) VALUES (${Object.values(cols).map(q).join(", ")});\n`;
+  const f = { ...form };
+  const typed = (Array.isArray(f.reviewList) ? f.reviewList : []).filter((r) => r && String(r.text || "").trim()).slice(0, 3);
+  delete f.reviewList;
+  const cols = { id, slug: domain.split(".")[0], domain, status, form_json: JSON.stringify(f), owner_name, owner_email, notify_email: owner_email, notify_sms, place_id, created_at: now, updated_at: now };
+  let sql = `INSERT INTO sites (${Object.keys(cols).join(", ")}) VALUES (${Object.values(cols).map(q).join(", ")});\n`;
+  for (const r of typed) {
+    const stars = Math.min(5, Math.max(1, parseInt(r.stars, 10) || 5));
+    const author = [r.name, r.town].map((x) => String(x || "").trim()).filter(Boolean).join(", ").slice(0, 80);
+    sql += `INSERT INTO reviews (site_id, source, author, stars, text, posted_at, fetched_at, show) VALUES (${q(id)}, 'manual', ${q(author)}, ${stars}, ${q(String(r.text).trim().slice(0, 240))}, ${q(now)}, NULL, 1);\n`;
+  }
+  return sql;
 }
 
 async function main() {

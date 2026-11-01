@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS addons (
 );
 
 CREATE TABLE IF NOT EXISTS events (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
   site_id TEXT,
   kind TEXT NOT NULL,
   data TEXT,

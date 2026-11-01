@@ -60,14 +60,14 @@ export function createApp(mods = {}) {
     if (site.status !== "live") return notActivePage();
 
     if (path === "/" || path === "/index.html") {
-      const obj = await env.BUCKET.get(pageKey(site.id));
+      const obj = await env.R2.get(pageKey(site.id));
       if (!obj) return notActivePage();
       const h = new Headers(PAGE_HEADERS);
       if (obj.httpEtag) h.set("etag", obj.httpEtag);
       return new Response(request.method === "HEAD" ? null : obj.body, { headers: h });
     }
     if (path === "/sitemap.xml") {
-      const obj = await env.BUCKET.get(sitemapKey(site.id));
+      const obj = await env.R2.get(sitemapKey(site.id));
       return new Response(obj ? obj.body : sitemapXml(site), { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
     }
     if (path === "/privacy") return privacyPage(site);

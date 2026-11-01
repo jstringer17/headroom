@@ -111,7 +111,7 @@ describe("two sites on two hosts", () => {
 describe("publishSite", () => {
   it("writes a live page with no sample bits, SEO tags and a real form", async () => {
     const id = await makeSite(FORM_A, "acme.test");
-    const html = await (await env.BUCKET.get(pageKey(id))).text();
+    const html = await (await env.R2.get(pageKey(id))).text();
     expect(checkHtml(html)).toEqual([]);
     expect(html).toContain('<link rel="canonical" href="https://acme.test/">');
     expect(html).toContain('property="og:title"');
@@ -124,24 +124,41 @@ describe("publishSite", () => {
     expect(html).toContain('href="/privacy"');
   });
 
-  it("shows only reviews the owner chose, Google rating only from Google data", async () => {
-    const id = await saveSite(env, { form: { ...FORM_A, rating: 4.9, reviews: 999, hosting: { google: { rating: 4.7, count: 52 } } }, domain: "acme.test", status: "live", place_id: "ChIJ123" });
-    await env.DB.prepare("INSERT INTO reviews (site_id, source, author, stars, text, posted_at, show) VALUES (?, 'google', 'Dana', 5, 'Fixed our roof fast.', 1, 1), (?, 'manual', 'Sam', 4, 'Hidden one.', 2, 0)").bind(id, id).run();
+  it("shows only reviews the owner chose, Google credit + rating only from Google data", async () => {
+    const id = await saveSite(env, { form: { ...FORM_A, rating: 4.9, reviews: 999, reviewList: [{ text: "Typed in the maker, not imported." }] }, domain: "acme.test", status: "live", place_id: "ChIJ123" });
+    const now = new Date().toISOString();
+    await env.DB.prepare("INSERT INTO reviews (site_id, source, author, stars, text, posted_at, fetched_at, show) VALUES (?, 'google', 'Dana', 5, 'Fixed our roof fast. <b>Great</b>', ?, ?, 1), (?, 'manual', 'Sam', 4, 'Hidden one.', ?, NULL, 0)").bind(id, now, now, id, now).run();
+    await env.DB.prepare("INSERT INTO events (site_id, kind, data, at) VALUES (?, 'google_reviews', ?, ?)").bind(id, JSON.stringify({ ok: 1, placeId: "ChIJ123", rating: 4.7, count: 52 }), now).run();
     expect((await publishSite(env, id)).ok).toBe(true);
-    const html = await (await env.BUCKET.get(pageKey(id))).text();
-    expect(html).toContain("Fixed our roof fast.");
+    const html = await (await env.R2.get(pageKey(id))).text();
+    expect(html).toContain("Fixed our roof fast. &lt;b&gt;Great&lt;/b&gt;");
     expect(html).toContain("Dana, on Google");
     expect(html).not.toContain("Hidden one.");
+    expect(html).not.toContain("Typed in the maker");
     expect(html).not.toContain("From 999");
     expect(html).toContain("From 52 Google reviews");
+    expect(html).toContain('Reviews from <a href="https://www.google.com/maps/place/?q=place_id:ChIJ123"');
+    expect(html).toContain("4.7 out of 5 from 52 reviews");
+    const lds = html.match(/<script type="application\/ld\+json">/g);
+    expect(lds).toHaveLength(1);
     const ld = JSON.parse(html.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1]);
     expect(ld.aggregateRating).toMatchObject({ ratingValue: 4.7, reviewCount: 52 });
-    expect(html).toContain("search.google.com/local/reviews?placeid=ChIJ123");
+    const ev = await env.DB.prepare("SELECT id FROM events WHERE kind = 'google_reviews'").first();
+    expect(typeof ev.id).toBe("string");
+  });
+
+  it("renderForm previews a draft without writing", async () => {
+    const id = await makeSite(FORM_A, "acme.test");
+    const before = await (await env.R2.get(pageKey(id))).text();
+    const { renderForm } = await import("../src/render.js");
+    const html = await renderForm(env, id, { ...FORM_A, phone: "512-555-0000" });
+    expect(html).toContain("(512) 555-0000");
+    expect(await (await env.R2.get(pageKey(id))).text()).toBe(before);
   });
 
   it("a bad render keeps the old live file and logs an event", async () => {
     const id = await makeSite(FORM_A, "acme.test");
-    const before = await (await env.BUCKET.get(pageKey(id))).text();
+    const before = await (await env.R2.get(pageKey(id))).text();
     const r1 = await publishSite(env, id, { render: () => before.replace("</body>", "<p>Sample review</p></body>") });
     expect(r1.ok).toBe(false);
     expect(r1.problems.join()).toContain("Sample review");
@@ -149,7 +166,7 @@ describe("publishSite", () => {
     expect(r2.ok).toBe(false);
     const r3 = await publishSite(env, id, { render: () => before + "x".repeat(6 * 1024 * 1024) });
     expect(r3.problems.join()).toContain("too big");
-    expect(await (await env.BUCKET.get(pageKey(id))).text()).toBe(before);
+    expect(await (await env.R2.get(pageKey(id))).text()).toBe(before);
     const ev = await env.DB.prepare("SELECT COUNT(*) AS n FROM events WHERE site_id = ? AND kind = 'publish_blocked'").bind(id).first();
     expect(ev.n).toBe(3);
     expect((await get("https://acme.test/")).status).toBe(200);
@@ -268,9 +285,9 @@ describe("media", () => {
   it("serves only this site's jpeg/png/webp files", async () => {
     const id = await makeSite(FORM_A, "acme.test");
     const other = await makeSite(FORM_B, "bestfence.test");
-    await env.BUCKET.put(`media/${id}/roof.jpg`, new Uint8Array([255, 216, 255]), { httpMetadata: { contentType: "image/jpeg" } });
-    await env.BUCKET.put(`media/${other}/secret.jpg`, new Uint8Array([1]), { httpMetadata: { contentType: "image/jpeg" } });
-    await env.BUCKET.put(`media/${id}/x.svg`, "<svg/>", { httpMetadata: { contentType: "image/svg+xml" } });
+    await env.R2.put(`media/${id}/roof.jpg`, new Uint8Array([255, 216, 255]), { httpMetadata: { contentType: "image/jpeg" } });
+    await env.R2.put(`media/${other}/secret.jpg`, new Uint8Array([1]), { httpMetadata: { contentType: "image/jpeg" } });
+    await env.R2.put(`media/${id}/x.svg`, "<svg/>", { httpMetadata: { contentType: "image/svg+xml" } });
     const r = await get("https://acme.test/media/roof.jpg");
     expect(r.status).toBe(200);
     expect(r.headers.get("content-type")).toBe("image/jpeg");
@@ -338,7 +355,7 @@ describe("scripts", () => {
     const { tmpdir } = await import("node:os");
     const dir = mkdtempSync(`${tmpdir()}/newsite-`);
     const png = "data:image/png;base64,iVBORw0KGgo=";
-    const { form, files } = extractPictures({ ...FORM_B, heroImage: png, cine: { images: { s1: png } } }, "ns1", "bestfence.test", dir);
+    const { form, files } = extractPictures({ ...FORM_B, heroImage: png, cine: { images: { s1: png } }, reviewList: [{ name: "Ann", town: "Round Rock", text: "Great fence, it's solid.", stars: 5 }, { text: "" }] }, "ns1", "bestfence.test", dir);
     expect(files).toHaveLength(2);
     expect(form.heroImage).toBe("https://bestfence.test/media/hero.png");
     expect(files[0].key).toBe("media/ns1/hero.png");
@@ -346,6 +363,10 @@ describe("scripts", () => {
     const s = await getSite(env, "ns1");
     expect(s.owner_email).toBe("o'neil@bestfence.test");
     expect((await publishSite(env, "ns1")).ok).toBe(true);
-    expect(await (await get("https://bestfence.test/")).text()).toContain("https://bestfence.test/media/hero.png");
+    const page = await (await get("https://bestfence.test/")).text();
+    expect(page).toContain("https://bestfence.test/media/hero.png");
+    expect(page).toContain("Great fence, it&#39;s solid.");
+    expect(JSON.parse(s.form_json).reviewList).toBeUndefined();
+    expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM reviews WHERE site_id = 'ns1' AND source = 'manual'").first()).n).toBe(1);
   });
 });

@@ -74,7 +74,7 @@ export function mockR2() {
 export function mockEnv(extra = {}) {
   return {
     DB: mockD1(),
-    BUCKET: mockR2(),
+    R2: mockR2(),
     AGENCY_DOMAIN: "agency.test",
     FROM_EMAIL: "Leads <leads@agency.test>",
     TURNSTILE_SITE_KEY: "1x00000000000000000000AA",

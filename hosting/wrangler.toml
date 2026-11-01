@@ -23,7 +23,7 @@ database_name = "headroom"
 database_id = "00000000-0000-0000-0000-000000000000"   # filled by `wrangler d1 create headroom`
 
 [[r2_buckets]]
-binding = "BUCKET"                     # sites/<id>/index.html, sites/<id>/sitemap.xml, media/<id>/<file>
+binding = "R2"                     # sites/<id>/index.html, sites/<id>/sitemap.xml, media/<id>/<file>
 bucket_name = "headroom-sites"
 
 [triggers]

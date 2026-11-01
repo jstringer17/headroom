@@ -90,12 +90,45 @@ await step("visitor sends the form -> lead row + one email to the owner", async 
   must(sent.length === 1 && sent[0].text.includes("Shingles blew off."), `emails to owner: ${sent.length}`);
 });
 
-await step("owner logs in by emailed link, changes the phone at 375px, publishes -> new phone live", async () => {
-  throw new Error("wire this step to owner-admin's login + save API once it lands");
+await step("owner logs in by emailed link, changes the phone, publishes -> new phone live (375px screens: owner-admin QA shots)", async () => {
+  const O = `https://${DOMAIN}`;
+  const before = fx.calls.email.length;
+  const r1 = await req(`${O}/admin/login`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", origin: O }, body: "email=owner%40acme-e2e.test" });
+  must(r1.status < 500, `login link status ${r1.status}`);
+  const mail = fx.calls.email.slice(before).find((m) => m.to.includes("owner@acme-e2e.test"));
+  const t = mail && (mail.text.match(/[?&]t=([A-Za-z0-9_-]+)/) || [])[1];
+  must(t, "no login link emailed");
+  const r2 = await req(`${O}/admin/login/confirm`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", origin: O }, body: `t=${t}` });
+  const cookie = (r2.headers.get("set-cookie") || "").split(";")[0];
+  must(cookie, `no session cookie (status ${r2.status})`);
+  const again = await req(`${O}/admin/login/confirm`, { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded", origin: O }, body: `t=${t}` });
+  must(!(again.headers.get("set-cookie") || "").includes(cookie.split("=")[1] || "x"), "login link worked twice");
+  const H = { cookie, "x-admin": "1", origin: O, "content-type": "application/json" };
+  const r3 = await req(`${O}/admin/api/draft`, { method: "PUT", headers: H, body: JSON.stringify({ phone: "512-555-8888" }) });
+  must(r3.status === 200, `draft ${r3.status}`);
+  const r4 = await req(`${O}/admin/api/publish`, { method: "POST", headers: H, body: "{}" });
+  must(r4.status === 200, `publish ${r4.status}: ${await r4.text()}`);
+  const page = await (await req(`${O}/`)).text();
+  must(page.includes("(512) 555-8888") && !page.includes("(512) 555-1234"), "new phone not live");
+  // another site's owner cookie must not work here
+  const other = await saveSite(env, { form: { company: "Other Co", trade: "roofing", phone: "5125550000" }, domain: "other-e2e.test", status: "live", owner_email: "owner@acme-e2e.test" });
+  const r5 = await req(`https://other-e2e.test/admin/api/draft`, { headers: { ...H, origin: "https://other-e2e.test" } });
+  must(r5.status === 401, `cookie from site A opened site B (status ${r5.status}, ${other})`);
 }, admin ? null : "owner-admin not landed");
 
-await step("Google reviews (fixture) shown on the live page with Google credit", async () => {
-  throw new Error("wire this step to refreshReviews with the Places fixture once it lands");
+await step("Google reviews (Places fixture, daily cron) shown on the live page with Google credit", async () => {
+  const details = JSON.parse((await import("node:fs")).readFileSync(join(here, "..", "test", "fixtures", "places-details.json"), "utf8"));
+  const inner = globalThis.fetch;
+  globalThis.fetch = async (u, init) => (String(u).startsWith("https://places.googleapis.com/") ? new Response(JSON.stringify(details), { status: 200, headers: { "content-type": "application/json" } }) : inner(u, init));
+  env.GOOGLE_PLACES_API_KEY = "test-places-key";
+  try { await app.scheduled({ cron: "17 9 * * *" }, env, ctx); } finally { globalThis.fetch = inner; }
+  must((await publishSite(env, siteId)).ok, "publish failed");
+  const t = await (await req(`https://${DOMAIN}/`)).text();
+  must(/Reviews from <a href="https:\/\/www\.google\.com\/maps\/place\/\?q=place_id:ChIJe2e"/.test(t), "Google credit link missing");
+  must(t.includes("on Google") && t.includes("4.8 out of 5 from 127 reviews"), "Google reviews / rating missing");
+  must(!t.includes("<b>Great</b>"), "Google text not escaped");
+  const ld = JSON.parse(t.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  must(ld.aggregateRating && ld.aggregateRating.reviewCount === 127, "JSON-LD rating");
 }, reviews ? null : "owner-admin (reviews) not landed");
 
 await step("host-core part of reviews: a shown Google review renders with credit, hidden one does not", async () => {

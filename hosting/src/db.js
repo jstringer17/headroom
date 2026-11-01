@@ -93,10 +93,3 @@ export async function logEvent(env, siteId, kind, data) {
     console.log("logEvent failed", kind, e && e.message);
   }
 }
-
-// Reviews the owner chose to show (show=1), Google first, newest first.
-export async function shownReviews(env, siteId) {
-  const r = await env.DB.prepare("SELECT * FROM reviews WHERE site_id = ? AND show = 1 ORDER BY CASE source WHEN 'google' THEN 0 ELSE 1 END, posted_at DESC, id DESC")
-    .bind(String(siteId)).all();
-  return r.results || [];
-}
