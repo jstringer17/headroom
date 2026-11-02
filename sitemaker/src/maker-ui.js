@@ -171,9 +171,24 @@
     $("cine-prices").innerHTML = '<label class="field" for="cine-unit"><span>Price is</span><select id="cine-unit">' +
       CINE_UNITS.map((u) => '<option' + (u === unit ? " selected" : "") + ">" + u + "</option>").join("") + "</select></label>" + est.sizes.map((sz) => '<div class="price-row"><b>' + esc(sz) + "</b>" + est.options.map((op) => {
       const c = (pr[sz] || {})[op] || {};
-      return '<div class="price-cell"><span>' + esc(op) + '</span><input type="number" min="0" step="1" inputmode="numeric" placeholder="Low" data-size="' + esc(sz) + '" data-opt="' + esc(op) + '" data-end="low" aria-label="' + esc(sz + ", " + op + ", low price") + '" value="' + esc(c.low || "") + '">' +
-        '<input type="number" min="0" step="1" inputmode="numeric" placeholder="High" data-size="' + esc(sz) + '" data-opt="' + esc(op) + '" data-end="high" aria-label="' + esc(sz + ", " + op + ", high price") + '" value="' + esc(c.high || "") + '"></div>';
+      return '<div class="price-cell"><span>' + esc(op) + '</span><input type="number" min="0" step="any" inputmode="decimal" placeholder="Low" data-size="' + esc(sz) + '" data-opt="' + esc(op) + '" data-end="low" aria-label="' + esc(sz + ", " + op + ", low price") + '" value="' + esc(c.low || "") + '">' +
+        '<input type="number" min="0" step="any" inputmode="decimal" placeholder="High" data-size="' + esc(sz) + '" data-opt="' + esc(op) + '" data-end="high" aria-label="' + esc(sz + ", " + op + ", high price") + '" value="' + esc(c.high || "") + '"></div>';
     }).join("") + "</div>").join("");
+  }
+
+  // Plain warnings: a phone that cannot be a call link, a low price above its high price.
+  function warns() {
+    const ph = $("phone").value.trim();
+    $("phone-warn").hidden = !ph || !!formatPhone(ph);
+    const pr = cinePrices[tradeSel.value] || {};
+    let swapped = 0;
+    for (const sz of Object.keys(pr)) for (const op of Object.keys(pr[sz] || {})) {
+      const lo = parseFloat(pr[sz][op].low), hi = parseFloat(pr[sz][op].high);
+      if (lo > 0 && hi > 0 && lo > hi) swapped++;
+    }
+    const w = $("price-warn");
+    w.hidden = !swapped;
+    w.textContent = swapped ? (swapped === 1 ? "One low price is higher than its high price. The site shows them the other way round." : swapped + " low prices are higher than their high prices. The site shows them the other way round.") : "";
   }
 
   function readForm() {
@@ -244,6 +259,7 @@
       ((pr[dp.size] = pr[dp.size] || {})[dp.opt] = pr[dp.size][dp.opt] || {})[dp.end] = e.target.value;
     }
     if (e.target.classList.contains("slot-url")) onSlotUrl(e.target);
+    warns();
     if (e.target.id !== "lead-paste" && e.target.id !== "hero-file" && e.target.type !== "file") render();
   });
   $("cine-slots").addEventListener("change", (e) => { if (e.target.type === "file") onSlotFile(e.target); });
@@ -308,7 +324,7 @@
   $("download").addEventListener("click", async () => {
     if (needName()) return;
     await ensureLib(tradeSel.value);
-    const html = generateSite(readForm());
+    const html = generateSite({ ...readForm(), clean: true });
     const name = fileName();
     if (downloads) {
       try {
@@ -337,7 +353,7 @@
   $("copy").addEventListener("click", async () => {
     if (needName()) return;
     await ensureLib(tradeSel.value);
-    const html = generateSite(readForm());
+    const html = generateSite({ ...readForm(), clean: true });
     const fallback = () => {
       $("code").value = html;
       $("code-box").hidden = false;

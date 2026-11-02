@@ -967,7 +967,7 @@ export function placeholderSvg(trade, slotId, labelText, opts = {}) {
 <filter id="gr"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch"/><feColorMatrix values="0 0 0 0 .5  0 0 0 0 .45  0 0 0 0 .35  0 0 0 .22 0"/></filter>
 <linearGradient id="ql" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3d6" stop-opacity=".18"/><stop offset="1" stop-color="#1a140c" stop-opacity=".22"/></linearGradient></defs>` : "";
     const drawn = opts.quiet ? `${quiet}<g filter="url(#qt)">${body}</g><rect width="${W}" height="${H}" fill="url(#ql)"/><rect width="${W}" height="${H}" filter="url(#gr)"/>` : body;
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc("Sample picture: make in Higgsfield. " + text)}">${MOTION}${drawn}${vignette}${opts.quiet ? "" : frameMarks(dark)}${label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96), opts.labelSide === "left" ? 440 : opts.labelSide === "right" ? 1160 : 800)}</svg>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${svgEsc((opts.note === false ? "" : "Sample picture: make in Higgsfield. ") + text)}">${MOTION}${drawn}${vignette}${opts.quiet ? "" : frameMarks(dark)}${opts.note === false ? "" : label(text, dark, opts.labelY || (k && k.styles.some((s) => s.id === slotId) ? 140 : 96), opts.labelSide === "left" ? 440 : opts.labelSide === "right" ? 1160 : 800)}</svg>`;
   } finally {
     Object.assign(C, LIGHT);
   }

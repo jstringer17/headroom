@@ -99,7 +99,7 @@ async function checkPage(page, label, imgCount = 0, fontsLoaded = true) {
       const b = a.getBoundingClientRect(); const cs = getComputedStyle(a);
       let vis = b.width > 0 && b.bottom > 0 && b.top < innerHeight && cs.visibility !== "hidden" && cs.opacity !== "0";
       for (let el = a; el && vis; el = el.parentElement) { const c = getComputedStyle(el); if (c.opacity === "0" || c.display === "none") vis = false; if (el.classList.contains("mobile-call") && c.transform !== "none" && el.getBoundingClientRect().top >= innerHeight - 1) vis = false; }
-      return vis && /Call/.test(a.textContent);
+      return vis && /Call|Contact/.test(a.textContent);
     }).length;
     return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: [...document.images].filter((i) => !i.classList.contains("all-thumb")).length, h1Lines, calls };
   });

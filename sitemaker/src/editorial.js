@@ -14,7 +14,7 @@
 import { rvwList } from "./reviews.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
-import { cineSlots, cineUnit, offeredPrices } from "./cinematic.js";
+import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS } from "./cinematic.js";
 import { kitVariant, variantCards } from "./variants.js";
 import { editorialLook, editorialShape } from "./cine-look.js";
 
@@ -50,6 +50,22 @@ const edIcon = (inner, size = 22) =>
   `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
 
 const ED_NAMES = ["Maple Lane", "Cedar Court", "Ridge Road"];
+const ED_WHERE = [null, "Nearby town", "Across town"];
+const ED_TYPES_BUILD = ["New install", "Full replacement", "Repair and refresh"];
+const ED_TYPES_SERVICE = ["Same-day job", "Whole property", "Repeat customer"];
+const ED_SERVICE_TRADES = new Set(["pressure", "cleaning", "junk", "pest", "towing", "landscaping", "tree", "plumbing", "electrical", "hvac", "garage", "restoration"]);
+// The accent for small text on cream: the trade's accent, darkened until it reads at 4.5:1 on the darkest cream.
+const edHexRgb = (h) => [1, 3, 5].map((i) => parseInt(String(h).replace("#", "").padEnd(6, "0").slice(i - 1, i + 1), 16) || 0);
+const edLum = ([r, g, b]) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+function edAccentPct(hex) {
+  const a = edHexRgb(hex), dark = [0x2a, 0x12, 0x04], bg = edLum([0xe2, 0xd9, 0xcd]);
+  for (let pct = 62; pct >= 10; pct -= 4) {
+    const m = a.map((v, i) => v * pct / 100 + dark[i] * (1 - pct / 100));
+    const l = edLum(m);
+    if ((Math.max(l, bg) + 0.05) / (Math.min(l, bg) + 0.05) >= 4.6) return pct;
+  }
+  return 10;
+}
 const edPad = (n) => String(n).padStart(2, "0");
 // Headline with its one italic accent word (cine-art copy rule).
 const edAccent = (text, accent) => {
@@ -183,6 +199,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-list{display:grid;gap:8px}
 .ed-list li{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--ed-line)}
 .js .ed-list{display:none}
+.ed-est-qty{display:grid;gap:6px;margin-top:10px;font:600 14px/1.2 var(--ed-sans);color:var(--ed-cream)}
+.ed-est-qty input{width:100%;max-width:240px;font:400 17px/1.4 var(--ed-sans);color:var(--ed-ink);background:#fff;border:1.5px solid #a79f8c;border-radius:12px;padding:11px 12px}
+.ed-est-total{margin-top:10px;font:500 18px/1.4 var(--ed-serif);color:var(--ed-cream);min-height:1.4em}
 .ed-est-ui{display:none}
 .js .ed-est-ui{display:grid;gap:26px}
 .ed-rev{display:grid;gap:10px 28px;justify-items:start;align-items:center;border:1.5px solid var(--ed-line);border-radius:var(--ed-card);padding:24px 26px;background:var(--ed-paper)}
@@ -288,7 +307,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 const ED_JS = `(function(){
 var root=document.documentElement;root.classList.add("js");root.classList.remove("ed-no-js");
 var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
-document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var f=e.target,n=document.getElementById("f-note"),g=function(k){var x=f.elements[k];return x&&x.value!=null?String(x.value).trim():""};if(!g("name")||(!g("phone")&&!g("email"))){n.textContent="Please add your name and a phone number.";return}n.textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
 /* picture lookup: every picture is in the page once, copies are filled in from it */
 var lib={},realMap={};
 function scan(r){[].slice.call(r.querySelectorAll("img[data-slot]")).forEach(function(im){var k=im.getAttribute("data-slot"),sr=im.getAttribute("src");if(sr&&sr.indexOf("R0lGODlhAQABAAAAACH5")<0&&!lib[k]){lib[k]=sr;realMap[k]=im.hasAttribute("data-real")}})}
@@ -326,6 +345,8 @@ if(rows.length){
   dlg.querySelector(".ed-dlg-x").addEventListener("click",shut);
   dlg.addEventListener("click",function(e){if(e.target===dlg)shut()});
 });
+/* "Ask about this": close any dialog, pick the matching job in the form, then the link scrolls to it */
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var dlg=a.closest("dialog");if(dlg&&dlg.open)dlg.close();var sel=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(sel)for(var i=0;i<sel.options.length;i++)if(sel.options[i].text===v){sel.selectedIndex=i;break}});
 /* price estimator: only the ranges the owner typed */
 var dataEl=document.getElementById("est-data");
 if(dataEl){
@@ -343,10 +364,11 @@ if(dataEl){
   };
   sizeIn.concat(optIn).forEach(function(i){i.addEventListener("change",show)});show();
 }
+${EST_TOTAL_JS}
 /* the floating call button shows after the hero buttons scroll away */
 var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
-if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
+if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","all","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".ed-rv"));
 var kids=new Map();els.forEach(function(el){var k=(kids.get(el.parentNode)||0);kids.set(el.parentNode,k+1);el.style.setProperty("--rvi",Math.min(k,5))});
@@ -412,6 +434,14 @@ export function generateEditorial(form, d, deps) {
   let beatId = pick(e.beat, styles.length ? styles[0].id : pool[0]);
   let processId = pick(e.process, story.length > 1 ? story[1].id : pool[0]);
   let workIds = [0, 1, 2].map((i) => pick(e.work && e.work[i], pool[i % pool.length]));
+  // With variations, the three cards show three different kinds of job (the picked one first), each with its own picture.
+  let workJobs = [];
+  if (allCards.length >= 3) {
+    const first = allCards.findIndex((c) => c.key === kit.variantKey);
+    const ordered = first > 0 ? [allCards[first], ...allCards.filter((_, i) => i !== first)] : allCards;
+    workIds = ordered.slice(0, 3).map((c) => c.after);
+    workJobs = ordered.slice(0, 3).map((c) => c.label);
+  }
   let svcFromUps = null;
   if (ups.length) {
     heroId = upStory.length ? upStory[upStory.length - 1] : ups[ups.length - 1];
@@ -473,7 +503,7 @@ export function generateEditorial(form, d, deps) {
   // Hero. The form's Hero picture box wins over any library or drawn picture.
   const heroBox = safeImage(form && form.heroImage);
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
-  <div><p class="ed-eyebrow">${eyebrow}</p><h1>${e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
+  <div><p class="ed-eyebrow">${eyebrow}</p><h1>${kit.slotPrefix && story.length ? edAccent(story[story.length - 1].headline, story[story.length - 1].accent) : e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div></div>
   <div class="ed-sil${heroBox || safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${heroBox ? `<img src="${esc(heroBox)}" data-slot="hero-box" data-real="1" alt="" fetchpriority="high">` : pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
@@ -509,11 +539,12 @@ export function generateEditorial(form, d, deps) {
     const p = typed[i] || {};
     const st = styles[i % Math.max(styles.length, 1)];
     const nm = edText(p.name, 28) || (d.live ? edText(p.job, 40) || tradeName : ED_NAMES[i]);
-    const jobName = edText(p.job, 40) || (styles.find((x) => x.id === id) || {}).name || `New ${tradeName.toLowerCase()}`;
+    const jobName = edText(p.job, 40) || workJobs[i] || (styles.find((x) => x.id === id) || {}).name || `New ${tradeName.toLowerCase()}`;
+    const typeSet = ED_SERVICE_TRADES.has(d.tradeKey) ? ED_TYPES_SERVICE : ED_TYPES_BUILD;
     const meta = [
-      ["Where", edText(p.where, 40) || d.city || "Local"],
+      ["Where", edText(p.where, 40) || (i === 0 ? d.city || "Local" : ED_WHERE[i])],
       ["Job", jobName],
-      ["Type", edText(p.type, 40) || tradeName],
+      ["Type", edText(p.type, 40) || typeSet[i % 3]],
     ];
     if (edText(p.time, 40)) meta.push(["Time", edText(p.time, 40)]);
     return `<li class="ed-rv"><article><div class="ed-card" data-ed="card">${pic(id)}<h3>${esc(nm)}</h3></div>
@@ -536,7 +567,7 @@ export function generateEditorial(form, d, deps) {
   <dialog class="ed-dlg" id="ed-dlg-${i}" aria-label="${esc(c.label)}, before and after"><div class="ed-dlg-in"><button type="button" class="ed-dlg-x" aria-label="Close">&times;</button><h3>${esc(c.label)}</h3>
     <div class="ed-cmp" style="--pos:50"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
     <input type="range" class="ed-cmp-r" min="0" max="100" value="50" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p>
-    <a class="ed-btn" href="#contact">Ask about this</a></div></dialog></li>`).join("")}</ul>
+    <a class="ed-btn" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></dialog></li>`).join("")}</ul>
 </div></section>` : "";
 
   // Services: large numbered rows, the open row swaps the picture
@@ -562,10 +593,11 @@ export function generateEditorial(form, d, deps) {
       <fieldset><legend>${esc(e2.sizeLabel || "Size")}</legend><div class="ed-opts">${prices.sizes.map((s) => radio("est-size", s, s === first)).join("")}</div></fieldset>
       <fieldset><legend>${esc(e2.optionLabel || "Option")}</legend><div class="ed-opts">${prices.options.map((o) => radio("est-opt", o, o === firstOpt)).join("")}</div></fieldset>
     </div>
-    <div><div class="ed-out" aria-live="polite"><p class="ed-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p><p class="ed-unit">${esc(cineUnit(d.tradeKey, cine.unit))}</p><p class="ed-note">An estimate, not a final price. The exact price comes after we look at the job.</p><a class="ed-btn light" href="#contact">${askLabel}</a></div>
+    <div><div class="ed-out" aria-live="polite"><p class="ed-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p><p class="ed-unit">${esc(cineUnit(d.tradeKey, cine.unit))}</p><p class="ed-note">An estimate, not a final price. The exact price comes after we look at the job.</p>${estQtyHtml(cineUnit(d.tradeKey, cine.unit), "ed-est")}<a class="ed-btn light" href="#contact">${askLabel}</a></div>
     <ul class="ed-list">${list}</ul></div>
   </div>
   <script type="application/json" id="est-data">${JSON.stringify(prices.cells).replace(/</g, "\\u003c")}</script>
+  <script type="application/json" id="est-nums">${JSON.stringify(prices.nums).replace(/</g, "\\u003c")}</script>
 </div></section>`;
   }
 
@@ -590,7 +622,8 @@ export function generateEditorial(form, d, deps) {
   ${d.rv.items.length ? rvwList(d.rv, esc, "ed-") : ""}
   ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
-  const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
+  const jobNames = [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
+  const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will get back to you."}</p>
@@ -620,7 +653,7 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="${esc(fontsHref)}">
 <style>
-:root{--ed-accent:color-mix(in srgb,${th.accent} 62%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
+:root{--ed-accent:color-mix(in srgb,${th.accent} ${edAccentPct(th.accent)}%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
 </style>

@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Sample Site Maker</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,600..800&family=Public+Sans:wght@400;600;700&display=swap">
@@ -34,6 +35,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .row3 .field>span{font-size:14px}
 .hint{font-size:14px;color:var(--muted);margin:0}
+.hint.bad{color:var(--bad);font-weight:600}
 .group{border:0;padding:0;margin:0;display:grid;gap:8px;min-width:0}
 .group>legend{padding:0;margin-bottom:8px}
 .checks{display:grid;grid-template-columns:1fr;gap:6px}
@@ -128,6 +130,7 @@ details.lead[open]{display:grid;gap:10px}
 
     <label class="field" for="phone"><span>Phone</span>
       <input type="tel" id="phone" name="phone" placeholder="Like: (918) 555-0100"></label>
+    <p class="hint bad" id="phone-warn" hidden>That phone number needs 10 digits (add + first for another country). The site leaves the call button out until it is fixed.</p>
 
     <div class="row3">
       <label class="field" for="rating"><span>Stars</span>
@@ -224,6 +227,7 @@ details.lead[open]{display:grid;gap:10px}
         <legend>Price ranges for the estimator</legend>
         <p class="hint">Type the owner's real prices. Leave a box empty and that choice is not offered. All empty hides the estimator.</p>
         <div id="cine-prices" class="prices"></div>
+        <p class="hint bad" id="price-warn" hidden></p>
         <label class="field" for="cine-rpct" id="cine-rpct-wrap" hidden><span>Repair or replace: say "worth pricing a new one" when the repair is at least this % of the lowest new-system price</span><input type="number" id="cine-rpct" min="1" max="100" step="1" inputmode="numeric" placeholder="Leave blank for no verdict"></label>
       </fieldset>
     </div>

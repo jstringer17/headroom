@@ -17,6 +17,13 @@ export function rvwSafeLink(url) {
   return /^https?:\/\/[^\s"'<>]+$/i.test(u) ? u : "";
 }
 
+// Cut long text at the last whole word and end with an ellipsis (never mid-word).
+function rvwCut(t) {
+  if (t.length <= RVW_TEXT_MAX) return t;
+  const head = t.slice(0, RVW_TEXT_MAX - 1), sp = head.lastIndexOf(" ");
+  return (sp > RVW_TEXT_MAX * 0.5 ? head.slice(0, sp) : head).replace(/[\s,;:.-]+$/, "") + "\u2026";
+}
+
 export function reviewsOf(f) {
   const list = Array.isArray(f && f.reviewList) ? f.reviewList : [];
   const typed = list.slice(0, RVW_MAX).map((r) => {
@@ -24,7 +31,7 @@ export function reviewsOf(f) {
     return {
       name: String((r && r.name) || "").trim().slice(0, 40),
       town: String((r && r.town) || "").trim().slice(0, 40),
-      text: String((r && r.text) || "").trim().slice(0, RVW_TEXT_MAX),
+      text: rvwCut(String((r && r.text) || "").trim()),
       stars: s >= 1 && s <= 5 ? s : 5,
     };
   }).filter((r) => r.text);

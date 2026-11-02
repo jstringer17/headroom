@@ -46,17 +46,18 @@ export function cineUnit(tradeKey, chosen) {
 // "$2,750" from whatever the owner typed; null if it is not a real number.
 function money(v) {
   const n = parseFloat(String(v ?? "").replace(/[^\d.]/g, ""));
-  return Number.isFinite(n) && n > 0 && n < 1e7 ? Math.round(n) : null;
+  return Number.isFinite(n) && n > 0 && n < 1e7 ? Math.round(n * 100) / 100 : null;
 }
-const usd = (n) => "$" + n.toLocaleString("en-US");
+// Whole dollars stay whole ("$1,200"); cents show as two digits ("$0.25").
+const usd = (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2));
 
-// Keep only the ranges the owner typed in full (both numbers, low <= high).
+// Keep only the ranges the owner typed in full (both numbers). A low above the high is swapped (the form warns).
 // Returns { sizes: [labels], options: [labels], cells: { size: { option: "$a to $b" } } }
 // or null when nothing is offered.
 export function offeredPrices(kit, prices) {
   const est = kit && kit.estimator;
   if (!est || !prices || typeof prices !== "object") return null;
-  const cells = {};
+  const cells = {}, nums = {};
   const optionUsed = new Set();
   const lows = [];
   for (const size of est.sizes || []) {
@@ -64,17 +65,31 @@ export function offeredPrices(kit, prices) {
     if (!row || typeof row !== "object") continue;
     for (const opt of est.options || []) {
       const c = row[opt];
-      const lo = c && money(c.low), hi = c && money(c.high);
-      if (lo == null || hi == null || hi < lo) continue;
+      let lo = c && money(c.low), hi = c && money(c.high);
+      if (lo == null || hi == null) continue;
+      if (hi < lo) [lo, hi] = [hi, lo];
       (cells[size] = cells[size] || {})[opt] = lo === hi ? usd(lo) : `${usd(lo)} to ${usd(hi)}`;
+      (nums[size] = nums[size] || {})[opt] = [lo, hi];
       optionUsed.add(opt);
       if (!/tune/i.test(opt)) lows.push(lo);
     }
   }
   const sizes = (est.sizes || []).filter((s) => cells[s]);
   if (!sizes.length) return null;
-  return { sizes, options: (est.options || []).filter((o) => optionUsed.has(o)), cells, lows };
+  return { sizes, options: (est.options || []).filter((o) => optionUsed.has(o)), cells, nums, lows };
 }
+
+// A job total from a typed quantity: shown for every unit but "per job".
+const QTY_UNITS = { "per sq ft": ["Square feet", "sq ft"], "per linear foot": ["Linear feet", "linear ft"], "per hour": ["Hours", "hours"] };
+export function estQtyHtml(unit, cls) {
+  const q = QTY_UNITS[unit];
+  if (!q) return "";
+  return `<label class="${cls}-qty"><span>${q[0]}</span><input type="number" id="est-qty" inputmode="decimal" min="0" step="any" data-unit="${q[1]}" placeholder="Like 1200"></label><p class="${cls}-total" id="est-total" aria-live="polite"></p>`;
+}
+export const EST_TOTAL_JS = `(function(){var nd=document.getElementById("est-nums"),q=document.getElementById("est-qty"),t=document.getElementById("est-total");if(!nd||!q||!t)return;var nums=JSON.parse(nd.textContent);
+function fm(n){return "$"+Math.round(n).toLocaleString("en-US")}
+function upd(){var sz=document.querySelector("input[name=est-size]:checked"),op=document.querySelector("input[name=est-opt]:checked"),v=parseFloat(q.value),r=sz&&op&&nums[sz.value]&&nums[sz.value][op.value];if(!(v>0)||!r){t.textContent="";return}var lo=r[0]*v,hi=r[1]*v;t.textContent="About "+(Math.round(lo)===Math.round(hi)?fm(lo):fm(lo)+" to "+fm(hi))+" for "+v.toLocaleString("en-US")+" "+q.getAttribute("data-unit")+". The exact price comes after we look at the job."}
+q.addEventListener("input",upd);[].forEach.call(document.querySelectorAll("input[name=est-size],input[name=est-opt]"),function(i){i.addEventListener("change",upd)});upd()})();`;
 
 // Words on the before/after slider, per trade (what the drag shows).
 const BA_TAGS = {
@@ -127,7 +142,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 /* header */
 .top{position:sticky;top:0;z-index:40;background:var(--dark);color:#fff;height:var(--hh)}
 .top .wrap{display:flex;align-items:center;gap:24px;height:100%}
-.brand{font:600 18px/1.15 var(--sans);text-decoration:none;margin-right:auto;min-width:0;overflow-wrap:anywhere}
+.brand{font:600 18px/1.15 var(--sans);text-decoration:none;margin-right:auto;min-width:0;flex:1 1 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav{display:none;gap:24px;font-size:15px}
 .nav a{text-decoration:none;color:rgba(255,255,255,.78)}
 @media (hover:hover){.nav a:hover{color:#fff}}
@@ -139,7 +154,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .frame img{display:block;width:100%;height:100%;object-fit:cover}
 .frame::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.28) 48%,rgba(0,0,0,.18) 100%)}
 .line{position:relative;z-index:2;width:100%;max-width:var(--max);margin:0 auto;padding:0 max(20px,env(safe-area-inset-left,0px)) 56px}
-.line .h{display:block;font:500 clamp(40px,10.5vw,104px)/1 var(--serif);letter-spacing:-.02em;max-width:14ch;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+.line .h{display:block;font:500 clamp(46px,12.8vw,104px)/1 var(--serif);letter-spacing:-.02em;max-width:14ch;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
 .story-cta{position:relative;z-index:3;display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:28px max(20px,env(safe-area-inset-left,0px));max-width:var(--max);margin:0 auto}
 .story-sub{flex:1 1 100%;color:rgba(255,255,255,.88);max-width:44ch;font-size:clamp(17px,2vw,20px);line-height:1.5}
 .cine-motion .story{height:calc(var(--n) * 100vh);height:calc(var(--n) * 100svh)}
@@ -204,13 +219,18 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .all-cap{display:grid;gap:12px;justify-items:start}
 .all-name{font:500 clamp(26px,5vw,40px)/1.1 var(--serif)}
 .all-btns{display:flex;flex-wrap:wrap;gap:10px}
-.all-count{display:none}
+.all-count,.all-dots{display:none}
 @media (min-width:760px){.all-grid{grid-template-columns:1fr 1fr;gap:40px 28px}}
 .all-motion .all-stage{height:calc(var(--n) * 85vh);height:calc(var(--n) * 85svh)}
 .all-motion .all-pin{position:sticky;top:var(--hh);height:calc(100vh - var(--hh));height:calc(100svh - var(--hh));overflow:hidden}
 .all-motion .all-grid{display:block;position:relative;height:100%}
 .all-motion .all-item{position:absolute;top:8px;bottom:18px;left:20px;right:20px;display:flex;flex-direction:column;gap:14px;will-change:opacity,transform}
 .all-motion .all .ba,.all-motion .all-item .ba{flex:1 1 0;min-height:0;aspect-ratio:auto;height:auto}
+.all-motion .all-dots{display:flex;position:absolute;left:max(24px,env(safe-area-inset-left,0px));top:14px;z-index:4;gap:0;background:rgba(0,0,0,.5);border-radius:999px;padding:2px 4px}
+.all-dot{position:relative;width:30px;height:30px;border:0;background:none;padding:0;cursor:pointer}
+.all-dot::before{content:"";position:absolute;left:50%;top:50%;width:20px;height:8px;margin:-4px 0 0 -10px;border-radius:99px;background:rgba(255,255,255,.55);transform:scaleX(.4);transition:transform .22s var(--ease-out),background-color .2s var(--ease-out)}
+.all-dot[aria-current=true]::before{transform:none;background:#fff}
+.all-dot:focus-visible{outline:3px solid var(--hi);outline-offset:0;border-radius:99px}
 .all-motion .all-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:18px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
 /* hvac tools */
 .tools{display:grid;gap:28px}
@@ -249,6 +269,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .est-num{font:500 clamp(36px,9vw,64px)/1.05 var(--serif);letter-spacing:-.02em;overflow-wrap:anywhere}
 .est-unit{color:rgba(255,255,255,.78);font-size:16px}
 .est-note{color:rgba(255,255,255,.7);font-size:14px;margin-top:8px}
+.est-qty{display:grid;gap:6px;margin-top:10px;font:600 14px/1.2 var(--sans);color:#fff}
+.est-qty input{width:100%;max-width:240px;font:400 17px/1.4 var(--sans);color:var(--ink);background:#fff;border:1.5px solid #a79f8c;border-radius:10px;padding:11px 12px}
+.est-total{margin-top:10px;font:500 18px/1.4 var(--serif);color:#fff;min-height:1.4em}
 .est-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .est-list li{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid #d9d0bc}
 .js .est-list{display:none}
@@ -330,12 +353,12 @@ const ENGINE_JS = `(function(){
 var root=document.documentElement;root.classList.add("js");root.classList.remove("cine-no-js");
 var reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function clamp(v,a,b){return v<a?a:v>b?b:v}
-document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var f=e.target,n=document.getElementById("f-note"),g=function(k){var x=f.elements[k];return x&&x.value!=null?String(x.value).trim():""};if(!g("name")||(!g("phone")&&!g("email"))){n.textContent="Please add your name and a phone number.";return}n.textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
 
 /* the bottom call bar shows once the story is behind you */
 function past(){var s=document.getElementById("story");root.classList.toggle("past",s.getBoundingClientRect().bottom<innerHeight*0.5)}
 addEventListener("scroll",past,{passive:true});past();
-if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["styles","before-after","price","comfort","contact"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
+if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["styles","before-after","all","price","comfort","contact"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 
 /* 1. scroll story: only opacity and transform change; the page scrolls normally */
 var story=document.getElementById("story");
@@ -432,21 +455,29 @@ function slideTo(ba,to){
 });
 var all=document.getElementById("all");
 if(all&&!reduce){
-  var aItems=[].slice.call(all.querySelectorAll(".all-item")),am=aItems.length,aStage=all.querySelector(".all-stage"),aPin=all.querySelector(".all-pin"),aCount=all.querySelector(".all-count"),aShown=0,aQ=false,aLive=false;
+  var aItems=[].slice.call(all.querySelectorAll(".all-item")),am=aItems.length,aStage=all.querySelector(".all-stage"),aPin=all.querySelector(".all-pin"),aCount=all.querySelector(".all-count"),aDots=[].slice.call(all.querySelectorAll(".all-dot")),aShown=0,aQ=false,aLive=false,aTimer=0;
   var aPaint=function(){
     aQ=false;
     var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight,p=total>0?clamp(-r.top/total,0,1):0,pos=p*(am-1);
     for(var i=0;i<am;i++){
-      var d=Math.abs(pos-i),o=clamp((0.75-d)/0.5,0,1);o=o*o*(3-2*o);
+      var d=Math.abs(pos-i),o=clamp((0.66-d)/0.32,0,1);o=o*o*(3-2*o);
       var it=aItems[i];
       it.style.opacity=o;
       it.style.transform="translateY("+((i-pos)*18).toFixed(1)+"px) scale("+(1-0.03*(1-o)).toFixed(4)+")";
       it.style.visibility=o<0.02?"hidden":"visible";
       it.style.pointerEvents=o>0.6?"auto":"none";
+      it.inert=o<0.5;
     }
-    var cur=Math.round(pos)+1;if(cur!==aShown){aShown=cur;aCount.textContent=cur+" / "+am}
+    var cur=Math.round(pos)+1;if(cur!==aShown){aShown=cur;aCount.textContent=cur+" / "+am;aDots.forEach(function(b,k){b.setAttribute("aria-current",k===cur-1?"true":"false")})}
   };
-  var aAsk=function(){if(!aQ){aQ=true;requestAnimationFrame(aPaint)}};
+  var aGo=function(i){var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight;scrollTo({top:r.top+scrollY+total*i/(am-1),behavior:"smooth"})};
+  /* when the scroll stops between two cards, settle on the nearer one */
+  var aSnap=function(){clearTimeout(aTimer);aTimer=setTimeout(function(){var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight,p=total>0?-r.top/total:0;if(p<=0||p>=1)return;var pos=p*(am-1),t=Math.round(pos);if(Math.abs(pos-t)>0.02)aGo(t)},160)};
+  aDots.forEach(function(b,i){
+    b.addEventListener("click",function(){aGo(i)});
+    b.addEventListener("keydown",function(e){var k=e.key,to=-1;if(k==="ArrowRight"||k==="ArrowDown")to=Math.min(i+1,am-1);else if(k==="ArrowLeft"||k==="ArrowUp")to=Math.max(i-1,0);else if(k==="Home")to=0;else if(k==="End")to=am-1;if(to>=0){e.preventDefault();aDots[to].focus();aGo(to)}});
+  });
+  var aAsk=function(){if(!aQ){aQ=true;requestAnimationFrame(aPaint)}aSnap()};
   all.classList.add("all-motion");
   aPaint();
   if("IntersectionObserver" in window){
@@ -510,6 +541,9 @@ if(dataEl){
   show();
 }
 
+${EST_TOTAL_JS}
+/* "Ask about this": close any dialog, pick the matching job in the form, then the link scrolls to it */
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var dlg=a.closest("dialog");if(dlg&&dlg.open)dlg.close();var sel=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(sel)for(var i=0;i<sel.options.length;i++)if(sel.options[i].text===v){sel.selectedIndex=i;break}});
 /* the rest fades in on scroll */
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".rv"));
@@ -534,7 +568,7 @@ export function generateCinematic(form, d, deps) {
   const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
   const phoneShow = d.phone ? esc(d.phone.show) : "";
   const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
-  const callText = d.phone ? `Call ${phoneShow}` : "Call us";
+  const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
   const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svgIcon(CINE_PHONE, 18)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
@@ -594,10 +628,10 @@ export function generateCinematic(form, d, deps) {
   const allSec = allCards.length >= 2 ? `<section class="sec dark-sec all" id="all" style="--n:${allCards.length}" aria-label="Everything we do">
   <div class="wrap"><div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Everything we <em>do</em>.</h2><p class="lede">Tap Compare to see each kind of job before and after.</p></div></div>
   <div class="all-stage"><div class="all-pin"><div class="wrap all-grid">${allCards.map((c, i) => `<article class="all-item" data-i="${i}">
-    <div class="ba all-ba" data-pos="0"><img class="after" src="${esc(slotSrc(c.after, `${c.label}, after`, { labelSide: "right" }))}"${safeImage(images[c.after]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" loading="lazy"><img class="before" src="${esc(slotSrc(c.before, `${c.label}, before`, { labelSide: "left" }))}"${safeImage(images[c.before]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[0]).toLowerCase()}" loading="lazy">
+    <div class="ba all-ba" data-pos="0"><img class="after" src="${esc(slotSrc(c.after, `${c.label}, after`, { labelSide: "right" }))}"${safeImage(images[c.after]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" loading="lazy" decoding="async"><img class="before" src="${esc(slotSrc(c.before, `${c.label}, before`, { labelSide: "left" }))}"${safeImage(images[c.before]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[0]).toLowerCase()}" loading="lazy">
       <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(c.label)}: ${esc(baTags(d.tradeKey)[0]).toLowerCase()} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div></div>
-    <div class="all-cap"><h3 class="all-name">${esc(c.label)}</h3><div class="all-btns"><button type="button" class="btn btn-glass btn-sm all-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent btn-sm" href="#contact">Ask about this</a></div></div>
-  </article>`).join("")}</div><p class="all-count" aria-hidden="true">1 / ${allCards.length}</p></div></div>
+    <div class="all-cap"><h3 class="all-name">${esc(c.label)}</h3><div class="all-btns"><button type="button" class="btn btn-glass btn-sm all-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent btn-sm" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
+  </article>`).join("")}</div><div class="all-dots" role="group" aria-label="Kinds of work">${allCards.map((c, i) => `<button type="button" class="all-dot" aria-label="${esc(c.label)}" aria-current="${i === 0}"></button>`).join("")}</div><p class="all-count" aria-hidden="true">1 / ${allCards.length}</p></div></div>
 </section>` : "";
 
   // 4. Price estimator: typed ranges only, hidden when there are none
@@ -617,11 +651,12 @@ export function generateCinematic(form, d, deps) {
       <fieldset><legend>${esc(est.optionLabel || "Option")}</legend><div class="opts">${prices.options.map((o) => radio("est-opt", o, o === firstOpt)).join("")}</div></fieldset>
     </div>
     <div>
-      <div class="est-out" aria-live="polite"><p class="est-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p><p class="est-unit">${esc(cineUnit(d.tradeKey, cine.unit))}</p><p class="est-note">An estimate, not a final price. The exact price comes after we look at the job.</p><a class="btn btn-accent" href="#contact" style="justify-self:start;margin-top:8px">${askLabel}</a></div>
+      <div class="est-out" aria-live="polite"><p class="est-num" id="est-num">${esc(prices.cells[first][firstOpt])}</p><p class="est-unit">${esc(cineUnit(d.tradeKey, cine.unit))}</p><p class="est-note">An estimate, not a final price. The exact price comes after we look at the job.</p>${estQtyHtml(cineUnit(d.tradeKey, cine.unit), "est")}<a class="btn btn-accent" href="#contact" style="justify-self:start;margin-top:8px">${askLabel}</a></div>
       <ul class="est-list">${list}</ul>
     </div>
   </div>
   <script type="application/json" id="est-data">${json}</script>
+  <script type="application/json" id="est-nums">${JSON.stringify(prices.nums).replace(/</g, "\\u003c")}</script>
 </div></section>`;
   }
 
@@ -651,18 +686,19 @@ export function generateCinematic(form, d, deps) {
   <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>
 </div></section>`;
   const starRow = (fill, size) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("");
-  const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec rvw-beat" id="reviews"><div class="wrap">
+  const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec dark-sec rvw-beat" id="reviews"><div class="wrap">
   <div class="sec-head rv"><h2>What customers <em>say</em>.</h2></div>
   ${d.rating ? `<div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
   ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
   ${d.rv.link ? `<p class="rvw-more rv"><a class="btn btn-accent" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
-  const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
+  const jobNames = [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
+  const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">
     <h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="lede">Call now, or send the form and we will call you back.${d.emergency ? " Open 24/7 for emergencies." : ""}</p>
-    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : `<p class="big-phone">Phone number here</p>`}
+    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
   </div>
   <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
     <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>

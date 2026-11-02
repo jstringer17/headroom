@@ -36,12 +36,20 @@ export function slugify(s) {
   return String(s || "sample").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "sample";
 }
 
+// US numbers only get a call link when they have 10 digits (or 11 with a leading 1); "+" numbers keep their country code;
+// anything else (9 digits, 7 digits) is no phone at all, so no wrong call link is ever made. "ext. 12" or "x12" adds ;ext=12.
 export function formatPhone(raw) {
-  const d = String(raw || "").replace(/\D/g, "");
+  let t = String(raw || "").trim();
+  if (!t) return null;
+  let ext = "";
+  const m = t.match(/\s*(?:ext\.?|extension|x|#)\s*(\d{1,6})\s*$/i);
+  if (m) { ext = m[1]; t = t.slice(0, m.index).trim(); }
+  const d = t.replace(/\D/g, "");
+  const tail = ext ? ` ext. ${ext}` : "";
   const ten = d.length === 11 && d[0] === "1" ? d.slice(1) : d;
-  if (ten.length === 10) return { show: `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`, tel: `+1${ten}` };
-  const t = String(raw || "").trim();
-  return t ? { show: t, tel: d ? `+${d}` : "" } : null;
+  if (!t.startsWith("+") && ten.length === 10) return { show: `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}${tail}`, tel: `+1${ten}${ext ? `;ext=${ext}` : ""}` };
+  if (t.startsWith("+") && d.length >= 8 && d.length <= 15) return { show: t + tail, tel: `+${d}${ext ? `;ext=${ext}` : ""}` };
+  return null;
 }
 
 // Fill in smart defaults so only company + trade are needed.
@@ -99,7 +107,7 @@ export function safeImage(src) {
 // ---------- Live mode (a sold site, hosted by hosting/) ----------
 // form.live = { siteId, leadUrl:"/api/lead", turnstileKey, analyticsToken, canonical, privacyUrl, google:{rating,count} }
 // With it: the form really sends, no sample bits render, and SEO tags go in <head>. Without it: nothing changes.
-export const LIVE_SAMPLE_SUBMIT = 'document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});';
+export const LIVE_SAMPLE_SUBMIT = 'document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var f=e.target,n=document.getElementById("f-note"),g=function(k){var x=f.elements[k];return x&&x.value!=null?String(x.value).trim():""};if(!g("name")||(!g("phone")&&!g("email"))){n.textContent="Please add your name and a phone number.";return}n.textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});';
 const liveUrl = (u) => (/^https:\/\/[^\s"'<>\\]+$/.test(String(u || "").trim()) ? String(u).trim() : "");
 const livePath = (u, dflt) => { const s = String(u || "").trim(); return /^\/[A-Za-z0-9/_.-]*$/.test(s) || liveUrl(s) ? s : dflt; };
 export function liveOf(form) {
@@ -219,8 +227,11 @@ export function generateSite(form) {
   const live = liveOf(form);
   const d = live ? liveNormalize(normalize(form), live) : normalize(form);
   const editorial = form && (form.look === "editorial" || (form.cine && form.cine.look === "editorial"));
-  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, live ? { ...CINE, placeholderArt: liveArt } : CINE);
-  const phArt = live ? liveArt : placeholderArt;
+  // A file that ships (Download, Copy: form.clean) has quiet drawings without the "Sample picture: make in Higgsfield" note.
+  const cleanArt = (a, b, c, o) => placeholderArt(a, b, c, { ...(o || {}), note: false, quiet: true });
+  const shipArt = live ? liveArt : form && form.clean ? cleanArt : null;
+  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, shipArt ? { ...CINE, placeholderArt: shipArt } : CINE);
+  const phArt = shipArt || placeholderArt;
   const t = d.trade;
   const th = THEMES[d.themeKey];
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
@@ -234,7 +245,7 @@ export function generateSite(form) {
   const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
   const phoneShow = d.phone ? esc(d.phone.show) : "";
   const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
-  const callText = d.phone ? `Call ${phoneShow}` : "Call us";
+  const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
   const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svg(ICON_PHONE, 19)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
@@ -273,7 +284,7 @@ export function generateSite(form) {
   } else if (lay === "split") {
     heroInner = `<div class="wrap hero-grid">${heroText}<aside class="panel" aria-label="Call us">
       <div class="panel-art">${shape("art").replace('xMidYMax meet', 'xMidYMax slice')}</div>
-      <div class="panel-body"><p class="panel-k">${d.freeEstimates ? "Free estimates" : "Prices before work starts"}</p><p class="panel-v">${d.phone ? phoneShow : "Phone number here"}</p><p class="panel-n">${d.emergency ? "Open 24 hours" : area ? `Serving ${area}` : "Serving your area"}</p></div>
+      <div class="panel-body"><p class="panel-k">${d.freeEstimates ? "Free estimates" : "Prices before work starts"}</p><p class="panel-v">${d.phone ? phoneShow : "Ask for a quote"}</p><p class="panel-n">${d.emergency ? "Open 24 hours" : area ? `Serving ${area}` : "Serving your area"}</p></div>
     </aside></div>`;
   } else if (lay === "ledger") {
     const figs = [];
@@ -626,7 +637,7 @@ ${body}
   <div class="head rv">
     <h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
     <p class="lede">Call now, or send the form and we will call you back.</p>
-    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : `<p class="big-phone">Phone number here</p>`}
+    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
     <dl>
       <div><dt>Service area:</dt><dd>${area ? `${area} and nearby towns` : "Your town and nearby towns"}</dd></div>
       <div><dt>${d.emergency ? "Hours:" : "Emergencies:"}</dt><dd>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</dd></div>
@@ -646,7 +657,7 @@ ${body}
   <div><p class="foot-name">${name}</p><p class="foot-tag">${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div>
   <div class="foot-cols">
     <div><h3>Services</h3><ul>${d.services.slice(0, 5).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
-    <div><h3>Contact</h3><ul><li>${d.phone ? `<a href="${callHref}">${phoneShow}</a>` : "Phone number here"}</li><li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
+    <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
     <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
   </div>
   <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
@@ -655,7 +666,7 @@ ${body}
 <script>
 ${liveScript(`(function(){
   var root=document.documentElement;root.classList.add("js");
-  document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();document.getElementById("f-note").textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
+  document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var f=e.target,n=document.getElementById("f-note"),g=function(k){var x=f.elements[k];return x&&x.value!=null?String(x.value).trim():""};if(!g("name")||(!g("phone")&&!g("email"))){n.textContent="Please add your name and a phone number.";return}n.textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
   // The extra call buttons show only after the hero's own call button scrolls away.
   var cta=document.getElementById("hero-cta");
   function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}
