@@ -19,8 +19,8 @@ async function jwt(over = {}, signKey) {
   const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', signKey || keys.privateKey, new TextEncoder().encode(`${h}.${p}`));
   return `${h}.${p}.${b64u(sig)}`;
 }
-const deskEnv = () => {
-  const x = makeEnv({ CF_ACCESS_TEAM: 'team', CF_ACCESS_AUD: 'AUD1', DESK_EMAILS: 'ceo@example.com, Partner@example.com' });
+const deskEnv = (now = NOW) => {
+  const x = makeEnv({ CF_ACCESS_TEAM: 'team', CF_ACCESS_AUD: 'AUD1', DESK_EMAILS: 'ceo@example.com, Partner@example.com' }, now);
   x.env.__deps.fetchCerts = async () => [jwk];
   return x;
 };
@@ -92,6 +92,42 @@ test('pause / resume need the x-desk header, work, and refuse wrong states', asy
   assert.equal((await getSiteRow(env, 'a')).status, 'live');
 });
 
+// Open the e-mailed link like the owner would, on the real router + admin: open -> confirm -> logged in -> link is single use.
+async function followLink(env, link) {
+  const host = new URL(link).host;
+  const worker = (await import('../src/index.js')).default, ctx = { waitUntil() {} };
+  const token = new URL(link).searchParams.get('t');
+  const confirmReq = () => new Request(`https://${host}/admin/login/confirm`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: `https://${host}` }, body: `t=${token}` });
+  assert.equal((await worker.fetch(new Request(link), env, ctx)).status, 200);
+  const confirm = await worker.fetch(confirmReq(), env, ctx);
+  assert.equal(confirm.status, 303);
+  const cookie = confirm.headers.get('set-cookie').split(';')[0];
+  const admin = await worker.fetch(new Request(`https://${host}/admin`, { headers: { cookie } }), env, ctx);
+  assert.equal(admin.status, 200);
+  assert.doesNotMatch(await admin.text(), /log in link|Send me a link/i);
+  assert.equal((await worker.fetch(confirmReq(), env, ctx)).status, 400); // one use only
+}
+
+test('owner login link works on any date (clock shifted +/-40 days and a year)', async () => {
+  const real = Date.parse('2026-06-15T09:30:00Z');
+  for (const t of [real - 40 * DAY, real, real + 40 * DAY, real + 400 * DAY]) {
+    const { env, calls } = deskEnv(t);
+    await addSite(env, { id: 'a', slug: 'a', domain: 'a.net', status: 'live' });
+    const tok = await jwt({ exp: t / 1000 + 600 });
+    const r = await deskApp(await req('/api/sites/a/login-link', { method: 'POST', token: tok, headers: { 'x-desk': '1' } }), env);
+    assert.equal(r.status, 200, new Date(t).toISOString());
+    await followLink(env, calls.emails.at(-1).text.match(/https:\/\/\S+/)[0]);
+    // an expired link (16 minutes later) is refused at every date
+    const r2 = await deskApp(await req('/api/sites/a/login-link', { method: 'POST', token: tok, headers: { 'x-desk': '1' } }), env);
+    const link2 = calls.emails.at(-1).text.match(/https:\/\/\S+/)[0];
+    Date.now = () => t + 16 * 60e3;
+    const worker = (await import('../src/index.js')).default;
+    const late = await worker.fetch(new Request(`https://a.net/admin/login/confirm`, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://a.net' }, body: `t=${new URL(link2).searchParams.get('t')}` }), env, { waitUntil() {} });
+    assert.equal(late.status, 400, `expired link accepted at ${new Date(t).toISOString()}`);
+    assert.equal(r2.status, 200);
+  }
+});
+
 test('checkout/portal links and owner login link', async () => {
   const { env, calls } = deskEnv(); await fixtureRows(env);
   assert.match((await (await deskApp(await req('/api/sites/d/checkout'), env)).json()).url, /checkout\.stripe\.test/);
@@ -103,19 +139,7 @@ test('checkout/portal links and owner login link', async () => {
   const link = mail.text.match(/https:\/\/\S+/)[0];
   assert.match(link, /^https:\/\/a\.net\/admin\/login\?t=[A-Za-z0-9_-]{20,}$/);
   assert.ok(!JSON.stringify(await r.clone().json()).includes(link)); // link only goes to the owner
-  // follow it like the owner would, on the real router + admin: open link -> confirm -> logged in
-  const worker = (await import('../src/index.js')).default, ctx = { waitUntil() {} };
-  const token = new URL(link).searchParams.get('t');
-  const open = await worker.fetch(new Request(link), env, ctx);
-  assert.equal(open.status, 200);
-  const confirm = await worker.fetch(new Request('https://a.net/admin/login/confirm', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://a.net' }, body: `t=${token}` }), env, ctx);
-  assert.equal(confirm.status, 303);
-  const cookie = confirm.headers.get('set-cookie').split(';')[0];
-  const admin = await worker.fetch(new Request('https://a.net/admin', { headers: { cookie } }), env, ctx);
-  assert.equal(admin.status, 200);
-  assert.doesNotMatch(await admin.text(), /log in link|Send me a link/i);
-  const again = await worker.fetch(new Request('https://a.net/admin/login/confirm', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', origin: 'https://a.net' }, body: `t=${token}` }), env, ctx);
-  assert.equal(again.status, 400); // one use only
+  await followLink(env, link);
 });
 
 test('import-lead: dry run prints the row and writes nothing without --apply', () => {

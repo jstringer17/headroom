@@ -16,14 +16,17 @@ export async function signed(event, { secret = SECRET, t = Math.floor(NOW / 1000
 export function fixture(name) { return JSON.parse(fs.readFileSync(new URL(`./stripe-${name}.json`, import.meta.url), 'utf8')); }
 
 // Real db.js / render.js / notify.js / router on a mock D1 + R2. Only Stripe's API and Resend's HTTP are stubbed.
-export function makeEnv(extra = {}) {
+// `now` is the test clock. It is injected into billing/desk (env.__deps.now) AND Date.now is pinned to it, so modules
+// that read the real clock (admin login expiry, sessions, host cache) agree with it. Tests never depend on today's date.
+export function makeEnv(extra = {}, now = NOW) {
+  Date.now = () => now;
   const emails = [], fetches = [];
   const env = mockEnv({
     RESEND_API_KEY: 're_test', STRIPE_WEBHOOK_SECRET: SECRET, STRIPE_SECRET_KEY: 'sk_test_x',
     STRIPE_PRICE_MONTHLY: 'price_month', STRIPE_PRICE_SETUP: 'price_setup', STRIPE_PRICE_SMS: 'price_sms',
     MONTHLY_CENTS: '9900', ADDON_CENTS_SMS: '1500', AGENCY_DOMAIN: 'example.com',
     __deps: {
-      now: () => NOW,
+      now: () => now,
       fetch: async (url, init) => {
         fetches.push({ url, init });
         const out = url.includes('billing_portal') ? 'https://billing.stripe.test/portal_1' : 'https://checkout.stripe.test/cs_1';
