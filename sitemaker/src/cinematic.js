@@ -18,6 +18,7 @@
 import { rvwList } from "./reviews.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
 import { pickerItems, pickerHtml, PICKER_CSS, PICKER_JS } from "./picker.js";
+import { promiseFor } from "./promise.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
@@ -577,7 +578,10 @@ export function generateCinematic(form, d, deps) {
 
   // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
   const heroBox = safeImage(form && form.heroImage);
-  const steps = story.map((s, i) => {
+  // Round 3 (consultant fix 1): the first frame states the result (promise), the next frames tell the story.
+  const promise = promiseFor(d.tradeKey, kit && kit.variantKey);
+  const steps = story.map((s0, i) => {
+    const s = i === 0 && promise ? { ...s0, headline: promise.headline, accent: promise.accent } : s0;
     const tag = i === 0 ? "h1" : "p";
     return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
   }).join("");
