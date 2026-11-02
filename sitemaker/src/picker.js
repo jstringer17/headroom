@@ -64,7 +64,8 @@ const VP_CHEV = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="no
 // o = { items, tradeKey, tradeName, img(id, label, attrs), prices, usd, unit, tags: [before, after], cls (extra section classes),
 //       head (optional html replacing the default heading), askLabel }
 export function pickerHtml(o) {
-  const items = o.items || [];
+  const tags0 = o.tags || ["Before", "After"];
+  const items = (o.items || []).map((it) => it.key === "ba" && !/^before$/i.test(tags0[0]) ? { ...it, label: `${tags0[0]} to ${String(tags0[1]).toLowerCase()}` } : it);
   if (!items.length) return "";
   const solo = items.length === 1;
   const [a, em, z] = pickerTitle(o.tradeKey);
@@ -73,7 +74,13 @@ export function pickerHtml(o) {
   const hd = pickerHead(o.tradeKey, items);
   // "Ask about this" picks a job the form really lists: the item's own name, else a job sharing a word with it, else the first.
   const jobs = o.jobs || [];
-  const jobFor = (label) => { if (!jobs.length || jobs.includes(label)) return label; const w = vpWords(label); return jobs.find((j) => [...vpWords(j)].some((x) => w.has(x))) || jobs[0]; };
+  const jobFor = (label, key) => {
+    if (!jobs.length || jobs.includes(label)) return label;
+    if (key === "ba") return jobs.find((j) => /replac|new |install|restor|remov|clean/i.test(j)) || jobs[0];
+    const w = vpWords(label);
+    return jobs.find((j) => [...vpWords(j)].some((x) => w.has(x))) || "Something else";
+  };
+
   const head = o.head || `<div class="vp-head"><span class="vp-kicker">${vpEsc(o.tradeName)}</span><h2 id="vp-h">${hd.h2}</h2><p class="vp-lede">${hd.lede}</p></div>`;
   const chips = items.map((it, i) => `<button type="button" class="vp-chip" role="tab" id="vp-t-${i}" aria-controls="vp-p-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${vpEsc(it.label)}</button>`).join("");
   const panels = items.map((it, i) => {
@@ -85,7 +92,7 @@ export function pickerHtml(o) {
     return `<div class="vp-panel" role="tabpanel" id="vp-p-${i}" aria-labelledby="vp-t-${i}" data-i="${i}">
     <div class="vp-stage">${pic}<button type="button" class="vp-nav vp-prev" aria-label="Previous: ${vpEsc(items[(i - 1 + items.length) % items.length].label)}">${VP_CHEV("M15 6l-6 6 6 6")}</button><button type="button" class="vp-nav vp-next" aria-label="Next: ${vpEsc(items[(i + 1) % items.length].label)}">${VP_CHEV("M9 6l6 6-6 6")}</button><span class="vp-count" aria-hidden="true">${i + 1} / ${items.length}</span></div>
     <div class="vp-info"><h3 class="vp-name">${vpEsc(it.label)}</h3>${it.note ? `<p class="vp-note">${vpEsc(it.note)}</p>` : ""}${price ? `<p class="vp-price"><span class="vp-pr"><b>${vpEsc(price)}</b> ${vpEsc(o.unit || "")}</span><span>Estimate from the owner. The exact price comes after we look.</span></p>` : ""}
-      <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label))}">Ask about this</a></div></div>
+      <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label, it.key))}">Ask about this</a></div></div>
   </div>`;
   }).join("\n  ");
   return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">

@@ -13,7 +13,7 @@ import { pickerItems, pickerHtml, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
 import { variantCards, kitVariant } from "./variants.js";
 import { promiseFor } from "./promise.js";
-import { offeredPrices, cineUnit } from "./cinematic.js";
+import { offeredPrices, cineUnit, baTags } from "./cinematic.js";
 
 const clIcon = (p, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const CL_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
@@ -26,7 +26,7 @@ const clAccent = (text, word) => { const i = word ? text.indexOf(word) : -1; ret
 // A tag for a service card from its own words (no claims: what kind of job it is).
 const clTag = (n, d) => /emergenc|storm|24/i.test(n) ? (d.emergency ? "24/7" : "Urgent") : /repair|fix|patch|leak/i.test(n) ? "Repair" : /inspect|check|estimate/i.test(n) ? (d.freeEstimates ? "Free check" : "Inspection") : /clean|wash/i.test(n) ? "Cleaning" : /new|install|replace|build/i.test(n) ? "New install" : "Service";
 // Headline size that keeps the H1 to 3 lines or fewer (Archivo 800 is ~0.56em per character).
-const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.min(46, Math.floor((2.7 * 335) / (n * 0.56)))}px;--h1d:${Math.min(66, Math.floor((2.6 * 600) / (n * 0.56)))}px`; };
+const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.min(46, Math.floor((2.55 * 335) / (n * 0.62)))}px;--h1d:${Math.min(66, Math.floor((2.5 * 600) / (n * 0.6)))}px`; };
 
 // form, d = normalize(form) (+ live), o = { phArt, CINE }
 export function generateClassic(form, d, o) {
@@ -38,7 +38,8 @@ export function generateClassic(form, d, o) {
   const phoneShow = d.phone ? esc(d.phone.show) : "";
   const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
   const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
-  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${clIcon(CL_PHONE, 19)}<span>${callText}</span></a>`;
+  const callIco = d.phone ? CL_PHONE : CL_ARROW;
+  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${clIcon(callIco, 19)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
   const kitFull = CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey];
   const kit = kitFull ? kitVariant(kitFull, form && form.cine && form.cine.variant) : null;
@@ -116,7 +117,7 @@ export function generateClassic(form, d, o) {
   const anyRealCl = anyReal;
   const items = kitFull ? pickerItems(kitFull, kit, allCards, d.tradeKey) : [];
   const pickImg = (id, label, attrs) => `<img src="${esc(safeImage(imgs[id]) || phArt(d.tradeKey, id, label, anyRealCl ? { quiet: true } : undefined))}" alt="${esc(label)}" ${attrs}>`;
-  const picker = pickerHtml({ items, tradeKey: d.tradeKey, tradeName, img: pickImg, prices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: kitFull ? cineUnit(d.tradeKey, form && form.cine && form.cine.unit) : "", tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: "sec tint cl-vp", jobs: jobNames });
+  const picker = pickerHtml({ items, tradeKey: d.tradeKey, tradeName, img: pickImg, prices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: kitFull ? cineUnit(d.tradeKey, form && form.cine && form.cine.unit) : "", tags: baTags(d.tradeKey), cls: "sec tint cl-vp", jobs: jobNames });
 
   // 6. Featured project: the picked variation's own first and last story frames, only when they are real pictures.
   const fb = story.length > 1 ? story[0].id : "", fa = finishedId;
@@ -132,7 +133,8 @@ export function generateClassic(form, d, o) {
   const ownerFacts = [d.cred.founded ? `In business since ${d.cred.founded}` : d.years ? `${d.years} year${d.years === 1 ? "" : "s"} in business` : "", d.cred.family ? "Family owned" : "", d.cred.veteran ? "Veteran owned" : "", d.cred.license ? `License #${esc(d.cred.license)}` : "", d.insured ? (d.cred.bonded ? "Insured and bonded" : "Insured") : ""].filter(Boolean);
   // every other typed fact the proof strip had no room for (jobs, awards, more certifications, ...)
   badges.slice(5).forEach((b) => { const f = esc(`${b.label}${b.sub ? ` ${b.sub.toLowerCase()}` : ""}`); if (!ownerFacts.some((x) => x.startsWith(esc(b.label)) || f.startsWith(x))) ownerFacts.push(f); });
-  const initials = esc(String(d.company).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase());
+  let initials = esc(String(d.company).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase());
+  if (["NO", "OK", "OR", "SO", "AT", "IN", "ON", "US", "IT", "IF", "GO", "UP", "AM", "AS", "BE", "DO", "HI", "ME", "MY", "WE"].includes(initials)) initials = initials[0];
   const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec" id="reviews"><div class="wrap cl-rev-grid">
   <aside class="cl-owner rv"><span class="cl-mono" aria-hidden="true">${initials}</span><p class="cl-kicker">${d.cred.family ? "Family owned" : "Local crew"}</p><h3>${name}</h3>
     <p>${esc(t.sub)} We answer the phone, show up when we say, and give you the price before any work starts.</p>
@@ -182,7 +184,7 @@ export function generateClassic(form, d, o) {
   <div class="foot-cols">
     <div><h3>Services</h3><ul>${d.services.slice(0, 6).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
     <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"} and nearby towns</li><li>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</li></ul></div>
-    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
+    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#reviews">Reviews</a></li><li><a href="#faq">Questions</a></li></ul></div>
   </div>
   <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
 </div></footer>`;
@@ -213,7 +215,7 @@ ${offerBar}
   <a class="brand-name" href="#top">${name}</a>
   <nav class="nav" aria-label="Sections"><a href="#services">Services</a>${picker ? `<a href="#styles">${items.some((x) => x.before) ? "Before and after" : "Styles"}</a>` : ""}<a href="#reviews">Reviews</a><a href="#faq">Questions</a></nav>
   ${callBtn("btn btn-accent cl-top-btn")}
-  <a class="top-call" href="${callHref}" aria-label="${callText}">${clIcon(CL_PHONE, 22)}</a>
+  <a class="top-call" href="${callHref}" aria-label="${callText}">${clIcon(callIco, 22)}</a>
 </div></header>
 <main id="top">
 ${heroSec}
@@ -270,10 +272,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .btn-dark{background:var(--dark);color:#fff}
 /* offer bar + header */
 .cl-offer{background:var(--dark2);color:#fff;font:600 14px/1.4 var(--body);text-align:center;padding:9px 16px}
-.cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:30px}
+.cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
-.brand-name{display:inline-flex;align-items:center;min-height:48px;font:800 20px/1.1 var(--head);letter-spacing:-.02em;text-decoration:none;color:var(--dark);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand-name{display:block;line-height:48px;min-height:48px;font:800 20px/1.1 var(--head);letter-spacing:-.02em;text-decoration:none;color:var(--dark);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav{display:none;gap:22px;font-weight:600;font-size:15px}
 .nav a{text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;min-height:48px}
 @media (hover:hover){.nav a:hover{color:var(--accent)}}
@@ -282,10 +284,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 /* hero */
 .cl-hero{position:relative;isolation:isolate;background:var(--dark);color:#fff;overflow:hidden}
 .cl-hero .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 60%;z-index:-2}
-.cl-hero.has-photo::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.35) 100%),linear-gradient(0deg,rgba(0,0,0,.5),rgba(0,0,0,0) 40%)}
-.cl-art{position:absolute;left:0;right:0;bottom:0;width:100%;height:38%;z-index:-1;opacity:.5}
-.cl-art.solid path{fill:var(--dark2)}
-.cl-art.strokes path{fill:none;stroke:var(--dark2);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.cl-hero.has-photo::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(0,0,0,.5) 0%,rgba(0,0,0,.72) 60%,rgba(0,0,0,.82) 100%)}
+@media (min-width:1024px){.cl-hero.has-photo::before{background:linear-gradient(90deg,rgba(0,0,0,.74) 0%,rgba(0,0,0,.5) 42%,rgba(0,0,0,.12) 72%,rgba(0,0,0,.06) 100%)}}
+.cl-art{position:absolute;left:0;right:0;bottom:0;width:100%;height:46%;z-index:-1}
+.cl-art.solid path{fill:color-mix(in srgb,var(--accent) 26%,var(--dark2))}
+.cl-art.strokes path{fill:none;stroke:color-mix(in srgb,var(--accent) 45%,var(--dark2));stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.cl-hero:not(.has-photo){background:radial-gradient(120% 90% at 85% 0%,color-mix(in srgb,var(--accent) 22%,var(--dark)) 0%,var(--dark) 60%)}
 .cl-hero-grid{display:grid;gap:28px;padding-block:36px 40px}
 .cl-pill{display:inline-flex;align-items:center;gap:8px;font:700 13px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--hi);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);padding:8px 12px;border-radius:999px}
 .cl-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--hi)}
@@ -419,6 +423,17 @@ footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
 /* reveal */
 @media (prefers-reduced-motion:no-preference){.motion .rv{transition:opacity .7s var(--ease),transform .7s var(--ease)}.motion .rv:not(.in){opacity:0;transform:translateY(20px)}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.mbar,.faq summary svg{transition:none}}
+@media (max-width:639px){
+  .cl-cards{grid-template-columns:1fr 1fr;gap:10px}
+  .cl-cards li{padding:14px;gap:6px}
+  .cl-cards h3{font-size:17px}
+  .cl-cards p{display:none}
+  .cl-more{min-height:44px;font-size:15px}
+  #how{display:none} /* phones: the FAQ answers "How do I get started?"; the page stays short */
+  .cl-feat-pics figure{aspect-ratio:1/1}
+  .sec{padding-block:52px}
+}
+@media (max-width:1023px){#styles{padding-bottom:110px}}
 @media (min-width:640px){
   .cl-proof ul{grid-template-columns:repeat(4,1fr)}
   .cl-cards{grid-template-columns:1fr 1fr}
@@ -434,7 +449,7 @@ footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
   .cl-to-form{display:none}
   .hero-cta .btn{flex:0 0 auto}
   .cl-formcard{padding:28px}
-  .cl-proof ul{grid-template-columns:repeat(5,1fr);padding:24px 0}
+  .cl-proof ul{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));padding:24px 0}
   .cl-proof li.cl-p5{display:grid}
   .cl-proof b{font-size:30px}
   .sec{padding-block:96px}

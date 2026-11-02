@@ -14,7 +14,7 @@
 import { rvwList } from "./reviews.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
-import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS } from "./cinematic.js";
+import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS, baTags } from "./cinematic.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
 import { pickerItems, pickerHtml, pickerHead, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
@@ -312,7 +312,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-links{display:flex;margin-left:auto}
   .ed-nav .ed-wrap{gap:20px}
   .ed-logo{flex:0 1 auto;margin-right:0}
-  .ed-nav .ed-tel{display:inline;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
+  .ed-nav .ed-tel{display:inline-flex;align-items:center;min-height:48px;font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
   .ed-links{gap:18px;font-size:14px}
   .ed-nav .ed-wrap{gap:16px}
   .ed-nav .ed-btn{display:inline-flex}
@@ -602,7 +602,7 @@ export function generateEditorial(form, d, deps) {
   // Round 3: the one shared picker (src/picker.js): offered variations (one is enough) or the trade's before and after plus styles.
   const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
   const vpHd = pickerHead(d.tradeKey, vpItems);
-  const pickSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: (id, label, attrs) => pic(id, `${attrs} alt="${esc(label)}"`).replace(' alt="" ', " "), prices: offeredPrices(kit, cine.prices), usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: "ed-sec ed-vp", jobs: [...vpItems.filter((x) => allCards.length).map((x) => x.label), ...d.services.map(([n]) => n)],
+  const pickSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: (id, label, attrs) => pic(id, `${attrs} alt="${esc(label)}"`).replace(' alt="" ', " "), prices: offeredPrices(kit, cine.prices), usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "ed-sec ed-vp", jobs: [...vpItems.filter((x) => allCards.length).map((x) => x.label), ...d.services.map(([n]) => n)],
     head: `<div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2 id="vp-h">${vpHd.h2}</h2><p class="ed-note">${vpHd.lede}</p></div>` });
 
   // Services: large numbered rows, the open row swaps the picture
@@ -705,7 +705,7 @@ ${PROOF_MORE_CSS}
   <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg><span class="ed-logo-t">${name}</span></a>${d.live ? "" : '<span class="ed-pill">Sample site</span>'}
   <nav class="ed-links" aria-label="Sections">${links}</nav>
   ${d.phone ? `<a class="ed-tel" href="${callHref}">${phoneShow}</a>` : ""}<a class="ed-btn sm" href="#contact">${askLabel}</a>
-  <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(ED_PHONE, 20)}</a>
+  <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(d.phone ? ED_PHONE : '<path d="M5 12h14M13 6l6 6-6 6"/>', 20)}</a>
 </div></header>
 <main id="top">
 ${hero}

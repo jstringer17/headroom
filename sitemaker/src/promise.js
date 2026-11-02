@@ -2,6 +2,22 @@
 // [headline, accent word, offer line]. The offer line is shown only when the owner ticked "Free estimates".
 // No claim the owner did not make; words from test.mjs BANNED are avoided ("done right", "same day", ...).
 export const PROMISES = {
+  hvac: { _: ["Heating and air that keep every room comfortable.", "comfortable", "Free estimate on a new system."] },
+  plumbing: { _: ["Plumbing fixed, the water running right.", "right", "A clear price before we start."] },
+  electrical: { _: ["Electrical work, safe and up to code.", "safe", "A clear price before we start."] },
+  landscaping: { _: ["A yard you want to be in.", "want", "Free estimate for your yard."] },
+  tree: { _: ["Tree work, safe from the first cut.", "safe", "Free estimate. We look before we cut."] },
+  garage: { _: ["Garage doors that open every time.", "every", "A clear price before we start."] },
+  painting: { _: ["Painting with clean, sharp lines.", "sharp", "Free estimate and color help."] },
+  concrete: { _: ["Concrete poured flat, finished smooth.", "smooth", "Free estimate for your slab."] },
+  pest: { _: ["Pests out, and kept out.", "kept", "A clear plan and price first."] },
+  junk: { _: ["Junk gone, the space back.", "gone", "A price before we load the truck."] },
+  cleaning: { _: ["A clean home, without lifting a finger.", "clean", "A clear price for your home."] },
+  towing: { _: ["Towing and roadside help when you need it.", "need", "Call for a price before we hook up."] },
+  remodeling: { _: ["Kitchens and baths, remodeled with care.", "care", "Free estimate and a plan on paper."] },
+  restoration: { _: ["Water, fire and mold damage, put back right.", "back", "We come out and tell you the plan."] },
+  builder: { _: ["Custom homes, planned with you.", "with", "Free first meeting and a plan on paper."] },
+  framing: { _: ["Framing that is straight, square and ready.", "square", "Free estimate from your plans."] },
   roofing: {
     _: ["A new roof, start to finish.", "new", "Free roof check. A written price before any work."],
     shingle: ["Shingle roofs that last through the storms.", "last", "Free estimate. Most roofs take a day or two."],

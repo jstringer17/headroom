@@ -12,6 +12,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { loadPlaywright, launchOpts } from "./qa/lib.mjs";
 import { generateSite } from "./src/generate.js";
 import { CINE_KIT } from "./src/cine-kit.js";
+import { TRADE_ORDER } from "./src/trades.js";
+import { promiseFor } from "./src/promise.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tmp = join(here, "qa", "round2-tmp"); mkdirSync(tmp, { recursive: true });
@@ -20,7 +22,7 @@ const files = (d) => readdirSync(d).flatMap((f) => statSync(join(d, f)).isDirect
 const imgs = (t) => existsSync(join(lib, t)) ? Object.fromEntries(files(join(lib, t)).filter((f) => f.endsWith(".webp")).map((f) => [relative(join(lib, t), f).replace(/\.webp$/, ""), `https://lib.test/${t}/${relative(join(lib, t), f)}`])) : {};
 const LOOKS = ["cinematic", "editorial", "classic"], TRADES = ["roofing", "fencing", "pressure"];
 const CRED = { rating: "4.9", reviews: "127", insured: true, cred: { founded: "2011", googleUrl: "https://g.page/r/x", bbb: { rating: "A+", accredited: true }, license: "ROC 334512", bonded: true, coverage: "$1M", warranty: "10-year workmanship warranty", jobs: "1200", family: true, certs: ["GAF Master Elite"] } };
-const form = (look, trade, extra = {}) => ({ company: "Ridgeline Roofing", trade, city: "Tulsa, OK", phone: "9185550142", look, cinematic: look === "cinematic", year: 2026, ...CRED, cine: { images: imgs(trade) }, ...extra });
+const form = (look, trade, extra = {}) => ({ company: "Ridgeline Roofing and Restoration of Northeastern Oklahoma", trade, city: "Tulsa, OK", phone: "9185550142", look, cinematic: look === "cinematic", year: 2026, ...CRED, cine: { images: imgs(trade) }, ...extra });
 let pass = 0; const bad = [];
 const ok = (c, m) => { if (c) pass++; else bad.push(m); };
 const write = (name, html) => { const f = join(tmp, name); writeFileSync(f, html); return pathToFileURL(f).href; };
@@ -61,6 +63,19 @@ for (const look of LOOKS) for (const trade of ["hvac", "towing", "concrete"]) {
   ok([...h.matchAll(/data-job="([^"]*)"/g)].every((x) => opts.includes(x[1])), `B ${look}/${trade}: Ask about this names a job the form does not list`);
 }
 
+// round 3: every trade opens on a promise (the result), in every look; Cinematic shows it over the FINISHED picture
+for (const look of ["cinematic", "classic"]) for (const trade of TRADE_ORDER) { // Editorial has its own promise lines per trade
+  const h = generateSite({ company: "Plain Co", trade, look, cinematic: look === "cinematic", phone: "9185550142" });
+  const kit = CINE_KIT[trade], vkey = kit && kit.variants ? kit.variants[0].key : undefined;
+  const want = (promiseFor(trade, vkey) || {}).headline;
+  const h1 = ((h.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) || [])[1] || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  ok(want && h1 === want, `R3 ${look}/${trade}: H1 "${h1}" is not the promise "${want}"`);
+  if (look === "cinematic") {
+    const srcs = [...h.matchAll(/<div class="step"[^>]*><div class="frame"><img src="([^"]+)"/g)].map((x) => x[1]);
+    ok(srcs.length >= 2 && srcs[0] === srcs[srcs.length - 1], `R3 cinematic/${trade}: the promise frame does not show the finished picture`);
+  }
+}
+
 // ---- browser
 const pw = loadPlaywright();
 const route = (ctx) => ctx.route("https://lib.test/**", (r) => { const p = join(lib, decodeURIComponent(new URL(r.request().url()).pathname.slice(1))); return existsSync(p) ? r.fulfill({ path: p, contentType: "image/webp" }) : r.fulfill({ status: 404 }); });
@@ -98,7 +113,15 @@ for (const engineName of ["chromium", "webkit"]) {
       const job = await page.evaluate(async () => { const p = [...document.querySelectorAll("#styles [role=tabpanel]")].find((x) => !x.hidden); const a = p.querySelector("[data-job]"); a.click(); await new Promise((r) => setTimeout(r, 900)); const sel = document.querySelector("#ask select"); return [a.getAttribute("data-job"), sel.options[sel.selectedIndex].text]; });
       ok(job[0] === job[1], `B ${tag}: Ask about this picked "${job[1]}" not "${job[0]}"`);
     }
+    if (w < 600 && look === "classic") {
+      // round 3 (QA: 8,300 px of stacked white cards): the Classic phone page stays under a height budget
+      const H = await page.evaluate(() => document.documentElement.scrollHeight);
+      ok(H <= 7400, `R3 ${tag}: Classic phone page is ${H}px tall (budget 7400)`);
+    }
     if (w < 600) {
+      // a long company name ends with an ellipsis in the header, never cut mid-letter
+      const nm = await page.evaluate(() => { const e = document.querySelector(".brand-name, .brand, .ed-logo-t"); if (!e) return "none"; const cs = getComputedStyle(e); return e.scrollWidth <= e.clientWidth + 1 || (cs.textOverflow === "ellipsis" && !/flex|grid/.test(cs.display)) ? "ok" : `${cs.display}/${cs.textOverflow}`; });
+      ok(nm === "ok", `R3 ${tag}: the company name in the header is cut without an ellipsis (${nm})`);
       // proof badges: 4 strongest + "+N more" on phones (impeccable Working Memory Rule); the button reveals every one
       const pb = await page.evaluate(() => { const b = document.querySelector(".pb-more button"); if (!b) { const ul = document.querySelector("#proof ul"); if (!ul) return { before: 0, after: 0, total: 0, btn: false }; const n = [...ul.children].filter((li) => getComputedStyle(li).display !== "none").length; return { before: n, after: n, total: n, btn: false }; } const u = b.closest("ul"); const vis = () => [...u.children].filter((li) => !li.classList.contains("pb-more") && getComputedStyle(li).display !== "none").length; const total = u.children.length - 1, before = vis(); b.click(); return { before, after: vis(), total, btn: !!u.querySelector(".pb-more") }; });
       ok(pb && pb.before <= 4 && pb.after === pb.total && !pb.btn, `C ${tag}: proof badges on phones ${JSON.stringify(pb)}`);

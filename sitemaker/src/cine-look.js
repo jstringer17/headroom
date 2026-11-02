@@ -189,7 +189,8 @@ h1 em,h2 em,.line em,.sec h2 em{color:var(--c-accent-text)${marker ? ";backgroun
 html body :is(.story,.dark-sec,.final,.panel,.est-out,.top) em{color:var(--c-accent-hi);background:none;padding:0}
 .est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
 box-shadow:0 30px 60px -30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
-.big-phone{white-space:normal;overflow-wrap:anywhere;max-width:100%}
+.big-phone{white-space:nowrap;max-width:100%}
+@media (max-width:600px){.big-phone{white-space:normal;overflow-wrap:anywhere}}
 .final .grid>*{min-width:0}
 .est-num{font-family:var(--f-display);font-weight:${grotesk ? "800" : "400"};font-size:clamp(2.6rem,7vw,4.5rem);line-height:1;letter-spacing:-.02em}
 `;

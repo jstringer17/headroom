@@ -99,9 +99,9 @@ q.addEventListener("input",upd);[].forEach.call(document.querySelectorAll("input
 const BA_TAGS = {
   pressure: ["Dirty", "Clean", "Drag to clean"], restoration: ["Damaged", "Restored", "Drag to restore"],
   builder: ["Plan", "Built", "Drag to build"], framing: ["Bare slab", "Framed", "Drag to frame"],
-  hvac: ["Dirty", "Clean", "Drag the line"],
+  hvac: ["Old", "New", "Drag the line"],
 };
-const baTags = (k) => BA_TAGS[k] || ["Before", "After", "Drag the line"];
+export const baTags = (k) => BA_TAGS[k] || ["Before", "After", "Drag the line"];
 
 // Accent the last word of a title like "Grime, then clean."
 function accentLast(text) {
@@ -163,7 +163,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .line .h{display:block;font:500 clamp(46px,12.8vw,104px)/1 var(--serif);letter-spacing:-.02em;max-width:14ch;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
 .story-cta{position:relative;z-index:3;display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:28px max(20px,env(safe-area-inset-left,0px));max-width:var(--max);margin:0 auto}
 .story-sub{flex:1 1 100%;color:rgba(255,255,255,.88);max-width:44ch;font-size:clamp(17px,2vw,20px);line-height:1.5}
-.cine-motion .story{height:calc(var(--n) * 100vh);height:calc(var(--n) * 100svh)}
+.cine-motion .story{height:calc(var(--n) * 80vh + 20vh);height:calc(var(--n) * 80svh + 20svh)}
 .cine-motion .pin{position:sticky;top:var(--hh);height:calc(100vh - var(--hh));height:calc(100svh - var(--hh));overflow:hidden}
 .cine-motion .step{position:absolute;inset:0;min-height:0;display:block}
 .cine-motion .frame img{transform-origin:50% 55%;will-change:transform,opacity}
@@ -564,7 +564,8 @@ export function generateCinematic(form, d, deps) {
   const phoneShow = d.phone ? esc(d.phone.show) : "";
   const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
   const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
-  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svgIcon(CINE_PHONE, 18)}<span>${callText}</span></a>`;
+  const callIco = d.phone ? CINE_PHONE : '<path d="M5 12h14M13 6l6 6-6 6"/>';
+  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svgIcon(callIco, 18)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
   // A slot's picture: the owner's, or labeled placeholder art drawn in code.
@@ -582,17 +583,18 @@ export function generateCinematic(form, d, deps) {
 
   // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
   const heroBox = safeImage(form && form.heroImage);
-  // Round 3 (consultant fix 1): the first frame states the result (promise), the next frames tell the story.
+  // Round 3 (consultant fix 1 + QA): the first frame states the result (promise) over the FINISHED picture; the story
+  // then runs from the before picture to the finished one as before.
   const promise = promiseFor(d.tradeKey, kit && kit.variantKey);
-  const steps = story.map((s0, i) => {
-    const s = i === 0 && promise ? { ...s0, headline: promise.headline, accent: promise.accent } : s0;
+  const frames = promise && story.length ? [{ id: story[story.length - 1].id, headline: promise.headline, accent: promise.accent }, ...story] : story;
+  const steps = frames.map((s, i) => {
     const tag = i === 0 ? "h1" : "p";
-    return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
+    return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : i === frames.length - 1 && promise ? 'loading="lazy"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
   }).join("");
-  const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
+  const storySec = `<section class="story" id="story" style="--n:${frames.length}" aria-label="Intro">
   <div class="pin">${steps}
     <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a><p class="story-where">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
-    <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${story.length}</span>
+    <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${frames.length}</span>
   </div>
 </section>`;
 
@@ -754,7 +756,7 @@ ${PROOF_MORE_CSS}
   <a class="brand" href="#top">${name}</a>
   <nav class="nav" aria-label="Sections">${nav}</nav>
   ${callBtn("btn btn-accent btn-sm")}
-  <a class="top-call" href="${callHref}" aria-label="${callText}">${svgIcon(CINE_PHONE, 22)}</a>
+  <a class="top-call" href="${callHref}" aria-label="${callText}">${svgIcon(callIco, 22)}</a>
 </div></header>
 <main id="top">
 ${storySec}
