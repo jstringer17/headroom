@@ -6,3 +6,11 @@ Problem found 2026-11-02: after the chief started a session on the CEO's Mac, th
 4. One owner per row in TASKS.md; every row has pass/fail done-criteria; nobody reviews their own work (qa-reviewer does).
 5. Sessions: cloud staff (host-core, owner-admin, billing-desk, cine-*) and the Mac session (env agency, bridge). The Mac session reaches the CEO's screen; secrets are typed by the CEO.
 6. Check cadence: get_session on each open row at every CEO message; a row 'working' with no commit for a day gets a ping.
+
+## Models (CEO rule, 2026-11-02): cheapest that can do it, Opus 5.5 when it is hard
+- Haiku (org:runner): lookups, file updates, status checks, small edits.
+- Sonnet (org:researcher, org:analyst, most sessions): routine builds, tests, docs, pictures sorting.
+- Opus 5.5 (org:planner, org:builder, org:qa-reviewer): plans, hard builds, security, money code, payments, final checks. Chief of staff may pick Opus without asking.
+- Never Fable.
+## Talking to the CEO
+5th-grade words. Short. One next step. Do the work, do not hand it back. Test live before reporting.
