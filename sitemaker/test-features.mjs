@@ -283,21 +283,21 @@ for (const trade of ["roofing", "plumbing", "junk"]) for (const look of LOOKS) {
 for (const trade of ["roofing", "fencing", "pressure"]) for (const look of LOOKS) {
   const page = await open(); await setup(page, { trade, look });
   const n = await page.$$eval("#offer-box input", (e) => e.length);
-  const cnt = (h) => look === "cinematic" ? (h.match(/class="all-item"/g) || []).length : look === "editorial" ? (h.match(/data-ed="all-card"/g) || []).length : (h.match(/class="all-thumb"/g) || []).length;
+  const cnt = (h) => look === "cinematic" ? (h.match(/class="pk-panel"/g) || []).length : look === "editorial" ? (h.match(/class="ed-chip"/g) || []).length : (h.match(/class="all-thumb"/g) || []).length;
   rec("Services we offer: a checkbox for every variation, all ticked", look, trade, n >= 5 && (await page.$$eval("#offer-box input:checked", (e) => e.length)) === n && await page.isVisible("#offer-wrap"), `${n} boxes`);
   let h = await page.html();
-  rec("Everything we do lists every variation", look, trade, h.includes('id="all"') && cnt(h) === n, `${cnt(h)} of ${n}`);
+  rec("Pick your style lists every variation", look, trade, cnt(h) === n, `${cnt(h)} of ${n}`);
   await page.uncheck("#offer-box input >> nth=1"); await page.settle(); h = await page.html();
-  rec("Unticking a service removes it from Everything we do", look, trade, cnt(h) === n - 1, `${cnt(h)} left of ${n}`);
+  rec("Unticking a service removes it from the style picker", look, trade, cnt(h) === n - 1, `${cnt(h)} left of ${n}`);
   for (let i = 2; i < n; i++) await page.uncheck(`#offer-box input >> nth=${i}`);
   await page.settle(); h = await page.html();
-  rec("With fewer than two services ticked the section is hidden", look, trade, !h.includes('id="all"'), "section still shown");
+  rec("With fewer than two services ticked the section is hidden", look, trade, cnt(h) === 0, "section still shown");
   await page.ctx.close();
 }
 for (const look of LOOKS) { // trades without variations have no group and no section
   const page = await open(); await setup(page, { trade: "hvac", look });
   const h = await page.html();
-  rec("Trade without variations: no Services we offer group and no Everything we do", look, "hvac", !(await page.isVisible("#offer-wrap")) && !h.includes('id="all"'), "shown for hvac");
+  rec("Trade without variations: no Services we offer group and no all-variations picker", look, "hvac", !(await page.isVisible("#offer-wrap")) && !/class="pk-panel"|class="ed-chip"|class="all-thumb"/.test(h), "shown for hvac");
   await page.ctx.close();
 }
 

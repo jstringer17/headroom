@@ -16,9 +16,10 @@
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
 import { rvwList } from "./reviews.js";
+import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
-import { kitVariant, variantCards } from "./variants.js";
+import { kitVariant, variantCards, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 
 // The picture slots a trade's kit asks for, in the order the form lists them.
 export function cineSlots(kit) {
@@ -178,6 +179,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .facts ul{list-style:none;margin:0;padding:18px 0;display:flex;flex-wrap:wrap;gap:10px 28px}
 .facts li{display:flex;align-items:center;gap:10px;font:600 15px/1.3 var(--sans)}
 .facts svg{flex:none;color:var(--accent)}
+.facts li b{font-weight:700}.facts li span{font-weight:500;color:var(--muted)}
+.facts a{display:flex;align-items:center;gap:10px;color:inherit;text-underline-offset:3px;min-height:44px}
+.story-trust{flex:1 1 100%;margin:0;font:600 14px/1.4 var(--sans);color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
+.plat-list{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.plat-list li{border:1.5px solid rgba(255,255,255,.35);border-radius:999px;padding:0 14px;min-height:40px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
+.plat-list a{color:inherit;display:flex;gap:6px;align-items:center;min-height:44px;text-decoration:none}
+.plat-list span{font-weight:500;opacity:.8}
+.cred-line{margin-top:14px;color:rgba(255,255,255,.78);font-size:15px;max-width:44ch}
 /* sections on cream */
 .sec{padding-block:72px}
 .sec h2{font-size:clamp(38px,7vw,72px)}
@@ -212,26 +221,20 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .ba-handle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
 .ba-knob{position:relative;scale:1;transition:scale .18s var(--ease-out);transform:translateX(var(--kx,0px));width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .ba-knob svg{width:22px;height:22px}
-/* everything we do: a list of cards; the pinned crossfade only when .all-motion is set */
-.all-grid{display:grid;gap:28px}
-.all-item{display:grid;gap:14px;align-content:start}
-.all .ba{aspect-ratio:4/3;height:auto}
-.all-cap{display:grid;gap:12px;justify-items:start}
-.all-name{font:500 clamp(26px,5vw,40px)/1.1 var(--serif)}
-.all-btns{display:flex;flex-wrap:wrap;gap:10px}
-.all-count,.all-dots{display:none}
-@media (min-width:760px){.all-grid{grid-template-columns:1fr 1fr;gap:40px 28px}}
-.all-motion .all-stage{height:calc(var(--n) * 85vh);height:calc(var(--n) * 85svh)}
-.all-motion .all-pin{position:sticky;top:var(--hh);height:calc(100vh - var(--hh));height:calc(100svh - var(--hh));overflow:hidden}
-.all-motion .all-grid{display:block;position:relative;height:100%}
-.all-motion .all-item{position:absolute;top:8px;bottom:18px;left:20px;right:20px;display:flex;flex-direction:column;gap:14px;will-change:opacity,transform}
-.all-motion .all .ba,.all-motion .all-item .ba{flex:1 1 0;min-height:0;aspect-ratio:auto;height:auto}
-.all-motion .all-dots{display:flex;position:absolute;left:max(24px,env(safe-area-inset-left,0px));top:14px;z-index:4;gap:0;background:rgba(0,0,0,.5);border-radius:999px;padding:2px 4px}
-.all-dot{position:relative;width:30px;height:30px;border:0;background:none;padding:0;cursor:pointer}
-.all-dot::before{content:"";position:absolute;left:50%;top:50%;width:20px;height:8px;margin:-4px 0 0 -10px;border-radius:99px;background:rgba(255,255,255,.55);transform:scaleX(.4);transition:transform .22s var(--ease-out),background-color .2s var(--ease-out)}
-.all-dot[aria-current=true]::before{transform:none;background:#fff}
-.all-dot:focus-visible{outline:3px solid var(--hi);outline-offset:0;border-radius:99px}
-.all-motion .all-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:18px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
+/* pick your roof / fence / wash: chips for every variation, one big picture with its own before / after */
+.pk .tabs{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;margin-inline:-20px;padding:2px 20px 12px;scrollbar-width:thin}
+.pk .tab{flex:none;scroll-snap-align:start;white-space:nowrap;min-height:48px;background:rgba(255,255,255,.14);color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
+.pk .tab[aria-selected=true]{background:#fff;color:var(--dark);box-shadow:none}
+.pk-panel{display:grid;gap:18px;align-content:start}
+.pk-panel[hidden]{display:none}
+.cine-no-js .pk-panel[hidden]{display:block;margin-bottom:28px}
+.pk .ba{aspect-ratio:4/3}
+.pk-cap{display:grid;gap:12px;justify-items:start;align-content:start}
+.pk-name{font:500 clamp(26px,5vw,40px)/1.1 var(--serif)}
+.pk-note{color:rgba(255,255,255,.86);max-width:46ch}
+.pk-price{font:600 16px/1.3 var(--sans);color:var(--hi)}
+.pk-btns{display:flex;flex-wrap:wrap;gap:10px}
+@media (min-width:900px){.pk-panel{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:40px;align-items:center}}
 /* hvac tools */
 .tools{display:grid;gap:28px}
 .dial-card{display:grid;gap:12px;justify-items:center}
@@ -358,7 +361,7 @@ document.getElementById("ask").addEventListener("submit",function(e){e.preventDe
 /* the bottom call bar shows once the story is behind you */
 function past(){var s=document.getElementById("story");root.classList.toggle("past",s.getBoundingClientRect().bottom<innerHeight*0.5)}
 addEventListener("scroll",past,{passive:true});past();
-if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["styles","before-after","all","price","comfort","contact"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
+if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["styles","before-after","price","comfort","contact"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 
 /* 1. scroll story: only opacity and transform change; the page scrolls normally */
 var story=document.getElementById("story");
@@ -407,6 +410,8 @@ var tabs=[].slice.call(document.querySelectorAll("#styles [role=tab]"));
 var panels=tabs.map(function(t){return document.getElementById(t.getAttribute("aria-controls"))});
 function pick(i,focus){
   tabs.forEach(function(t,j){var on=j===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;panels[j].hidden=!on});
+  var sl=panels[i].querySelector(".ba");if(sl&&sl.__set)sl.__set(+sl.querySelector("[role=slider]").getAttribute("aria-valuenow"));
+  if(tabs[i].scrollIntoView&&!reduce)tabs[i].scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
   if(focus)tabs[i].focus();
 }
 if(tabs.length){
@@ -450,44 +455,9 @@ function slideTo(ba,to){
   if(reduce||!window.requestAnimationFrame){ba.__set(to);return}
   var t0=null;(function f(ts){if(t0===null)t0=ts;var u=clamp((ts-t0)/240,0,1);u=1-Math.pow(1-u,3);ba.__set(from+(to-from)*u);if(u<1)requestAnimationFrame(f)})(performance.now());
 }
-[].slice.call(document.querySelectorAll(".all-cmp")).forEach(function(b){
-  b.addEventListener("click",function(){var on=b.getAttribute("aria-pressed")==="true",ba=b.closest(".all-item").querySelector(".ba");b.setAttribute("aria-pressed",on?"false":"true");b.textContent=on?"Compare before and after":"Hide comparison";slideTo(ba,on?0:50)});
+[].slice.call(document.querySelectorAll(".pk-cmp")).forEach(function(b){
+  b.addEventListener("click",function(){var on=b.getAttribute("aria-pressed")==="true",ba=b.closest(".pk-panel").querySelector(".ba");b.setAttribute("aria-pressed",on?"false":"true");b.textContent=on?"Compare before and after":"Hide comparison";slideTo(ba,on?0:50)});
 });
-var all=document.getElementById("all");
-if(all&&!reduce){
-  var aItems=[].slice.call(all.querySelectorAll(".all-item")),am=aItems.length,aStage=all.querySelector(".all-stage"),aPin=all.querySelector(".all-pin"),aCount=all.querySelector(".all-count"),aDots=[].slice.call(all.querySelectorAll(".all-dot")),aShown=0,aQ=false,aLive=false,aTimer=0;
-  var aPaint=function(){
-    aQ=false;
-    var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight,p=total>0?clamp(-r.top/total,0,1):0,pos=p*(am-1);
-    for(var i=0;i<am;i++){
-      var d=Math.abs(pos-i),o=clamp((0.66-d)/0.32,0,1);o=o*o*(3-2*o);
-      var it=aItems[i];
-      it.style.opacity=o;
-      it.style.transform="translateY("+((i-pos)*18).toFixed(1)+"px) scale("+(1-0.03*(1-o)).toFixed(4)+")";
-      it.style.visibility=o<0.02?"hidden":"visible";
-      it.style.pointerEvents=o>0.6?"auto":"none";
-      it.inert=o<0.5;
-    }
-    var cur=Math.round(pos)+1;if(cur!==aShown){aShown=cur;aCount.textContent=cur+" / "+am;aDots.forEach(function(b,k){b.setAttribute("aria-current",k===cur-1?"true":"false")})}
-  };
-  var aGo=function(i){var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight;scrollTo({top:r.top+scrollY+total*i/(am-1),behavior:"smooth"})};
-  /* when the scroll stops between two cards, settle on the nearer one */
-  var aSnap=function(){clearTimeout(aTimer);aTimer=setTimeout(function(){var r=aStage.getBoundingClientRect(),total=r.height-aPin.offsetHeight,p=total>0?-r.top/total:0;if(p<=0||p>=1)return;var pos=p*(am-1),t=Math.round(pos);if(Math.abs(pos-t)>0.02)aGo(t)},160)};
-  aDots.forEach(function(b,i){
-    b.addEventListener("click",function(){aGo(i)});
-    b.addEventListener("keydown",function(e){var k=e.key,to=-1;if(k==="ArrowRight"||k==="ArrowDown")to=Math.min(i+1,am-1);else if(k==="ArrowLeft"||k==="ArrowUp")to=Math.max(i-1,0);else if(k==="Home")to=0;else if(k==="End")to=am-1;if(to>=0){e.preventDefault();aDots[to].focus();aGo(to)}});
-  });
-  var aAsk=function(){if(!aQ){aQ=true;requestAnimationFrame(aPaint)}aSnap()};
-  all.classList.add("all-motion");
-  aPaint();
-  if("IntersectionObserver" in window){
-    new IntersectionObserver(function(es){
-      var on=es[0].isIntersecting;
-      if(on&&!aLive){addEventListener("scroll",aAsk,{passive:true});addEventListener("resize",aAsk);aLive=true;aAsk()}
-      else if(!on&&aLive){removeEventListener("scroll",aAsk);removeEventListener("resize",aAsk);aLive=false;aAsk()}
-    },{rootMargin:"20% 0px"}).observe(all);
-  }else{addEventListener("scroll",aAsk,{passive:true});addEventListener("resize",aAsk)}
-}
 
 /* 5. hvac dial and repair-or-replace */
 var dial=document.getElementById("dial");
@@ -543,7 +513,7 @@ if(dataEl){
 
 ${EST_TOTAL_JS}
 /* "Ask about this": close any dialog, pick the matching job in the form, then the link scrolls to it */
-document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var dlg=a.closest("dialog");if(dlg&&dlg.open)dlg.close();var sel=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(sel)for(var i=0;i<sel.options.length;i++)if(sel.options[i].text===v){sel.selectedIndex=i;break}});
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var sel=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(sel)for(var i=0;i<sel.options.length;i++)if(sel.options[i].text===v){sel.selectedIndex=i;break}});
 /* the rest fades in on scroll */
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".rv"));
@@ -593,7 +563,7 @@ export function generateCinematic(form, d, deps) {
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}
-    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a></div>
+    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
     <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${story.length}</span>
   </div>
 </section>`;
@@ -603,7 +573,8 @@ export function generateCinematic(form, d, deps) {
   if (d.years) factList.push(`${d.years} year${d.years === 1 ? "" : "s"} in business`);
   if (d.emergency) factList.push("Open 24/7 for emergencies");
   if (d.insured) factList.push("Licensed and insured");
-  const factsSec = factList.length ? `<section class="facts" aria-label="At a glance"><div class="wrap"><ul>${factList.map((f) => `<li class="rv">${svgIcon('<path d="M5 12.5l4.5 4.5L19 7"/>', 18)}<span>${esc(f)}</span></li>`).join("")}</ul></div></section>` : "";
+  const proofBadges = [...(d.emergency ? [{ label: "Open 24/7", sub: "for emergencies" }] : []), ...credBadges(d)];
+  const factsSec = proofBadges.length ? `<section class="facts" aria-label="At a glance"><div class="wrap"><ul>${credProofLis(proofBadges, esc, "", svgIcon('<path d="M5 12.5l4.5 4.5L19 7"/>', 18))}</ul></div></section>` : "";
 
   // 2. Pick your style
   const stylesSec = styles.length ? `<section class="sec" id="styles"><div class="wrap">
@@ -623,16 +594,20 @@ export function generateCinematic(form, d, deps) {
   <p class="ba-cap" aria-hidden="true"><span>${esc(baTags(d.tradeKey)[0])}</span><span>${esc(baTags(d.tradeKey)[1])}</span></p>
 </div></section>` : "";
 
-  // Everything we do: every variation the owner offers, each with its before and after
+  // Trades with variations: ONE section lists every variation the owner offers (chips, big picture, its own before/after).
+  // It replaces the separate style picker and drag-the-line sections, so the page has a single slider.
   const allCards = variantCards(CINE_KIT[d.tradeKey], cine.offer);
-  const allSec = allCards.length >= 2 ? `<section class="sec dark-sec all" id="all" style="--n:${allCards.length}" aria-label="Everything we do">
-  <div class="wrap"><div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Everything we <em>do</em>.</h2><p class="lede">Tap Compare to see each kind of job before and after.</p></div></div>
-  <div class="all-stage"><div class="all-pin"><div class="wrap all-grid">${allCards.map((c, i) => `<article class="all-item" data-i="${i}">
-    <div class="ba all-ba" data-pos="0"><img class="after" src="${esc(slotSrc(c.after, `${c.label}, after`, { labelSide: "right" }))}"${safeImage(images[c.after]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" loading="lazy" decoding="async"><img class="before" src="${esc(slotSrc(c.before, `${c.label}, before`, { labelSide: "left" }))}"${safeImage(images[c.before]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[0]).toLowerCase()}" loading="lazy">
+  const prices0 = offeredPrices(kit, cine.prices);
+  const pickNoun = PICK_NOUN[d.tradeKey];
+  const pickSec = allCards.length >= 2 ? `<section class="sec dark-sec pk" id="styles" aria-label="Pick your ${esc(pickNoun || "style")}"><div class="wrap">
+  <div class="sec-head rv"><span class="kicker">${esc(tradeName)}</span><h2>Pick your <em>${esc(pickNoun || "style")}</em>.</h2></div>
+  <div class="tabs" role="tablist" aria-label="${esc(tradeName)} options">${allCards.map((c, i) => `<button class="tab" role="tab" type="button" id="tab-${i}" aria-controls="panel-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(c.label)}</button>`).join("")}</div>
+  ${allCards.map((c, i) => { const price = variantPrice(prices0, c.label); return `<div class="pk-panel" role="tabpanel" id="panel-${i}" aria-labelledby="tab-${i}"${i ? " hidden" : ""}>
+    <div class="ba" data-pos="0"><img class="after" src="${esc(slotSrc(c.after, `${c.label}, after`, { labelSide: "right" }))}"${safeImage(images[c.after]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[1]).toLowerCase()}"${i ? ' loading="lazy"' : ""} decoding="async"><img class="before" src="${esc(slotSrc(c.before, `${c.label}, before`, { labelSide: "left" }))}"${safeImage(images[c.before]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[0]).toLowerCase()}"${i ? ' loading="lazy"' : ""} decoding="async">
       <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(c.label)}: ${esc(baTags(d.tradeKey)[0]).toLowerCase()} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div></div>
-    <div class="all-cap"><h3 class="all-name">${esc(c.label)}</h3><div class="all-btns"><button type="button" class="btn btn-glass btn-sm all-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent btn-sm" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
-  </article>`).join("")}</div><div class="all-dots" role="group" aria-label="Kinds of work">${allCards.map((c, i) => `<button type="button" class="all-dot" aria-label="${esc(c.label)}" aria-current="${i === 0}"></button>`).join("")}</div><p class="all-count" aria-hidden="true">1 / ${allCards.length}</p></div></div>
-</section>` : "";
+    <div class="pk-cap"><h3 class="pk-name">${esc(c.label)}</h3><p class="pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c))}</p>${price ? `<p class="pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}<div class="pk-btns"><button type="button" class="btn btn-glass pk-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
+  </div>`; }).join("")}
+</div></section>` : "";
 
   // 4. Price estimator: typed ranges only, hidden when there are none
   let priceSec = "";
@@ -689,6 +664,7 @@ export function generateCinematic(form, d, deps) {
   const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec dark-sec rvw-beat" id="reviews"><div class="wrap">
   <div class="sec-head rv"><h2>What customers <em>say</em>.</h2></div>
   ${d.rating ? `<div class="rating rv"><span class="rating-num">${d.rating.toFixed(1)}</span><span><span class="stars" style="width:${5 * 26 + 16}px;height:26px" role="img" aria-label="${d.rating} out of 5 stars"><span class="stars-row off">${starRow("currentColor", 26)}</span><span class="stars-row" style="width:${(Math.max(0, Math.min(1, d.rating / 5)) * (5 * 26 + 16)).toFixed(1)}px">${starRow("currentColor", 26)}</span></span><span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+  ${credPlatformLis(d, esc) ? `<ul class="plat-list rv">${credPlatformLis(d, esc)}</ul>` : ""}
   ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
   ${d.rv.link ? `<p class="rvw-more rv"><a class="btn btn-accent" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
@@ -698,6 +674,7 @@ export function generateCinematic(form, d, deps) {
   <div class="head rv">
     <h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
     <p class="lede">Call now, or send the form and we will call you back.${d.emergency ? " Open 24/7 for emergencies." : ""}</p>
+    ${credLine(d) ? `<p class="cred-line">${esc(credLine(d))}</p>` : ""}
     ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
   </div>
   <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
@@ -744,16 +721,15 @@ ${look && look.css ? look.css : ""}
 <main id="top">
 ${storySec}
 ${factsSec}
-${stylesSec}
+${pickSec || stylesSec}
 ${hvacSec}
-${baSec}
+${pickSec ? "" : baSec}
 ${priceSec}
-${allSec}
 ${services}
 ${reviews}
 ${contact}
 </main>
-<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${factList.length ? `<p>${esc(factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
+<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credLine(d) || factList.length ? `<p>${esc(credLine(d) || factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
 <div class="mobile-call">${callBtn("btn btn-accent")}</div>
 <script>
 ${liveScript(ENGINE_JS, d)}

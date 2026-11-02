@@ -71,3 +71,24 @@ export function variantCards(kit, offer) {
     return { key: v.key, label: v.label || v.key, before: (ba.before && ba.before.id) || `${kv.slotPrefix}before`, after: (ba.after && ba.after.id) || `${kv.slotPrefix}after` };
   });
 }
+
+// What the style picker shows under a variation's name.
+export const PICK_NOUN = { roofing: "roof", fencing: "fence", pressure: "wash" };
+// One line: the trade's own style note when it has one for this variation, else the finished-job headline.
+export function variantNote(kit, c) {
+  const st = ((kit && kit.styles) || []).find((s) => s.id === c.key);
+  if (st && st.note) return st.note;
+  const kv = kitVariant(kit, c.key), last = (kv.story || []).slice(-1)[0];
+  return last ? last.headline : "";
+}
+// The typed price range for a variation: the estimator option whose name shares a word with it ("Standing seam metal").
+export function variantPrice(prices, label) {
+  if (!prices) return "";
+  const words = (x) => String(x).toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 4);
+  const mine = words(label);
+  for (const opt of prices.options) {
+    if (!words(opt).some((w) => mine.includes(w))) continue;
+    for (const size of prices.sizes) if (prices.cells[size] && prices.cells[size][opt]) return prices.cells[size][opt];
+  }
+  return "";
+}

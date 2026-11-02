@@ -15,7 +15,8 @@ import { rvwList } from "./reviews.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS } from "./cinematic.js";
-import { kitVariant, variantCards } from "./variants.js";
+import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
+import { kitVariant, variantCards, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { editorialLook, editorialShape } from "./cine-look.js";
 
 // Simple silhouettes for the hero picture, as CSS polygon() points in percent.
@@ -210,6 +211,16 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-stars-row svg{position:absolute;top:0}
 .ed-stars-row.off{color:var(--ed-line);width:100%}
 .ed-rev b{font:500 clamp(64px,16vw,110px)/.85 var(--ed-serif);font-variant-numeric:tabular-nums}
+.ed-trust3{margin:14px 0 0;font:600 14px/1.4 var(--ed-sans);color:var(--ed-muted)}
+.ed-proof-sec{padding-block:0 8px}
+.ed-proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ed-proof li{border:1.5px solid var(--ed-line);border-radius:999px;background:var(--ed-paper);min-height:44px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans);color:var(--ed-ink)}
+.ed-proof b{font-weight:700}.ed-proof span{font-weight:500;color:var(--ed-muted)}
+.ed-proof a,.ed-plat-list a{display:flex;gap:6px;align-items:center;min-height:44px;color:inherit;text-decoration:none}
+.ed-plat-list{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ed-plat-list li{border:1.5px solid var(--ed-line);border-radius:999px;min-height:44px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans)}
+.ed-plat-list span{font-weight:500;color:var(--ed-muted)}
+.ed-cred-line{margin-top:12px;color:rgba(236,229,220,.78);font-size:15px}
 .ed-rvw-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:16px}
 .ed-rvw{border:1.5px solid var(--ed-line);border-radius:var(--ed-card);padding:24px 26px;background:var(--ed-paper)}
 .ed-rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--ed-accent)}
@@ -218,30 +229,28 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-rvw-by{margin:14px 0 0;font:600 14px/1.3 var(--ed-sans);color:var(--ed-muted);overflow-wrap:anywhere}
 .ed-rvw-more{margin:26px 0 0}
 @media (min-width:900px){.ed-rvw-list{grid-template-columns:repeat(3,1fr);gap:20px}}
-.ed-all{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 14px}
-.ed-all-card{display:grid;gap:10px;width:100%;text-align:left;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;transition:transform .2s var(--ed-ease)}
-.ed-all-card:active{transform:scale(.98)}
-@media (hover:hover){.ed-all-card:hover{transform:translateY(-3px)}}
-.ed-all-pic{position:relative;display:block;aspect-ratio:4/5;border-radius:var(--ed-card);overflow:hidden;background:var(--ed-cream2)}
-.ed-all-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
-.ed-all-name{font:500 clamp(18px,4.2vw,26px)/1.2 var(--ed-serif);overflow-wrap:anywhere}
-.ed-all-hint{font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-accent)}
-.ed-dlg{border:0;padding:0;border-radius:var(--ed-card);width:min(720px,calc(100vw - 24px));max-height:calc(100vh - 24px);background:var(--ed-paper);color:var(--ed-ink)}
-.ed-dlg::backdrop{background:rgba(20,17,15,.62)}
-.ed-dlg-in{display:grid;gap:14px;padding:20px;justify-items:start}
-.ed-dlg-in h3{font:500 clamp(24px,5vw,32px)/1.1 var(--ed-serif);padding-right:52px}
-.ed-dlg-x{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1.5px solid var(--ed-line);background:var(--ed-cream);color:var(--ed-ink);font-size:26px;line-height:1;cursor:pointer;transition:transform .18s var(--ed-ease)}
-.ed-dlg-x:active{transform:scale(.94)}
+.ed-chips{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -20px 18px;padding:2px 20px 12px;scrollbar-width:thin}
+.ed-chip{flex:none;scroll-snap-align:start;white-space:nowrap;min-height:48px;padding:0 20px;border-radius:999px;border:1.5px solid var(--ed-ink);background:transparent;color:var(--ed-ink);font:600 15px/1 var(--ed-sans);cursor:pointer;transition:background-color .2s var(--ed-ease),color .2s var(--ed-ease),transform .18s var(--ed-ease)}
+.ed-chip:active{transform:scale(.97)}
+.ed-chip[aria-selected=true]{background:var(--ed-ink);color:var(--ed-cream)}
+.ed-chip:focus-visible{outline:3px solid var(--ed-accent);outline-offset:2px}
+.ed-pk{display:grid;gap:18px;align-content:start}
+.ed-pk[hidden]{display:none}
+.ed-no-js .ed-pk[hidden]{display:block}
+.ed-pk-pic{display:grid;gap:10px}
+.ed-pk-cap{display:grid;gap:12px;justify-items:start;align-content:start}
+.ed-pk-cap h3{font:500 clamp(26px,5vw,38px)/1.1 var(--ed-serif)}
+.ed-pk-note{color:var(--ed-muted);max-width:46ch}
+.ed-pk-price{font:600 16px/1.3 var(--ed-sans);color:var(--ed-accent)}
+.ed-pk-btns{display:flex;flex-wrap:wrap;gap:10px}
+.ed-btn.ghost{background:transparent;color:var(--ed-ink);box-shadow:inset 0 0 0 1.5px var(--ed-ink)}
+@media (min-width:900px){.ed-pk{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:44px;align-items:center}}
 .ed-cmp{position:relative;justify-self:stretch;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--ed-cream2)}
 .ed-cmp>span{position:absolute;inset:0;display:block}
 .ed-cmp img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
 .ed-cmp-b{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
 .ed-cmp-r{justify-self:stretch;width:100%;min-height:44px;accent-color:var(--ed-accent)}
 .ed-cmp-cap{justify-self:stretch;display:flex;justify-content:space-between;font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-muted)}
-.ed-no-js .ed-dlg{display:block;position:static;margin:12px 0 0;width:auto;border:1px solid var(--ed-line)}
-.ed-no-js .ed-all-card{display:none}
-@media (prefers-reduced-motion:no-preference){.ed-dlg[open]{animation:ed-dlg-in .22s var(--ed-ease)}@keyframes ed-dlg-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}}
-@media (min-width:900px){.ed-all{grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 20px}}
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
@@ -260,7 +269,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-rise .ed-rv{transition:opacity .8s var(--ed-out),transform .8s var(--ed-out);transition-delay:calc(var(--rvi,0) * 70ms)}
   .ed-rise .ed-rv:not(.in){opacity:0;transform:translateY(26px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name,.ed-all-card,.ed-dlg-x{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ed-btn,.ed-pic img,.ed-row-name{transition:none}}
 @media (min-width:760px){
   .ed-meta{grid-template-columns:repeat(var(--n,3),minmax(0,1fr))!important}
   #price{padding-bottom:48px}
@@ -337,16 +346,25 @@ if(rows.length){
     });
   });
 }
-/* everything we do: a tap opens the card's before and after */
-[].slice.call(document.querySelectorAll(".ed-all-card")).forEach(function(b){var dlg=document.getElementById(b.getAttribute("aria-controls"));b.addEventListener("click",function(){if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","")})});
-[].slice.call(document.querySelectorAll(".ed-dlg")).forEach(function(dlg){
-  var cmp=dlg.querySelector(".ed-cmp"),r=dlg.querySelector(".ed-cmp-r"),shut=function(){if(dlg.close)dlg.close();else dlg.removeAttribute("open")};
-  r.addEventListener("input",function(){cmp.style.setProperty("--pos",r.value)});
-  dlg.querySelector(".ed-dlg-x").addEventListener("click",shut);
-  dlg.addEventListener("click",function(e){if(e.target===dlg)shut()});
+/* pick your roof: chips (a tab list) show one variation at a time; Compare moves the slider */
+var pkTabs=[].slice.call(document.querySelectorAll(".ed-chip")),pkPanels=pkTabs.map(function(t){return document.getElementById(t.getAttribute("aria-controls"))});
+function pkPick(i,focus){
+  pkTabs.forEach(function(t,j){var on=j===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;pkPanels[j].hidden=!on});
+  if(focus)pkTabs[i].focus();
+  if(pkTabs[i].scrollIntoView&&!reduce)pkTabs[i].scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
+}
+pkTabs.forEach(function(t,i){
+  t.addEventListener("click",function(){pkPick(i,false)});
+  t.addEventListener("keydown",function(e){var k=e.key,to=-1;if(k==="ArrowRight"||k==="ArrowDown")to=(i+1)%pkTabs.length;else if(k==="ArrowLeft"||k==="ArrowUp")to=(i-1+pkTabs.length)%pkTabs.length;else if(k==="Home")to=0;else if(k==="End")to=pkTabs.length-1;if(to>=0){e.preventDefault();pkPick(to,true)}});
 });
-/* "Ask about this": close any dialog, pick the matching job in the form, then the link scrolls to it */
-document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var dlg=a.closest("dialog");if(dlg&&dlg.open)dlg.close();var sel=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(sel)for(var i=0;i<sel.options.length;i++)if(sel.options[i].text===v){sel.selectedIndex=i;break}});
+[].slice.call(document.querySelectorAll(".ed-pk")).forEach(function(p){
+  var cmp=p.querySelector(".ed-cmp"),r=p.querySelector(".ed-cmp-r"),b=p.querySelector(".ed-pk-cmp");
+  var setv=function(v){r.value=v;cmp.style.setProperty("--pos",v)};
+  r.addEventListener("input",function(){cmp.style.setProperty("--pos",r.value)});
+  b.addEventListener("click",function(){var on=b.getAttribute("aria-pressed")==="true";b.setAttribute("aria-pressed",on?"false":"true");b.textContent=on?"Compare before and after":"Hide comparison";setv(on?0:50)});
+});
+/* "Ask about this": pick the matching job in the form, then the link scrolls to it */
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var sel=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(sel)for(var i=0;i<sel.options.length;i++)if(sel.options[i].text===v){sel.selectedIndex=i;break}});
 /* price estimator: only the ranges the owner typed */
 var dataEl=document.getElementById("est-data");
 if(dataEl){
@@ -368,7 +386,7 @@ ${EST_TOTAL_JS}
 /* the floating call button shows after the hero buttons scroll away */
 var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
-if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","all","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
+if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","styles","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 if(!("IntersectionObserver" in window)||reduce)return;
 var els=[].slice.call(document.querySelectorAll(".ed-rv"));
 var kids=new Map();els.forEach(function(el){var k=(kids.get(el.parentNode)||0);kids.set(el.parentNode,k+1);el.style.setProperty("--rvi",Math.min(k,5))});
@@ -505,7 +523,7 @@ export function generateEditorial(form, d, deps) {
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
   <div><p class="ed-eyebrow">${eyebrow}</p><h1>${kit.slotPrefix && story.length ? edAccent(story[story.length - 1].headline, story[story.length - 1].accent) : e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div></div>
+    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div>${credTop(d).length ? `<p class="ed-trust3">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
   <div class="ed-sil${heroBox || safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${heroBox ? `<img src="${esc(heroBox)}" data-slot="hero-box" data-real="1" alt="" fetchpriority="high">` : pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
 </div></section>`;
 
@@ -525,6 +543,8 @@ export function generateEditorial(form, d, deps) {
   ];
   for (const g of generic) { if (facts.length >= 3) break; if (!facts.some((f) => f[0] === g[0])) facts.push(g); }
   const cells = facts.slice(0, 4);
+  const proofBadges = credBadges(d);
+  const proofBar = proofBadges.length ? `<section class="ed-proof-sec" aria-label="Credentials"><div class="ed-wrap"><ul class="ed-proof" data-ed="proof">${credProofLis(proofBadges, esc, "ed-")}</ul></div></section>` : "";
   const trust = cells.length ? `<section class="ed-trust" id="trust" aria-label="At a glance"><div class="ed-wrap"><ul data-ed="trust" style="--cols:${cells.length}">${cells.map(([k, h, p]) => `<li class="ed-rv">${edIcon(ED_ICONS[k])}<b>${esc(h)}</b><p>${esc(p)}</p></li>`).join("")}</ul></div></section>` : "";
 
   // Second beat
@@ -560,14 +580,18 @@ export function generateEditorial(form, d, deps) {
   <p class="ed-work-note">Sample projects: names and homes are fictional.</p>
 </div></section>`;
 
-  // Everything we do: a card for every variation the owner offers; a tap opens its before and after
-  const allSec = allCards.length >= 2 ? `<section class="ed-sec" id="all" data-ed="all"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">Everything we do</p><h2>Every kind of <em>job</em></h2></div>
-  <ul class="ed-all">${allCards.map((c, i) => `<li class="ed-rv"><button type="button" class="ed-all-card" data-ed="all-card" aria-haspopup="dialog" aria-controls="ed-dlg-${i}"><span class="ed-all-pic">${pic(c.after)}</span><span class="ed-all-name">${esc(c.label)}</span><span class="ed-all-hint">Before and after</span></button>
-  <dialog class="ed-dlg" id="ed-dlg-${i}" aria-label="${esc(c.label)}, before and after"><div class="ed-dlg-in"><button type="button" class="ed-dlg-x" aria-label="Close">&times;</button><h3>${esc(c.label)}</h3>
-    <div class="ed-cmp" style="--pos:50"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
-    <input type="range" class="ed-cmp-r" min="0" max="100" value="50" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p>
-    <a class="ed-btn" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></dialog></li>`).join("")}</ul>
+  // Pick your roof / fence / wash: chips for every variation the owner offers, a big picture, its own before and after.
+  // It is the page's only before/after.
+  const pickNoun = PICK_NOUN[d.tradeKey] || "style";
+  const pickSec = allCards.length >= 2 ? `<section class="ed-sec" id="styles" data-ed="pick"><div class="ed-wrap">
+  <div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2>Pick your <em>${esc(pickNoun)}</em></h2></div>
+  <div class="ed-chips" role="tablist" aria-label="${esc(tradeName)} options">${allCards.map((c, i) => `<button type="button" class="ed-chip" role="tab" id="ed-tab-${i}" aria-controls="ed-panel-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(c.label)}</button>`).join("")}</div>
+  ${allCards.map((c, i) => { const price = variantPrice(offeredPrices(kit, cine.prices), c.label); return `<div class="ed-pk" role="tabpanel" id="ed-panel-${i}" aria-labelledby="ed-tab-${i}"${i ? " hidden" : ""} data-ed="pick-panel">
+    <div class="ed-pk-pic"><div class="ed-cmp" style="--pos:0"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
+    <input type="range" class="ed-cmp-r" min="0" max="100" value="0" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p></div>
+    <div class="ed-pk-cap"><h3>${esc(c.label)}</h3><p class="ed-pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c))}</p>${price ? `<p class="ed-pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}
+      <div class="ed-pk-btns"><button type="button" class="ed-btn ghost ed-pk-cmp" aria-pressed="false">Compare before and after</button><a class="ed-btn" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
+  </div>`; }).join("")}
 </div></section>` : "";
 
   // Services: large numbered rows, the open row swaps the picture
@@ -626,6 +650,7 @@ export function generateEditorial(form, d, deps) {
   const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
+    ${credLine(d) ? `<p class="ed-cred-line">${esc(credLine(d))}</p>` : ""}
     <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will get back to you."}</p>
     ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : ""}</div>
   <form id="ask" class="ed-form ed-rv"${liveFormAttrs(d)} novalidate>
@@ -667,17 +692,18 @@ ${lookExtra.css || ""}
 </div></header>
 <main id="top">
 ${hero}
+${proofBar}
 ${trust}
 ${beat}
 ${work}
-${allSec}
+${pickSec}
 ${svc}
 ${est}
 ${process}
 ${reviews}
 ${contact}
 </main>
-<footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
+<footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credLine(d) ? `<p>${esc(credLine(d))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
 <script>
 ${liveScript(ED_JS, d)}
 </script>

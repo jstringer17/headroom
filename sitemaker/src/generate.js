@@ -16,10 +16,11 @@
 // }
 import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
-import { generateCinematic } from "./cinematic.js";
+import { generateCinematic, offeredPrices } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
-import { variantCards, kitVariant } from "./variants.js";
+import { credOf, credRatings, credBadges, credTop, credLine, credLd, credProofLis, credPlatformLis } from "./credibility.js";
+import { variantCards, kitVariant, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
 import { cineLook, placeholderArt, blueprintArt } from "./cine-look.js";
 
@@ -71,14 +72,15 @@ export function normalize(form) {
     phone: formatPhone(f.phone),
     rating: rating >= 1 && rating <= 5 ? Math.round(rating * 10) / 10 : null,
     reviews: reviews > 0 ? reviews : null,
-    years: years > 0 && years < 200 ? years : null,
+    years: (() => { const c = credOf(f, f.year); const yr = Number(f.year) || new Date().getFullYear(); return c.founded ? yr - c.founded : years > 0 && years < 200 ? years : null; })(),
+    cred: credOf(f, f.year),
     services: trade.services.filter((s) => picked.includes(s[0])),
     emergency: !!f.emergency,
     freeEstimates: f.freeEstimates === undefined ? trade.freeEstimates !== false : !!f.freeEstimates,
     insured: !!f.insured,
     themeKey: THEMES[f.theme] ? f.theme : trade.theme,
     themePicked: !!(THEMES[f.theme] && f.themePicked), // the owner chose a swatch: it overrides the trade's own palette
-    rv: reviewsOf(f), // review cards: typed ones, or three marked samples
+    rv: (() => { const r = reviewsOf(f); if (!r.link) r.link = credOf(f, f.year).googleUrl; return r; })(), // review cards: typed ones, or three marked samples
     year: f.year || new Date().getFullYear(),
   };
 }
@@ -136,7 +138,13 @@ function liveNormalize(d, live) {
 // Everything a look adds to <head> in live mode.
 export function liveHead(d, form, title, description) {
   const L = d.live;
-  if (!L) return "";
+  if (!L) {
+    const extra = credLd(d);
+    if (!Object.keys(extra).length) return "";
+    const tn = d.trade.label.replace(/ \(.*\)$/, "");
+    const json0 = JSON.stringify({ "@context": "https://schema.org", "@type": "HomeAndConstructionBusiness", name: d.company, ...(d.phone && d.phone.tel ? { telephone: d.phone.tel } : {}), ...(d.city ? { address: { "@type": "PostalAddress", addressLocality: d.city } } : {}), knowsAbout: [tn], ...extra }).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
+    return `<script type="application/ld+json">${json0}</script>\n`;
+  }
   const img = liveUrl(form && form.heroImage);
   const tradeName = d.trade.label.replace(/ \(.*\)$/, "");
   const ld = {
@@ -150,6 +158,7 @@ export function liveHead(d, form, title, description) {
     ...(img ? { image: img } : {}),
     knowsAbout: [tradeName, ...d.services.map((s) => s[0])],
     ...(L.google && L.google.count ? { aggregateRating: { "@type": "AggregateRating", ratingValue: L.google.rating, reviewCount: L.google.count, bestRating: 5 } } : {}),
+    ...(() => { const e = credLd(d); delete e.aggregateRating; return e; })(),
   };
   const json = JSON.stringify(ld).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026");
   return [
@@ -237,6 +246,7 @@ export function generateSite(form) {
   const lay = LAYOUTS[t.layout] ? t.layout : "band";
   const cineImgs = (form && form.cine && form.cine.images) || {};
   const allCards = variantCards(CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.offer);
+  const cinePrices = (() => { try { return offeredPrices(CINE.CINE_KIT[d.tradeKey], form.cine.prices); } catch (_) { return null; } })();
   const L = LAYOUTS[lay];
   const tradeName = t.label.replace(/ \(.*\)$/, "");
   // The Classic hero uses the form's hero picture, else the finished-job picture the owner or the library gave this trade.
@@ -248,6 +258,8 @@ export function generateSite(form) {
   const phoneShow = d.phone ? esc(d.phone.show) : "";
   const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
   const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
+  const proofBadges = credBadges(d);
+  const proofBar = proofBadges.length ? `<section class="proof-sec" aria-label="Credentials"><div class="wrap"><ul class="proof">${credProofLis(proofBadges, esc, "")}</ul></div></section>` : "";
   const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svg(ICON_PHONE, 19)}<span>${callText}</span></a>`;
   const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
 
@@ -279,6 +291,7 @@ export function generateSite(form) {
     <h1 style="${h1Sizes(t.headline, hero ? "split" : lay)}">${esc(t.headline)}</h1>
     <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
     <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line" href="#contact">${askLabel}</a></div>
+    ${credTop(d).length ? `<p class="hero-trust">${esc(credTop(d).join(" · "))}</p>` : ""}
   </div>`;
   let heroInner;
   if (hero) {
@@ -334,9 +347,9 @@ export function generateSite(form) {
   <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
   <div class="body">${services}</div>
 </div></section>`,
-    all: (tint) => allCards.length >= 2 ? `<section class="sec${tint}" id="all"><div class="wrap">
-  <h2 class="rv">Everything we do</h2>
-  <ul class="all-list">${allCards.map((c) => `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : phArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><a class="all-ask" href="#contact">Ask about this</a></li>`).join("")}</ul>
+    all: (tint) => allCards.length >= 2 ? `<section class="sec${tint}" id="styles"><div class="wrap">
+  <h2 class="rv">Pick your ${esc(PICK_NOUN[d.tradeKey] || "style")}</h2>
+  <ul class="all-list">${allCards.map((c) => { const price = variantPrice(cinePrices, c.label); return `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : phArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><span class="all-note">${esc(variantNote(CINE && CINE.CINE_KIT[d.tradeKey], c))}${price ? ` <b>${esc(price)}</b>` : ""}</span><a class="all-ask btn-line" href="#contact" data-job="${esc(c.label)}">Ask about this</a></li>`; }).join("")}</ul>
 </div></section>` : "",
     process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
   <h2 class="rv">How it works</h2>
@@ -513,10 +526,20 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .stars-row.off{color:var(--line);width:100%}
 .all-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:0}
 .all-list li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
-.all-thumb{grid-row:1/span 2;width:96px;height:72px;object-fit:cover;border-radius:6px;display:block;background:var(--tint,#eee)}
+.all-note{grid-column:2;color:var(--muted);font-size:16px}
+.all-note b{color:var(--ink)}
+.all-thumb{grid-row:1/span 3;width:96px;height:72px;object-fit:cover;border-radius:6px;display:block;background:var(--tint,#eee)}
 .all-name{font-weight:600;font-size:19px;overflow-wrap:anywhere}
 .all-ask{justify-self:start;font-weight:600;color:var(--ink);text-underline-offset:4px;padding:6px 0}
 @media (min-width:760px){.all-list{grid-template-columns:1fr 1fr;gap:0 40px}.all-list li{grid-template-columns:120px minmax(0,1fr)}.all-thumb{width:120px;height:90px}}
+.hero-trust{margin:16px 0 0;font-size:15px;font-weight:600;opacity:.92}
+.proof-sec{padding-block:20px}
+.proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.proof li,.plat-list li{border:1.5px solid var(--line);border-radius:999px;min-height:44px;display:flex;align-items:center;padding:0 16px;font-size:15px;font-weight:600;background:#fff}
+.proof span,.plat-list span{font-weight:500;color:var(--muted)}
+.proof a,.plat-list a{display:flex;gap:6px;align-items:center;min-height:44px;color:inherit;text-decoration:none}
+.plat-list{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.cred-line{margin-top:12px;color:var(--on-dark-2,rgba(255,255,255,.78));font-size:15px}
 .rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
 .rvw{border-top:1px solid var(--line);padding-top:18px}
 .rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--accent)}
@@ -633,12 +656,14 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 </div></header>
 <main id="top">
 ${heroSec}
+${proofBar}
 ${trust}
 ${body}
 <section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">
     <h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
     <p class="lede">Call now, or send the form and we will call you back.</p>
+    ${credLine(d) ? `<p class="cred-line">${esc(credLine(d))}</p>` : ""}
     ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
     <dl>
       <div><dt>Service area:</dt><dd>${area ? `${area} and nearby towns` : "Your town and nearby towns"}</dd></div>
@@ -660,7 +685,7 @@ ${body}
   <div class="foot-cols">
     <div><h3>Services</h3><ul>${d.services.slice(0, 5).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
     <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
-    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
+    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}${d.cred.license ? `<li>Licensed #${esc(d.cred.license)}</li>` : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
   </div>
   <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
 </div></footer>

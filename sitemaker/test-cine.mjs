@@ -96,9 +96,9 @@ for (const { name, html } of targets) {
       const sl = await page.$(SEL.slider);
       if (sl) {
         await sl.focus(); const a = +(await sl.getAttribute("aria-valuenow"));
-        await page.keyboard.press("ArrowLeft"); const b = +(await sl.getAttribute("aria-valuenow"));
+        await page.keyboard.press(a > 0 ? "ArrowLeft" : "ArrowRight"); const b = +(await sl.getAttribute("aria-valuenow"));
         await page.keyboard.press("End"); const c = +(await sl.getAttribute("aria-valuenow"));
-        check(2, `${sk}${name}: slider moves by keyboard`, b < a && c === 100, `${a},${b},${c}`);
+        check(2, `${sk}${name}: slider moves by keyboard`, b !== a && c === 100, `${a},${b},${c}`);
         const box = await (await sl.evaluateHandle((e) => e.parentElement)).asElement().boundingBox();
         await page.mouse.move(box.x + box.width * 0.2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.up();
         const d = +(await sl.getAttribute("aria-valuenow"));

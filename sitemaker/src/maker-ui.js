@@ -191,6 +191,49 @@
     w.textContent = swapped ? (swapped === 1 ? "One low price is higher than its high price. The site shows them the other way round." : swapped + " low prices are higher than their high prices. The site shows them the other way round.") : "";
   }
 
+  // Credibility group: read, save in this browser, reuse next time.
+  const val = (id) => ($(id) ? $(id).value : "");
+  const tick = (id) => !!($(id) && $(id).checked);
+  function readCred() {
+    return {
+      founded: val("cred-founded"), googleUrl: val("cred-google-url"),
+      bbb: { rating: val("cred-bbb-rating"), accredited: tick("cred-bbb-acc"), url: val("cred-bbb-url") },
+      yelp: { rating: val("cred-yelp-rating"), count: val("cred-yelp-count"), url: val("cred-yelp-url") },
+      angi: { rating: val("cred-angi-rating"), count: val("cred-angi-count"), url: val("cred-angi-url") },
+      facebook: { rating: val("cred-fb-rating"), url: val("cred-fb-url") },
+      other: { name: val("cred-other-name"), rating: val("cred-other-rating"), url: val("cred-other-url") },
+      license: val("cred-license"), bonded: tick("cred-bonded"), coverage: val("cred-coverage"), warranty: val("cred-warranty"),
+      jobs: val("cred-jobs"), family: tick("cred-family"), veteran: tick("cred-veteran"),
+      awards: [1, 2, 3].map((i) => val("cred-award-" + i)), certs: [1, 2, 3].map((i) => val("cred-cert-" + i)),
+    };
+  }
+  const SAVE_KEY = "sitemaker-business-v1";
+  const SAVED_IDS = ["company", "city", "phone", "rating", "reviews", "years", "insured"];
+  const credIds = () => Array.from(document.querySelectorAll("[data-cred]")).map((e) => e.id);
+  function saveBusiness() {
+    try {
+      const o = {};
+      for (const id of [...SAVED_IDS, ...credIds()]) { const e = $(id); if (e) o[id] = e.type === "checkbox" ? e.checked : e.value; }
+      localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+    } catch (_) { /* storage can be blocked: the form still works */ }
+  }
+  function savedBusiness() { try { return JSON.parse(localStorage.getItem(SAVE_KEY) || "null"); } catch (_) { return null; } }
+  function reuseBusiness() {
+    const o = savedBusiness();
+    if (!o) { $("cred-saved").textContent = "Nothing saved in this browser yet."; return; }
+    for (const [id, v] of Object.entries(o)) { const e = $(id); if (!e) continue; if (e.type === "checkbox") e.checked = !!v; else e.value = v; }
+    $("cred-saved").textContent = "Filled in from the last business you typed.";
+    render();
+  }
+  function showSaved() {
+    const o = savedBusiness();
+    $("cred-reuse").hidden = !o || !o.company;
+    $("cred-forget").hidden = !o;
+    $("cred-saved").textContent = o && o.company ? "Saved in this browser: " + o.company : "";
+  }
+  $("cred-reuse").addEventListener("click", reuseBusiness);
+  $("cred-forget").addEventListener("click", () => { try { localStorage.removeItem(SAVE_KEY); } catch (_) {} showSaved(); });
+
   function readForm() {
     const theme = (document.querySelector('input[name="theme"]:checked') || {}).value;
     return {
@@ -201,6 +244,7 @@
       rating: $("rating").value,
       reviews: $("reviews").value,
       years: $("years").value,
+      cred: readCred(),
       reviewList: [1, 2, 3].map((i) => ({ name: $("rvw-name-" + i).value, town: $("rvw-town-" + i).value, text: $("rvw-text-" + i).value, stars: $("rvw-stars-" + i).value })),
       reviewLink: $("rvw-link").value,
       services: Array.from(svcBox.querySelectorAll("input:checked")).map((i) => i.value),
@@ -260,6 +304,7 @@
     }
     if (e.target.classList.contains("slot-url")) onSlotUrl(e.target);
     warns();
+    if (e.target.id && (SAVED_IDS.includes(e.target.id) || e.target.hasAttribute("data-cred"))) { saveBusiness(); }
     if (e.target.id !== "lead-paste" && e.target.id !== "hero-file" && e.target.type !== "file") render();
   });
   $("cine-slots").addEventListener("change", (e) => { if (e.target.type === "file") onSlotFile(e.target); });
@@ -440,6 +485,7 @@
   });
 
   setTrade("roofing");
+  showSaved();
   lastHtml = generateSite(readForm());
   $("frame").srcdoc = lastHtml;
 

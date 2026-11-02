@@ -40,30 +40,28 @@ async function site(html, width = 375, fn) {
 }
 const pick = async (page, trade, look) => { await page.fill("#company", "Ridge Roofing and Restoration"); await page.selectOption("#trade", trade); await page.selectOption("#look", look); await page.waitForTimeout(500); };
 
-// ---- 1. Everything we do (Cinematic): one card at rest, keyboard reaches all
-for (const trade of ["roofing", "pressure"]) {
-  const html = await maker(375, async (p) => { await pick(p, trade, "cinematic"); return srcdoc(p); });
+// ---- 1. One style picker with every variation and the page's only before/after
+for (const look of ["cinematic", "editorial", "classic"]) for (const trade of ["roofing", "fencing", "pressure"]) {
+  const html = await maker(375, async (p) => { await pick(p, trade, look); return srcdoc(p); });
+  const n = CINE_KIT[trade].variants.length;
   await site(html, 375, async (page, errs) => {
-    const m = await page.$$eval("#all .all-item", (e) => e.length);
-    const geo = await page.evaluate(() => { const st = document.querySelector("#all .all-stage"), pin = document.querySelector("#all .all-pin"); return { top: st.getBoundingClientRect().top + scrollY, total: st.offsetHeight - pin.offsetHeight }; });
-    for (const f of [0.5, 1.5, 2.6, 4.45]) {
-      await page.evaluate((y) => scrollTo(0, y), geo.top + geo.total * f / (m - 1));
-      await page.waitForTimeout(1300); // scroll stops: the story settles by itself
-      const ops = await page.$$eval("#all .all-item", (e) => e.map((x) => +(+x.style.opacity).toFixed(2)));
-      const strong = ops.filter((o) => o > 0.5).length, faint = ops.filter((o) => o > 0.03 && o < 0.97).length;
-      ok(strong === 1 && faint === 0, `${trade}: stopping at step ${f} leaves ${strong} cards showing and ${faint} half-faded (${ops.join(",")})`);
-    }
-    ok((await page.$$eval("#all .all-dots button", (e) => e.length)) === m, `${trade}: Everything we do has no one-button-per-card control (${m} cards)`);
-    // every card is reachable with the keyboard: dots, then arrows move to the next card
-    await page.focus("#all .all-dots button >> nth=0", { timeout: 1500 }).catch(() => {});
-    for (let i = 1; i < m; i++) await page.keyboard.press("ArrowRight");
-    await page.waitForTimeout(1500);
-    ok((await page.evaluate(() => document.activeElement && document.activeElement.closest(".all-dots") ? document.activeElement.textContent.length >= 0 : false)), `${trade}: focus left the card buttons on ArrowRight`);
-    const act = await page.$$eval("#all .all-item", (e) => e.map((x) => +x.style.opacity > 0.5));
-    ok(act[m - 1] && act.filter(Boolean).length === 1, `${trade}: arrow keys did not step to card ${m}: ${act}`);
-    const focusable = await page.$$eval("#all .all-item", (e) => e.map((x) => x.inert || getComputedStyle(x).visibility === "hidden" ? 0 : x.querySelectorAll("button,a,[tabindex='0']").length));
-    ok(focusable[m - 1] >= 3 && focusable.filter((n) => n > 0).length === 1, `${trade}: only the active card should be focusable, got ${focusable}`);
-    ok(errs.length === 0, `${trade}: page errors ${errs.join("; ")}`);
+    const chips = look === "cinematic" ? "#styles [role=tab]" : look === "editorial" ? "#styles [role=tab]" : "#styles .all-list li";
+    ok((await page.$$eval(chips, (e) => e.length)) === n, `${trade}/${look}: the style picker should list all ${n} variations`);
+    ok(!(await page.$("#before-after")) && !(await page.$("#all")), `${trade}/${look}: the old separate before/after or Everything we do section is still there`);
+    if (look === "classic") return;
+    const sliders = await page.$$eval("[role=slider],input[type=range]", (e) => e.filter((x) => { const r = x.getBoundingClientRect(); return r.width > 0 && getComputedStyle(x).visibility !== "hidden" && !x.closest("[hidden]"); }).length);
+    ok(sliders === 1, `${trade}/${look}: ${sliders} before/after sliders are showing, there must be exactly one`);
+    // phone: the chips scroll sideways and every one is reachable by keyboard
+    const sc = await page.$eval(look === "cinematic" ? "#styles .tabs" : "#styles .ed-chips", (e) => ({ sw: e.scrollWidth, cw: e.clientWidth, ox: getComputedStyle(e).overflowX }));
+    ok(sc.ox === "auto" && sc.sw >= sc.cw, `${trade}/${look}: the chips are not a sideways-scrolling row (${JSON.stringify(sc)})`);
+    await page.focus(look === "cinematic" ? "#styles [role=tab] >> nth=0" : "#styles .ed-chip >> nth=0");
+    for (let i = 1; i < n; i++) await page.keyboard.press("ArrowRight");
+    await page.waitForTimeout(400);
+    const act = await page.$$eval("#styles [role=tab]", (e) => e.map((x) => x.getAttribute("aria-selected")));
+    ok(act[n - 1] === "true" && act.filter((x) => x === "true").length === 1, `${trade}/${look}: arrow keys did not reach the last variation (${act})`);
+    const vis = await page.$$eval("#styles [role=tabpanel]", (e) => e.map((x) => !x.hidden));
+    ok(vis[n - 1] && vis.filter(Boolean).length === 1, `${trade}/${look}: only the picked variation's panel should show (${vis})`);
+    ok(errs.length === 0, `${trade}/${look}: page errors ${errs.join("; ")}`);
   });
 }
 
@@ -74,7 +72,7 @@ for (const trade of ["pressure", "roofing", "fencing"]) {
     const c = await page.evaluate(() => {
       const bgOf = (el) => { for (; el; el = el.parentElement) { const b = getComputedStyle(el).backgroundColor; if (b && b !== "rgba(0, 0, 0, 0)") return b; } return "rgb(255,255,255)"; };
       const out = {};
-      for (const [k, sel] of [["em", "#reviews h2 em"], ["tag", "#reviews .rvw-tag"], ["by", "#reviews .rvw-by"], ["kicker", "#all .kicker"]]) { const e = document.querySelector(sel); out[k] = e ? [getComputedStyle(e).color, bgOf(e)] : null; }
+      for (const [k, sel] of [["em", "#reviews h2 em"], ["tag", "#reviews .rvw-tag"], ["by", "#reviews .rvw-by"], ["kicker", "#styles .kicker"]]) { const e = document.querySelector(sel); out[k] = e ? [getComputedStyle(e).color, bgOf(e)] : null; }
       return out;
     });
     if (c.em) ok(contrast(rgb(c.em[0]), rgb(c.em[1])) >= 4.5, `${trade}: reviews heading accent ${c.em[0]} on ${c.em[1]} is ${contrast(rgb(c.em[0]), rgb(c.em[1])).toFixed(1)}:1 (needs 4.5)`);
@@ -100,18 +98,12 @@ for (const trade of ["roofing", "fencing", "pressure"]) {
   ok(new Set([...html.matchAll(/<dt>Type<\/dt><dd>([^<]*)/g)].map((m) => m[1])).size >= 2, `${trade}: every work card has the same Type`);
 }
 
-// ---- 4. "Ask about this": closes the dialog, goes to the form, picks the job
+// ---- 4. "Ask about this": goes to the form and picks the job
 for (const look of ["editorial", "cinematic"]) {
   const html = await maker(1280, async (p) => { await pick(p, "roofing", look); return srcdoc(p); });
   await site(html, 375, async (page) => {
-    if (look === "editorial") {
-      await page.click('[data-ed="all-card"] >> nth=1'); await page.waitForTimeout(300);
-      ok(await page.$eval("#ed-dlg-1", (d) => d.open), "editorial: the card did not open its dialog");
-      await page.click("#ed-dlg-1 a.ed-btn"); await page.waitForTimeout(900);
-      ok(!(await page.$eval("#ed-dlg-1", (d) => d.open)), "editorial: Ask about this left the dialog open");
-    } else {
-      await page.evaluate(() => document.querySelector("#all .all-item:nth-child(2) a.btn-accent").click()); await page.waitForTimeout(900);
-    }
+    await page.click("#styles [role=tab] >> nth=1"); await page.waitForTimeout(300);
+    await page.evaluate(() => document.querySelector("#styles [role=tabpanel]:not([hidden]) a[data-job]").click()); await page.waitForTimeout(900);
     const r = await page.evaluate(() => { const c = document.getElementById("contact").getBoundingClientRect(); return { inView: c.top < innerHeight * 0.8 && c.bottom > 0, job: (document.querySelector("#ask select") || {}).value }; });
     ok(r.inView, `${look}: Ask about this did not scroll to the contact form`);
     ok(/metal/i.test(r.job || ""), `${look}: Ask about this did not preselect the job (got "${r.job}")`);
@@ -200,12 +192,56 @@ for (const [name, html] of [["maker.html", (await import("node:fs")).readFileSyn
       ok(!/Thanks/i.test(note) && /name|phone/i.test(note), `${look}: the sample form says "${note}" when it is empty`);
     });
   }
-  const sticky = generateSite({ company: "Ridge Co", trade: "roofing", cinematic: true, look: "cinematic", cine: { look: "cinematic" } });
-  await site(sticky, 375, async (page) => {
-    await page.evaluate(() => document.getElementById("all").scrollIntoView()); await page.waitForTimeout(700);
-    const hidden = await page.evaluate(() => { const m = document.querySelector(".mobile-call"); const r = m.getBoundingClientRect(); return getComputedStyle(m).visibility === "hidden" || r.top >= innerHeight; });
-    ok(hidden, "cinematic: the Call pill stays over Everything we do (it covers Ask about this)");
+}
+
+
+// ---- C. Credibility profile: type once, plugged in everywhere, in every look
+const CRED = { "#cred-founded": "2008", "#cred-google-url": "https://g.page/ridge", "#cred-bbb-rating": "A+", "#cred-bbb-url": "https://bbb.org/ridge", "#cred-yelp-rating": "4.5", "#cred-yelp-count": "38", "#cred-yelp-url": "https://yelp.com/biz/ridge", "#cred-angi-rating": "4.9", "#cred-angi-count": "22", "#cred-fb-rating": "4.7", "#cred-other-name": "Nextdoor", "#cred-other-rating": "4.6", "#cred-license": "R-12345", "#cred-coverage": "$2M", "#cred-warranty": "10 year", "#cred-jobs": "1200", "#cred-award-1": "Best of Tulsa 2024", "#cred-cert-1": "GAF Master Elite" };
+for (const look of ["cinematic", "editorial", "classic"]) {
+  const doc = await maker(1280, async (p) => {
+    await pick(p, "roofing", look);
+    await p.fill("#phone", "9185550142"); await p.fill("#rating", "4.8"); await p.fill("#reviews", "112"); await p.check("#insured");
+    for (const [sel, v] of Object.entries(CRED)) { if (sel === "#cred-bbb-rating") await p.selectOption(sel, v); else await p.fill(sel, v); }
+    for (const sel of ["#cred-bbb-acc", "#cred-bonded", "#cred-family", "#cred-veteran"]) await p.check(sel);
+    await p.waitForTimeout(500);
+    return srcdoc(p);
   });
+  const text = doc.replace(/<script[\s\S]*?<\/script>/g, "").replace(/<style[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  for (const need of ["BBB A+", "Accredited", "Yelp 4.5", "Angi 4.9", "Facebook 4.7", "Nextdoor 4.6", "Licensed", "R-12345", "Bonded", "10 year", "1,200+ jobs", "Family owned", "Veteran owned", "Best of Tulsa 2024", "GAF Master Elite", "Since 2008"]) ok(text.includes(need), `${look}: "${need}" is not on the site`);
+  ok(/href="https:\/\/yelp\.com\/biz\/ridge"/.test(doc) && /href="https:\/\/bbb\.org\/ridge"/.test(doc), `${look}: the typed profile links are not on the site`);
+  const years = new Date().getFullYear() - 2008;
+  ok(text.includes(`${years} years`), `${look}: years in business is not worked out from the founded year (${years})`);
+  const top = (doc.match(/class="(?:story-trust|ed-trust3|hero-trust)">([^<]*)</) || [])[1] || "";
+  ok(top && top.split(" · ").length === 3 && /Google/.test(top) && /Licensed/.test(top), `${look}: the hero line is not the three strongest facts ("${top}")`);
+  const ld = (doc.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/) || [])[1];
+  let j = null; try { j = JSON.parse(ld.replace(/\\u003c/g, "<")); } catch (_) { /* below */ }
+  ok(j && j.aggregateRating && j.aggregateRating.ratingValue === 4.8 && j.aggregateRating.reviewCount === 112 && j.sameAs.length >= 3 && j.foundingDate === "2008", `${look}: schema.org data is missing or wrong`);
+  ok(new RegExp("Licensed #R-12345").test(text) && text.includes("Insured $2M") , `${look}: the contact or footer line is missing the license and insurance`);
+}
+{ // nothing typed: nothing shown, no schema, no invented numbers
+  for (const look of ["cinematic", "editorial", "classic"]) {
+    const h = generateSite({ company: "Ridge Co", trade: "roofing", ...(look === "classic" ? {} : { cinematic: true, look, cine: { look } }) });
+    ok(!/class="[^"]*\b(?:ed-)?proof\b|story-trust"|ed-trust3"|hero-trust"|ld\+json|cred-line"/.test(h.replace(/<style[\s\S]*?<\/style>/g, "")), `${look}: an empty profile still shows credibility pieces`);
+  }
+  const bad = generateSite({ company: "T", trade: "roofing", cred: { bbb: { rating: "Z" }, yelp: { rating: "9" }, googleUrl: "javascript:alert(1)", jobs: "-3", founded: "1500" } });
+  ok(!/BBB|Yelp|javascript:|\+ jobs|Since 1500/.test(bad.replace(/<style[\s\S]*?<\/style>/g, "")), "profile: invalid values must be ignored");
+  const noCount = generateSite({ company: "T", trade: "roofing", rating: "4.8", cred: { googleUrl: "https://g.page/x" } });
+  ok(!/aggregateRating/.test(noCount), "schema: a rating without a review count must not become aggregateRating");
+}
+{ // saved in this browser, reused next time
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const a = await ctx.newPage(); await a.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await a.goto(MAKER, { waitUntil: "load" });
+  await a.fill("#company", "Ridge Roofing"); await a.fill("#city", "Tulsa, OK"); await a.fill("#cred-license", "R-12345"); await a.fill("#cred-yelp-rating", "4.5"); await a.waitForTimeout(300);
+  const b = await ctx.newPage(); await b.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
+  await b.goto(MAKER, { waitUntil: "load" });
+  ok(await b.locator("#cred-reuse").isVisible(), "profile: no 'Reuse last business' button on the next visit");
+  await b.click("#cred-reuse"); await b.waitForTimeout(400);
+  ok((await b.inputValue("#company")) === "Ridge Roofing" && (await b.inputValue("#cred-license")) === "R-12345" && (await b.inputValue("#cred-yelp-rating")) === "4.5", "profile: Reuse last business did not fill the fields");
+  await b.click("#cred-forget"); await b.waitForTimeout(200);
+  const c = await ctx.newPage(); await c.goto(MAKER, { waitUntil: "load" });
+  ok(!(await c.locator("#cred-reuse").isVisible()), "profile: Forget saved business did not forget");
+  await ctx.close();
 }
 
 await browser.close();
