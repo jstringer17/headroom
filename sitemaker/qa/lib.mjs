@@ -38,8 +38,8 @@ export const ED = {
   work: '[data-ed="work"] [data-ed="card"], .ed-work .ed-card',
   rows: '[data-ed="row"], .ed-row',
   rowImg: '[data-ed="row-img"], .ed-row-img img, .ed-service-img img',
-  trust: '[data-ed="trust"], .ed-trust',
-  trustCell: '[data-ed="trust"] > *',
+  trust: '#included', // round 4: What's included replaced the trust strip
+  trustCell: '#included .lt-inc > li',
   nav: "nav, header",
 };
 export const NEW_TRADES = ["restoration", "homebuilder", "framing"];

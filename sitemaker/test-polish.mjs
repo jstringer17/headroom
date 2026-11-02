@@ -181,7 +181,7 @@ for (const [name, html] of [["maker.html", (await import("node:fs")).readFileSyn
   await site(ch, 375, async (page) => {
     const m = await page.evaluate(() => { const b = document.querySelector(".top .brand"), h = document.querySelector(".top").getBoundingClientRect(), r = b.getBoundingClientRect(); const lh = parseFloat(getComputedStyle(b).lineHeight) || 20; return { lines: Math.round(r.height / lh), inside: r.top >= h.top - 1 && r.bottom <= h.bottom + 1, ellipsis: getComputedStyle(b).textOverflow, h1: parseFloat(getComputedStyle(document.querySelector(".story h1")).fontSize) }; });
     ok(m.lines <= 1 && m.inside && m.ellipsis === "ellipsis", `cinematic: a long company name is not shortened in the header (${JSON.stringify(m)})`);
-    ok(m.h1 >= 46, `cinematic: phone hero text is ${m.h1}px, should be 46px or more`);
+    ok(m.h1 >= 38 && m.h1 <= 40, `cinematic: phone hero text is ${m.h1}px, should be 38-40px (round 4: Lifetime spec max 40)`);
   });
   const cf = generateSite({ company: "Ridge Co", trade: "roofing", cinematic: true, look: "cinematic", cine: { look: "cinematic" } });
   for (const [look, html] of [["cinematic", cf], ["editorial", generateSite({ company: "Ridge Co", trade: "roofing", cinematic: true, look: "editorial", cine: { look: "editorial" } })], ["classic", generateSite({ company: "Ridge Co", trade: "roofing" })]]) {
@@ -212,7 +212,9 @@ for (const look of ["cinematic", "editorial", "classic"]) {
   const years = new Date().getFullYear() - 2008;
   ok(text.includes(`${years} years`), `${look}: years in business is not worked out from the founded year (${years})`);
   const top = (doc.match(/class="(?:story-trust|ed-trust3|hero-trust)">([^<]*)</) || [])[1] || "";
-  ok(top && top.split(" · ").length === 3 && /Google/.test(top) && /Licensed/.test(top), `${look}: the hero line is not the three strongest facts ("${top}")`);
+  // round 4: the Google rating moved to the star row under the hero button (.lt-rate), the trust line keeps the next two facts
+  const rate = (doc.match(/<p class="lt-rate">([\s\S]*?)<\/p>/) || [])[1] || "";
+  ok(top && top.split(" · ").length === 2 && /Licensed/.test(top) && /Google/.test(rate) && /4\.\d/.test(rate), `${look}: the hero line + star row are not the three strongest facts ("${top}" / ${rate.replace(/<[^>]+>/g, " ").slice(0, 80)})`);
   const ld = (doc.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/) || [])[1];
   let j = null; try { j = JSON.parse(ld.replace(/\\u003c/g, "<")); } catch (_) { /* below */ }
   ok(j && j.aggregateRating && j.aggregateRating.ratingValue === 4.8 && j.aggregateRating.reviewCount === 112 && j.sameAs.length >= 3 && j.foundingDate === "2008", `${look}: schema.org data is missing or wrong`);

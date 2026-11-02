@@ -197,7 +197,7 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
       check("E", `${tag}: hero picture is cut to a silhouette (clip-path/mask)`, r.hero && r.clip, "no clip-path or mask in hero");
       check("E", `${tag}: work cards are rounded (>=16px) and labeled as sample`, r.cards > 0 && r.minRadius >= 16 && r.sample, `${r.cards} cards, min radius ${r.minRadius}, sample label ${r.sample}`);
       check("E", `${tag}: numbered service rows (3+)`, r.rows >= 3 && r.nums >= 3, `${r.rows} rows, ${r.nums} numbered`);
-      check("E", `${tag}: trust strip has 4 cells when 4+ facts are typed`, r.trust && r.cells === 4, `${r.cells} cells`);
+      check("E", `${tag}: "What's included" has 4+ items when 4+ facts are typed (round 4: replaced the trust strip)`, r.trust && r.cells >= 4, `${r.cells} cells`);
       check("E", `${tag}: sticky nav`, r.nav, "no sticky/fixed nav");
       // service rows: pick the 2nd row (pointer) and a key press; the picture must change
       const rows = await page.$$(ED.rows);

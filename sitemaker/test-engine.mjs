@@ -87,7 +87,7 @@ for (const trade of TRADE_ORDER) {
   ok(!/<script[^>]+src=/i.test(plain), `${trade}: editorial loads an outside script`);
   ok(plain.includes('data-ed="beat"') && plain.includes('data-ed="process"') && (plain.match(/<ol class="ed-steps">[\s\S]*?<\/ol>/)[0].match(/<li /g) || []).length === 4, `${trade}: editorial beat or four-step process missing`);
   const full = generateSite({ ...base, insured: true, emergency: true, years: "9", city: "Tulsa, OK" });
-  ok((full.match(/<li class="ed-rv"><svg/g) || []).length === 4, `${trade}: editorial trust strip should show 4 facts when 4+ are ticked`);
+  ok((full.match(/<ul class="lt-inc">([\s\S]*?)<\/ul>/) || [, ""])[1].split("<li").length - 1 >= 4, `${trade}: editorial "What's included" should show 4+ items when 4+ are ticked (round 4: replaced the trust strip)`);
   for (const width of [375, 1280]) {
     const page = await browser.newPage({ viewport: { width, height: 800 } });
     const errs = []; page.on("pageerror", (e) => errs.push(e.message));

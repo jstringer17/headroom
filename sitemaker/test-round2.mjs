@@ -131,7 +131,7 @@ for (const engineName of ["chromium", "webkit"]) {
       const rs = vis(sub), rp = vis(prim);
       return { size: parseFloat(cs.fontSize), weight: parseInt(cs.fontWeight, 10), form: rs ? Math.round(rs.bottom) : -1, subH: rs ? Math.round(rs.height) : 0,
         prim: rp ? [Math.round(rp.bottom), Math.round(rp.height)] : null, orcall: !!vis(document.querySelector(".lt-orcall a")), rate: !!document.querySelector(".lt-rate"),
-        bar: bar ? bar.children.length : 0, nav: nav.length, offer: !!vis(document.querySelector(".lt-offer")), tel: tel.length ? Math.round(tel[0].height) : 0, est: est.length ? Math.round(est[0].height) : 0,
+        bar: bar ? bar.children.length : 0, nav: nav.length, offer: !!vis(document.querySelector(".lt-offer")), tel: tel.length ? Math.round(Math.max(...tel.map((r) => r.height))) : 0, est: est.length ? Math.round(Math.max(...est.map((r) => r.height))) : 0,
         secs: ["included", "faq", "areas", "call", "services", "contact"].filter((id) => !document.getElementById(id)), foot: !!document.querySelector("footer.lt-foot .lt-foot-cols"), checks: document.querySelectorAll(".lt-checks li").length >= 3, ih: innerHeight };
     }, w >= 1024);
     const serif = look !== "classic";
@@ -178,7 +178,7 @@ for (const engineName of ["chromium", "webkit"]) {
         if (!pin.skip) {
           ok(pin.endP > 0.99 && pin.startP === 0, `F ${tag}: story progress ${pin.startP}..${pin.endP} does not run 0..1 over the pinned runway`);
           ok(pin.afterPin < pin.endPin, `F ${tag}: story did not let go after its runway`);
-          ok(pin.pinH >= pin.vh - 80 && pin.pinH <= pin.vh, `F ${tag}: pinned story is ${pin.pinH}px tall in a ${pin.vh}px screen`);
+          ok(pin.pinH >= pin.vh - 104 && pin.pinH <= pin.vh, /* round 4: the sticky header carries the 36px offer bar */ `F ${tag}: pinned story is ${pin.pinH}px tall in a ${pin.vh}px screen`);
           // round 3 (QA: frames were upscaled 2-2.6x): on phones the picture fills the width and the top part of the screen,
           // and a 1600 px library picture is drawn at no more than 1.5x on a 3x screen
           const shown = Math.max(pin.imgW, pin.imgH * 1600 / 893) * 3 / 1600;
