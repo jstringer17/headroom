@@ -93,3 +93,65 @@ Self-score on the rubric (mine, NOT independent; the qa-reviewer must re-score):
 | Average | 4.29 | 4.25 | 3.71 |
 E is NOT met: no look clearly reaches 4.3 by my own read, Classic is well below (it is the plain look by design). Biggest remaining gaps: Cinematic hero still opens on the problem ("Every roof shows its age."), not a promise (consultant fix 1); Editorial phone proof chips are busy (9+ chips); Classic hero is a template.
 Not verified: iOS Safari/WebKit (WebKit is not installed in this container; `test-round2` prints SKIPPED for it). No hosted-admin work (owner-admin reads the `cred` keys listed above).
+
+### Independent QA of a4f4922 (Opus qa-reviewer, 2 Nov): FAIL. Cinematic 4.14, Editorial 4.25, Classic 3.86 (floor 4.3, no line < 4)
+Method: judged cold from org/art/round3/*.jpg, my own shots (`round2-shots.mjs --out=/tmp/qa3`, 3 looks x roofing/fencing/pressure x 375/430/1280, 162 shots), phone story frames of all 18 variations (`story-frames.mjs /tmp/qa3story`, 71 frames, looked at as 3 sheets), full-page edge cases (one ticked variation `cine.offer=["metal"]`, hvac, towing, empty profile, 82-char company name + no phone; 3 looks x 375/1280), Playwright probes (drag on picture, phone bar vs every form field at 375/430, Ask-about-this per chip, tap targets <44 px, contrast), and `test-all` from a fresh clone. **WebKit is not installed in this container: iOS Safari is NOT verified.** Chromium only.
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 4 | 4 | 4 |
+| 2 Photos and motion | 4 | 4 | 3 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 3 |
+| 5 Tools | 4 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 4 | 4 | 4 |
+| 8 Editorial craft | - | 4 | - |
+| **Average** | **4.14 FAIL** | **4.25 FAIL** | **3.86 FAIL (two lines at 3)** |
+Real progress since 3e475f5 (+0.28 / +0.50 / +0.72), and no line is below 4 in Cinematic or Editorial, but none reaches the 4.3 floor; the 4.5 target is not close.
+
+**Items of "Independent QA of 3e475f5"**
+- B1 one ticked variation: FIXED. `offer:["metal"]` gives 1 chip + 1 slider in all 3 looks, H1 "Metal roofs built for decades." (/tmp/qa3edge/*-onemetal-*.jpg).
+- B2 hvac before/after: FIXED. Editorial and Classic have exactly one before/after slider (Cinematic: one before/after + the thermostat tool). Towing also one.
+- B3 test-all red: FIXED. See test summary below (classic step PASS: all checks).
+- M Editorial picture drag: FIXED. Mouse drag from 50% to 20% across the picture moves the line (value 50 -> 20) in Editorial, Classic and Cinematic.
+- M platform row in Editorial + Classic reviews: FIXED (Google + BBB chips in both, round3 sheets col 5).
+- M Classic footer cred line: FIXED (`foot-cred`: "Licensed #ROC 334512 · Insured $1M · Bonded · 10-year workmanship warranty · BBB A+ accredited · Family owned").
+- M same-shot default pairs: FIXED for roofing shingle, fencing cedar, pressure driveway (same camera both sides, round3 sheets col 4).
+- M phone story frames soft/badly cropped: FIXED for sharpness (measured 1.47-1.53x at DPR 3, 390 px), subject now in frame and CTAs below the picture in all 18. Still weak: fencing-vinyl subject is a thin white line on the horizon (sky/lawn fill the frame); pressure-driveway has 3 frames, all others 4.
+- M Classic action bar over form fields: FIXED (bar steps aside for every field and the submit at 375 and 430).
+- m tap targets: MOSTLY FIXED. Only remaining: Classic hero "Or call (918) 555-0142" link 94x30 px at 375 (inline in a sentence; still a thumb target on phones).
+- m Editorial contact phone contrast: FIXED (rgb(218,170,140) on rgb(20,17,15), about 9:1).
+- m hvac Ask about this: NOT FIXED (partly). Chips map "Central air" -> AC repair, "Heat pump" -> Heat pumps, but "Ductless mini-split" -> AC repair and the "Before and after" chip -> AC repair; the job list has no ductless/new-system choice (/tmp/qa3edge/classic-hvac.html `#f-job`).
+- m Editorial see-through nav: FIXED (solid cream bar).
+- m sample review cards: FIXED (one card, labeled "Sample review, replace with a real one").
+- m maker other-site count + Reuse saves trade/look: FIXED (src/maker-ui.html:157 `cred-other-count`; src/maker-ui.js SAVED_IDS includes trade, look).
+
+**Round 3 Classic vs org/inspiration/lifetime/NOTES.md:** offer bar yes; promise H1 yes for roofing/fencing/pressure only; proof strip yes; form in hero on desktop yes; service cards with tags yes (but tags are mostly the generic "Service"); featured project yes (real pair + 3 steps, no scope/warranty bullets); owner card + reviews yes (no photo slot, initials only); FAQ yes; final CTA band yes; full footer yes. Structure is there; the craft is not yet at 4.3 (below).
+
+**BLOCKER**
+- none new. (test-all: see below.)
+
+**MAJOR**
+1. Cinematic promise headline sits on the BEFORE picture. First screen says "Cedar privacy fences, built straight." over an empty lawn with stakes; "Your driveway, bright again." over the oil-stained driveway; "Shingle roofs that last" over the worn roof (/tmp/qa3/cinematic-fencing-cedar-1280-0top.jpg, story frame 0 of every variation). Cause: src/cinematic.js:586-588 swaps only the headline of step 0, not its picture. Fix: when the promise is used, frame 0 shows the finished picture (last step's image), and the story starts from frame 1; or keep the problem headline. Costs line 1 a point in Cinematic.
+2. Promise hero only exists for 3 of 19 trades. src/promise.js:5-33 has roofing/fencing/pressure; every other trade falls back to problem or label headlines: Cinematic hvac "Cold creeps in at the glass.", towing "Stuck on the side of the road.", Classic hvac "Heating and air conditioning service." (/tmp/qa3edge/*-hvac-*.jpg). Round 3 asked for one promise hero. Fix: add a promise per trade in PROMISES (`_` key), test that every trade's H1 is a promise.
+3. Classic phone rhythm is long and template-like: 6 stacked full-width service cards (~1,400 px) before the picker, page 8,243-8,323 px at 375 (/tmp/qa3edge/classic-onemetal-375.jpg, classic-long-375.jpg), every section is a white card on white/pale. "Cleaner, not busier" is not met. Fix: on phones show services as a 2-column compact grid or a horizontal scroller (max ~600 px), alternate one full-bleed photo band (featured project picture) between proof and services, cut the "Three steps" section on phones or fold into FAQ.
+4. Classic photos (line 2 = 3): hero picture is darkened to near-black so the house barely reads (/tmp/qa3edge/c0.jpg from classic-onemetal-1280); overlay is .82/.62/.35 black plus a bottom gradient (src/classic.js:285); trades without library art get a flat blue hero with no picture at all (/tmp/qa3edge/tiles/classic-hvac-1280.jpg); only plain reveals, no photo motion. Fix: lighten to about .65 -> .15 behind the text column only so the house reads beside the form, use the trade's drawing in the hero when there is no photo.
+5. Classic phone header clips the company name mid-letter with no ellipsis ("Bright Side Pressure Washi", "Northeastern Oklahoma Pre"; org/art/round3/classic-375.jpg row 3, /tmp/qa3edge/tiles/classic-long-375.jpg). Cause: src/classic.js:276 `.brand-name{display:inline-flex;...text-overflow:ellipsis}` (ellipsis does not apply to a flex container's anonymous text). Fix: wrap the name in a `<span>` with the overflow/ellipsis rules, or use `display:block` + line-height 48px.
+
+**MINOR**
+- Cinematic contact phone breaks inside the number at 1280: "(918) 555-" / "0142" (pressure; /tmp/qa3/cinematic-pressure-driveway-1280-5contact.jpg). Cause: src/cine-look.js:192 `.big-phone{white-space:normal;overflow-wrap:anywhere}` overrides src/cinematic.js:351 nowrap. Fix: scope the cine-look rule to <=600 px or use `white-space:nowrap` with a smaller clamp.
+- Cinematic hvac before/after says "Dirty" / "Clean" (and aria "dirty and clean") over an old/new AC unit: src/cinematic.js:102. Fix: ["Old", "New", "Drag the line"].
+- Trades without variations show a chip literally named "Before and after" next to style chips (src/picker.js:55), and it maps Ask about this to the first job. Fix: label it with the pair's subject ("Old unit to new"), map Ask to the best matching job.
+- Header phone glyph with no phone: when phone is empty the header icon button (and "Contact us" with a phone icon) still shows a phone glyph but links to #contact (all 3 looks, /tmp/qa3edge/*-long-375.jpg). Fix: use a chat/arrow icon when there is no phone.
+- Classic owner card initials read as words: "Northeastern Oklahoma..." -> "NO". Fix: skip initials that form a stop word (NO, OK, OR...) or use the trade icon.
+- Classic desktop proof strip with 3 facts is left-aligned leaving half the row empty (c0.jpg). Fix: spread facts across the row / center.
+- Editorial desktop header phone sits ~12 px higher than the button (/tmp/qa3/editorial-fencing-cedar-1280-0top.jpg): src/editorial.js:315 sets `.ed-nav .ed-tel{display:inline}` which drops the inline-flex centering from line 216. Fix: keep inline-flex + align-items:center.
+- Editorial hero silhouette peak is clipped flat at the top (same shot). Fix: give the clip-path 2-4 px headroom.
+- Cinematic last story frame changes crop/zoom versus frame 3 (visible jump; all 18 sheets, column 4). Fix: keep the same object-position/scale on the last step.
+- Picker price line and "Estimate from the owner" sit under the phone bar when the picker is scrolled to its natural stop (org/art/round3/classic-375.jpg col 3). Fix: add bottom padding = bar height to #styles on phones.
+
+**Tests (fresh clone /tmp/qa3clone, branch at a4f4922, `node sitemaker/test-all.mjs`)**
+13/13 steps OK, exit 0, "all steps passed": build (test library) OK; classic PASS all checks; engine PASS (19 trades x 2 widths); looks test-cine criteria 4/5/D/E/R/S all PASS; library PASS; variants PASS (748); variants-maker PASS; polish PASS; buttons PASS; features 245/245; live PASS (866, 19 trades x 3 looks); round2 513 pass / 0 fail with **WebKit SKIPPED (not installed)**; build (full library, lazy) maker.html 489.9 KB, 116 pictures 21.48 MB not embedded. Note: the suites pass while MAJOR 1-5 above exist, so no test guards them; add checks for frame-0 picture = finished picture when a promise is shown, promise H1 for every trade, Classic phone page height budget, and header-name ellipsis.
+
+**Not verified:** WebKit/iOS Safari (not installed), real devices, the hosted admin, page weight on download.
