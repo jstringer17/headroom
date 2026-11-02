@@ -308,7 +308,7 @@ export const LT_CSS = `
 .lt-band h2 em{color:var(--lt-hi)}
 .lt-band p{margin:0;color:rgba(255,255,255,.82);max-width:46ch}
 .lt-band-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:6px}
-.lt-big{min-height:64px;font:800 clamp(22px,5.6vw,30px)/1 var(--lt-head);font-variant-numeric:tabular-nums;padding:0 28px}
+.lt-big{min-height:64px;font:800 clamp(22px,5.6vw,30px)/1 var(--lt-body);font-variant-numeric:tabular-nums;padding:0 28px}
 .lt-band .lt-line{min-height:64px;color:#fff}
 .lt-foot{background:var(--lt-dark);color:rgba(255,255,255,.8);font-size:15px}
 .lt-foot .lt-wrap{display:grid;gap:28px;padding-block:48px 28px}

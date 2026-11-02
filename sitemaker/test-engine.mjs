@@ -250,8 +250,8 @@ for (const trade of TRADE_ORDER) {
     await page.setContent(html, { waitUntil: "load" });
     const r = await page.evaluate((look) => {
       const cs = (e, k) => (e ? getComputedStyle(e)[k] : ""), q = (s) => document.querySelector(s);
-      if (look === "editorial") return { btn: cs(q(".ed-hero .ed-btn"), "backgroundColor"), ink: cs(q(".ed-hero .ed-btn"), "color"), em: cs(q(".ed-sec h2 em"), "color"), paper: cs(document.body, "backgroundColor"), dark: cs(q("#services"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
-      return { btn: cs(q(".btn-accent"), "backgroundColor"), ink: cs(q(".btn-accent"), "color"), em: cs(q("#styles h2 em") || q("h2 em"), "color"), paper: (() => { for (let e = q("#styles h2 em") || q("h2 em"); e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; if (b && !/rgba\(0, 0, 0, 0\)|transparent/.test(b)) return b; } return cs(document.body, "backgroundColor"); })(), dark: cs(q("#contact"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
+      if (look === "editorial") return { btn: cs(q(".ed-hero .ed-btn"), "backgroundColor"), ink: cs(q(".ed-hero .ed-btn"), "color"), em: cs(q(".ed-sec h2 em"), "color"), paper: cs(document.body, "backgroundColor"), dark: cs(q("#services"), "backgroundColor"), hi: cs(q("#call h2 em"), "color") };
+      return { btn: cs(q(".btn-accent"), "backgroundColor"), ink: cs(q(".btn-accent"), "color"), em: cs(q("#styles h2 em") || q("h2 em"), "color"), paper: (() => { for (let e = q("#styles h2 em") || q("h2 em"); e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; if (b && !/rgba\(0, 0, 0, 0\)|transparent/.test(b)) return b; } return cs(document.body, "backgroundColor"); })(), dark: cs(q("#call .lt-band"), "backgroundColor"), hi: cs(q("#call h2 em"), "color") }; /* round 4: the dark call band replaced the dark contact block */
     }, look);
     await page.close();
     return r;
