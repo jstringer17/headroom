@@ -201,14 +201,14 @@
       yelp: { rating: val("cred-yelp-rating"), count: val("cred-yelp-count"), url: val("cred-yelp-url") },
       angi: { rating: val("cred-angi-rating"), count: val("cred-angi-count"), url: val("cred-angi-url") },
       facebook: { rating: val("cred-fb-rating"), url: val("cred-fb-url") },
-      other: { name: val("cred-other-name"), rating: val("cred-other-rating"), url: val("cred-other-url") },
+      other: { name: val("cred-other-name"), rating: val("cred-other-rating"), count: val("cred-other-count"), url: val("cred-other-url") },
       license: val("cred-license"), bonded: tick("cred-bonded"), coverage: val("cred-coverage"), warranty: val("cred-warranty"),
       jobs: val("cred-jobs"), family: tick("cred-family"), veteran: tick("cred-veteran"),
       awards: [1, 2, 3].map((i) => val("cred-award-" + i)), certs: [1, 2, 3].map((i) => val("cred-cert-" + i)),
     };
   }
   const SAVE_KEY = "sitemaker-business-v1";
-  const SAVED_IDS = ["company", "city", "phone", "rating", "reviews", "years", "insured"];
+  const SAVED_IDS = ["trade", "look", "company", "city", "phone", "rating", "reviews", "years", "insured"];
   const credIds = () => Array.from(document.querySelectorAll("[data-cred]")).map((e) => e.id);
   function saveBusiness() {
     try {
@@ -221,7 +221,9 @@
   function reuseBusiness() {
     const o = savedBusiness();
     if (!o) { $("cred-saved").textContent = "Nothing saved in this browser yet."; return; }
-    for (const [id, v] of Object.entries(o)) { const e = $(id); if (!e) continue; if (e.type === "checkbox") e.checked = !!v; else e.value = v; }
+    // Trade and look first: picking them rebuilds the parts of the form that depend on them.
+    for (const id of ["trade", "look"]) { const e = $(id); if (e && o[id] && [...e.options].some((x) => x.value === o[id])) { e.value = o[id]; e.dispatchEvent(new Event("change", { bubbles: true })); } }
+    for (const [id, v] of Object.entries(o)) { if (id === "trade" || id === "look") continue; const e = $(id); if (!e) continue; if (e.type === "checkbox") e.checked = !!v; else e.value = v; }
     $("cred-saved").textContent = "Filled in from the last business you typed.";
     render();
   }

@@ -100,9 +100,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-eyebrow{display:flex;align-items:center;gap:14px;font:600 12px/1.3 var(--ed-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--ed-accent)}
 .ed-eyebrow::before{content:"";flex:none;width:36px;height:1.5px;background:currentColor}
 /* nav */
-.ed-nav{position:sticky;top:0;z-index:40;height:var(--ed-nav);background:rgba(236,229,220,.78);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border-bottom:1px solid var(--ed-line)}
+.ed-nav{position:sticky;top:0;z-index:40;height:var(--ed-nav);background:rgba(236,229,220,.97);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border-bottom:1px solid var(--ed-line)}
 .ed-nav .ed-wrap{display:flex;align-items:center;gap:14px;height:100%}
-.ed-logo{font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;display:flex;align-items:center;gap:8px;margin-right:auto;flex:1 1 auto}
+.ed-logo{min-height:48px;font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;display:flex;align-items:center;gap:8px;margin-right:auto;flex:1 1 auto}
 .ed-logo-t{min-width:0;overflow-wrap:anywhere;line-height:1.05;font-size:clamp(15px,4.4vw,22px);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ed-mark{flex:none}
 .ed-nav .ed-wrap{gap:10px}
@@ -266,7 +266,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
-.ed-phone{display:inline-block;max-width:100%;margin-top:22px;font:500 clamp(26px,7vw,64px)/1.05 var(--ed-serif);color:var(--ed-hi,var(--ed-cream));text-decoration:none;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ed-phone{display:inline-flex;align-items:center;min-height:48px;max-width:100%;margin-top:22px;font:500 clamp(26px,7vw,64px)/1.05 var(--ed-serif);color:color-mix(in srgb,var(--ed-hi,#fff) 50%,#fff);text-decoration:none;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .ed-final .ed-note{color:rgba(236,229,220,.75);margin-top:14px}
 .ed-form{display:grid;gap:16px;align-content:start;background:var(--ed-cream);color:var(--ed-ink);border-radius:var(--ed-card);padding:24px}
 .ed-form label{display:grid;gap:6px;font-size:14px;font-weight:700}

@@ -266,7 +266,7 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
     const base = { company: "Ridge Test Co", trade, city: "Tulsa, OK", phone: "9185550142" };
     const sampleHtml = look === "classic" ? generateSite(base) : generateSite({ ...base, cinematic: true, look, cine: { look } });
     const typedHtml = look === "classic" ? generateSite({ ...base, reviewList: typed, reviewLink: "https://g.page/x" }) : generateSite({ ...base, cinematic: true, look, cine: { look }, reviewList: typed, reviewLink: "https://g.page/x" });
-    check("R", `${trade}/${look}: empty form shows 3 marked samples`, (sampleHtml.match(/Sample review, replace with a real one/g) || []).length === 3 && (sampleHtml.match(/<blockquote/g) || []).length === 3, "samples missing or unmarked");
+    check("R", `${trade}/${look}: empty form shows 1 marked sample`, (sampleHtml.match(/Sample review, replace with a real one/g) || []).length === 1 && (sampleHtml.match(/<blockquote/g) || []).length === 1, "samples missing or unmarked");
     check("R", `${trade}/${look}: typed reviews replace the samples and drop the mark`, !typedHtml.includes("Sample review, replace") && typedHtml.includes("Dana, Broken Arrow") && typedHtml.includes("See all reviews"), "typed reviews not shown cleanly");
     if (trade === "fencing" || trade === "junk") for (const width of [375, 1280]) {
       const { page, ctx } = await open(typedHtml, `reviews-${trade}-${look}`, { width, tag: `-${width}` });

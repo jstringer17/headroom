@@ -438,7 +438,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .top{position:sticky;top:0;z-index:20;background:var(--dark);color:var(--on-dark);transition:box-shadow .4s var(--ease)}
 .past .top{box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .top .wrap{display:flex;align-items:center;gap:28px;min-height:68px}
-.brand-name{font:700 19px/1.15 var(--body);letter-spacing:-.01em;text-decoration:none;margin-right:auto;min-width:0}
+.brand-name{display:inline-flex;align-items:center;min-height:48px;font:700 19px/1.15 var(--body);letter-spacing:-.01em;text-decoration:none;margin-right:auto;min-width:0}
 .nav{display:none;gap:28px;font-size:15px;font-weight:500}
 .nav a{text-decoration:none;color:var(--on-dark-2);transition:color .25s}
 .nav a:hover{color:var(--on-dark)}
@@ -581,7 +581,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .final{background:var(--dark);color:var(--on-dark)}
 .final h2{font-size:clamp(48px,8.5vw,104px)}
 .final .lede{color:var(--on-dark-2)}
-.big-phone{display:inline-block;margin-top:28px;font:900 clamp(40px,6.5vw,68px)/1 var(--display);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
+.big-phone{display:inline-flex;align-items:center;min-height:48px;margin-top:28px;font:900 clamp(40px,6.5vw,68px)/1 var(--display);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
 .final dl{display:grid;gap:4px;margin-top:24px;color:var(--on-dark-2)}
 .final dl div{display:flex;gap:8px;flex-wrap:wrap}
 .final dt{color:var(--on-dark);font-weight:600}
@@ -600,7 +600,7 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 .foot-cred{grid-column:1/-1;margin:0;font-size:15px;color:var(--on-dark-2)}
 .foot-cols h3{font:600 13px/1.2 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);margin-bottom:12px}
 .foot-cols ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.foot-cols a{text-decoration:none}
+.foot-cols a{text-decoration:none;display:inline-flex;align-items:center;min-height:48px}
 .foot-cols a:hover{color:var(--on-dark)}
 .foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:22px;border-top:1px solid var(--rule-dark);font-size:14px}
 .mbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.2);transform:translateY(110%);visibility:hidden;transition:transform .3s var(--ease),visibility 0s .3s}

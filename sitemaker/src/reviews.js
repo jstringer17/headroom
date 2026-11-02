@@ -1,14 +1,12 @@
 // Customer reviews for every look. Pure functions; each look escapes and styles the result itself.
 //   form.reviewList = [{ name, town, text, stars }] (up to 3), form.reviewLink = a Google / Facebook page URL.
-// With no review text typed, three SAMPLE reviews are shown, each marked as a sample. Typed ones are shown as the
+// With no review text typed, ONE sample review is shown, marked as a sample (QA round 2: three 5-star samples looked fake). Typed ones are shown as the
 // owner's, with no sample mark.
 export const RVW_MAX = 3;
 export const RVW_TEXT_MAX = 240;
 export const RVW_SAMPLE_TAG = "Sample review, replace with a real one";
 const RVW_SAMPLES = [
   { name: "Sample name", town: "Your town", text: "They showed up when they said they would, explained the price before starting and left everything tidy.", stars: 5 },
-  { name: "Sample name", town: "Your town", text: "Easy to reach, quick to answer and the work looks great. We would call them again.", stars: 5 },
-  { name: "Sample name", town: "Your town", text: "Straight talk, fair price and no surprises on the bill. Worth the call.", stars: 5 },
 ];
 
 // A link only if it is a plain http(s) address.

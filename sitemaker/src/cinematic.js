@@ -147,7 +147,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 /* header */
 .top{position:sticky;top:0;z-index:40;background:var(--dark);color:#fff;height:var(--hh)}
 .top .wrap{display:flex;align-items:center;gap:24px;height:100%}
-.brand{font:600 18px/1.15 var(--sans);text-decoration:none;margin-right:auto;min-width:0;flex:1 1 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand{font:600 18px/1.15 var(--sans);line-height:48px;text-decoration:none;margin-right:auto;min-width:0;flex:1 1 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav{display:none;gap:24px;font-size:15px}
 .nav a{text-decoration:none;color:rgba(255,255,255,.78)}
 @media (hover:hover){.nav a:hover{color:#fff}}
@@ -181,7 +181,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
   .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 132px);min-height:46%;overflow:hidden}
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
   .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 14px)}
-  .cine-motion .line .h{font-size:clamp(38px,10.6vw,48px);text-shadow:none}
+  .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
   .cine-motion .prog-count{top:12px}
 }
 .panel img[data-real],.ba img[data-real]{object-position:72% 45%}
@@ -319,7 +319,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .rvw-more{margin:44px 0 0}
 .final{background:var(--dark);color:#fff}
 .final .lede{color:rgba(255,255,255,.78)}
-.big-phone{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
+.big-phone{display:inline-flex;align-items:center;min-height:48px;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
 .grid{display:grid;gap:36px}
 form{display:grid;gap:16px;align-content:start;background:var(--cream);color:var(--ink);border-radius:18px;padding:24px}
 label{display:grid;gap:6px;font-size:15px;font-weight:600}

@@ -232,12 +232,14 @@ for (const look of ["cinematic", "editorial", "classic"]) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const a = await ctx.newPage(); await a.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
   await a.goto(MAKER, { waitUntil: "load" });
-  await a.fill("#company", "Ridge Roofing"); await a.fill("#city", "Tulsa, OK"); await a.fill("#cred-license", "R-12345"); await a.fill("#cred-yelp-rating", "4.5"); await a.waitForTimeout(300);
+  await a.selectOption("#trade", "fencing"); await a.selectOption("#look", "editorial"); await a.waitForTimeout(200); await a.fill("#company", "Ridge Roofing"); await a.fill("#city", "Tulsa, OK"); await a.fill("#cred-other-name", "Nextdoor"); await a.fill("#cred-other-rating", "4.7"); await a.fill("#cred-other-count", "31"); await a.fill("#cred-license", "R-12345"); await a.fill("#cred-yelp-rating", "4.5"); await a.waitForTimeout(300);
   const b = await ctx.newPage(); await b.route("**/*", (q) => (/^(file|data|about|blob):/.test(q.request().url()) ? q.continue() : q.abort()));
   await b.goto(MAKER, { waitUntil: "load" });
   ok(await b.locator("#cred-reuse").isVisible(), "profile: no 'Reuse last business' button on the next visit");
   await b.click("#cred-reuse"); await b.waitForTimeout(400);
   ok((await b.inputValue("#company")) === "Ridge Roofing" && (await b.inputValue("#cred-license")) === "R-12345" && (await b.inputValue("#cred-yelp-rating")) === "4.5", "profile: Reuse last business did not fill the fields");
+  ok((await b.inputValue("#trade")) === "fencing" && (await b.inputValue("#look")) === "editorial" && (await b.inputValue("#cred-other-count")) === "31", "profile: Reuse last business did not bring back the trade, the look or the other-site review count");
+  ok(/Nextdoor[\s\S]{0,120}31/.test(await b.$eval("#frame", (f) => f.srcdoc.replace(/<style[\s\S]*?<\/style>/g, ""))), "profile: the other-site review count is not on the site");
   await b.click("#cred-forget"); await b.waitForTimeout(200);
   const c = await ctx.newPage(); await c.goto(MAKER, { waitUntil: "load" });
   ok(!(await c.locator("#cred-reuse").isVisible()), "profile: Forget saved business did not forget");
