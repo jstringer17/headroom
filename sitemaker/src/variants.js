@@ -72,10 +72,40 @@ export function variantCards(kit, offer) {
   });
 }
 
+// One plain line per variation for the style picker.
+export const VARIANT_NOTES = {
+  roofing: {
+    shingle: "Layered asphalt shingles in many colors. The most common roof, and the best value.",
+    metal: "Long panels with raised seams. Sheds rain and snow and lasts 40 years or more.",
+    tile: "Clay or concrete tile. Heavy, cool in the sun, made for hot and dry places.",
+    slate: "Real stone. The longest-lasting roof there is, with a look nothing else matches.",
+    shake: "Split cedar with deep shadow lines. Warm, natural, and it weathers to silver.",
+    flat: "Membrane roofs for flat and low-slope tops: porches, additions and shops.",
+  },
+  fencing: {
+    cedar: "Tight cedar boards for full privacy. Warm color, and it takes stain well.",
+    vinyl: "White vinyl panels that never need paint. A rinse with the hose keeps it clean.",
+    aluminum: "Black picket that keeps the view open. Pool-code friendly and it never rusts.",
+    chainlink: "The fast, low-cost way to keep pets and kids in the yard.",
+    splitrail: "Rustic rails for big yards, pastures and property lines.",
+    slat: "Horizontal boards with tight, even gaps. Clean, modern lines.",
+  },
+  pressure: {
+    driveway: "Oil spots, tire marks and dark grime lifted off the concrete.",
+    siding: "A soft wash that takes the green and gray off siding without harm.",
+    deck: "Wood and pavers cleaned back to their real color, ready to seal.",
+    fence: "Gray, mossy boards brought back to clean wood.",
+    roof: "A low-pressure wash that takes off black streaks and moss safely.",
+    storefront: "Sidewalks, entries and lots, done early before you open.",
+  },
+};
+
 // What the style picker shows under a variation's name.
 export const PICK_NOUN = { roofing: "roof", fencing: "fence", pressure: "wash" };
 // One line: the trade's own style note when it has one for this variation, else the finished-job headline.
-export function variantNote(kit, c) {
+export function variantNote(kit, c, tradeKey) {
+  const own = tradeKey && VARIANT_NOTES[tradeKey] && VARIANT_NOTES[tradeKey][c.key];
+  if (own) return own;
   const st = ((kit && kit.styles) || []).find((s) => s.id === c.key);
   if (st && st.note) return st.note;
   const kv = kitVariant(kit, c.key), last = (kv.story || []).slice(-1)[0];

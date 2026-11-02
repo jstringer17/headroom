@@ -85,7 +85,7 @@ export function credTop(d) {
   if (c.license && d.insured) out.push(`Licensed #${c.license} and insured`);
   else if (c.license) out.push(`Licensed #${c.license}`);
   else if (d.insured) out.push(c.bonded ? "Insured and bonded" : "Licensed and insured");
-  else if (c.warranty) out.push(`${c.warranty} warranty`);
+  else if (c.warranty) out.push(/warrant/i.test(c.warranty) ? c.warranty : `${c.warranty} warranty`);
   return out.slice(0, 3);
 }
 
@@ -95,7 +95,7 @@ export function credLine(d) {
   if (c.license) bits.push(`Licensed #${c.license}`);
   if (d.insured) bits.push(c.coverage ? `Insured ${c.coverage}` : "Insured");
   if (c.bonded) bits.push("Bonded");
-  if (c.warranty) bits.push(`${c.warranty} warranty`);
+  if (c.warranty) bits.push(/warrant/i.test(c.warranty) ? c.warranty : `${c.warranty} warranty`);
   if (c.bbb && (c.bbb.rating || c.bbb.accredited)) bits.push(`BBB ${[c.bbb.rating, c.bbb.accredited ? "accredited" : ""].filter(Boolean).join(" ")}`);
   if (c.family) bits.push("Family owned");
   if (c.veteran) bits.push("Veteran owned");

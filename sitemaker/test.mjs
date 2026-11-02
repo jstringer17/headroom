@@ -30,7 +30,7 @@ const ok = (cond, msg) => { if (!cond) fails.push(msg); };
 const BANNED = /award[- ]winning|best in (town|the)|#1\b|number one|trusted by|5-star service|guaranteed|top[- ]rated|same day|cleans? up after|fixed fast|fix it fast|done right|built to last/i;
 
 // The "Everything we do" list has small variation thumbnails (<img class="all-thumb">); these checks are about hero pictures
-const noThumbs = (h) => h.replace(/<img class="all-thumb"[^>]*>/g, "");
+const noThumbs = (h) => h.replace(/<img class="all-thumb"[^>]*>/g, "").replace(/<section class="vp [^"]*" id="styles"[\s\S]*?<\/section>/g, ""); // the style picker (round 2) has its own pictures
 // ---- 1. pure function checks ----
 for (const key of TRADE_ORDER) {
   const html = generateSite({ company: "Test Co", trade: key, year: 2026 });
@@ -98,17 +98,18 @@ async function checkPage(page, label, imgCount = 0, fontsLoaded = true) {
     const calls = [...document.querySelectorAll('a[href^="tel:"].btn, a[href="#contact"].btn')].filter((a) => {
       const b = a.getBoundingClientRect(); const cs = getComputedStyle(a);
       let vis = b.width > 0 && b.bottom > 0 && b.top < innerHeight && cs.visibility !== "hidden" && cs.opacity !== "0";
-      for (let el = a; el && vis; el = el.parentElement) { const c = getComputedStyle(el); if (c.opacity === "0" || c.display === "none") vis = false; if (el.classList.contains("mobile-call") && c.transform !== "none" && el.getBoundingClientRect().top >= innerHeight - 1) vis = false; }
+      for (let el = a; el && vis; el = el.parentElement) { const c = getComputedStyle(el); if (c.opacity === "0" || c.display === "none") vis = false; if (el.classList.contains("mbar") && c.transform !== "none" && el.getBoundingClientRect().top >= innerHeight - 1) vis = false; }
       return vis && /Call|Contact/.test(a.textContent);
     }).length;
-    return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: [...document.images].filter((i) => !i.classList.contains("all-thumb")).length, h1Lines, calls };
+    return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: [...document.images].filter((i) => !i.classList.contains("all-thumb") && !i.closest("[data-vp]")).length, h1Lines, calls };
   });
   ok(r.sw <= r.cw, `${label}: sideways scroll (${r.sw} > ${r.cw}) ${r.wide.join(" ")}`);
   ok(r.empty.length === 0, `${label}: empty sections ${r.empty.join(",")}`);
   ok(r.imgs === imgCount, `${label}: ${r.imgs} images, expected ${imgCount}`);
   // Line count is set for the web font; offline the fallback font is wider.
   if (fontsLoaded) ok(r.h1Lines <= 3, `${label}: headline is ${r.h1Lines} lines`);
-  ok(r.calls === 1, `${label}: ${r.calls} call buttons in the first screen`);
+  // Round 2 (CEO D): the header call button is always visible, so the first screen may hold it plus the hero call.
+  ok(r.calls >= 1 && r.calls <= 2, `${label}: ${r.calls} call buttons in the first screen`);
   return r;
 }
 
@@ -142,7 +143,8 @@ for (const { key, form } of sets) {
     if (form.rating) {
       const txt = await page.evaluate(() => document.body.innerText);
       const times = txt.split(form.rating).length - 1;
-      ok(times === 1, `${key}@${width}: rating ${form.rating} shown ${times} times`);
+      // Round 2 (CEO C): the rating sits in the hero trust strip, the proof bar and the reviews header; never more.
+      ok(times >= 1 && times <= 3, `${key}@${width}: rating ${form.rating} shown ${times} times`);
       ok(txt.includes("Sample review, replace with a real one"), `${key}@${width}: sample review tag missing`);
     }
     // Full page for the two lead trades; first screen for the rest keeps the folder small.
@@ -161,7 +163,7 @@ for (const js of [true, false]) {
     await page.goto(pathToFileURL(join(outDir, `${key}.html`)).href, { waitUntil: "load" });
     await page.waitForTimeout(300);
     const r = await checkPage(page, `${key}@375x667${js ? "" : "-nojs"}`);
-    const bar = await page.evaluate(() => { const b = document.querySelector(".mobile-call"); return { top: b.getBoundingClientRect().top, vis: getComputedStyle(b).visibility }; });
+    const bar = await page.evaluate(() => { const b = document.querySelector(".mbar"); return { top: b.getBoundingClientRect().top, vis: getComputedStyle(b).visibility }; });
     ok(bar.top >= 667 || bar.vis === "hidden", `${key}@375x667${js ? "" : "-nojs"}: call bar visible in first screen`);
     if (js) await page.screenshot({ path: join(shotDir, `${key}-375x667-first-screen.jpg`), type: "jpeg", quality: 50 });
     await page.close();
@@ -177,7 +179,7 @@ for (const js of [true, false]) {
   await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
   await page.waitForTimeout(300);
   const cover = await page.evaluate(() => {
-    const bar = document.querySelector(".mobile-call").getBoundingClientRect();
+    const bar = document.querySelector(".mbar").getBoundingClientRect();
     const last = document.querySelector(".foot-base").getBoundingClientRect();
     return { barTop: bar.top, lastBottom: last.bottom };
   });

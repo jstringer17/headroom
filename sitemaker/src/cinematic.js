@@ -184,9 +184,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .facts svg{flex:none;color:var(--accent)}
 .facts li b{font-weight:700}.facts li span{font-weight:500;color:var(--muted)}
 .facts a{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;min-height:48px;padding:0 16px;border:1.5px solid rgba(0,0,0,.5);border-radius:999px}
+@media (max-width:639px){.facts ul{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;padding:16px 0}.facts li{align-items:flex-start;flex-wrap:wrap;gap:0 8px;font-size:14px;line-height:1.3}.facts li>span{flex-basis:100%;padding-left:26px}.facts li:has(>a){grid-column:1/-1}.facts li svg{margin-top:1px}}
 .story-trust{flex:1 1 100%;margin:0;font:600 14px/1.4 var(--sans);color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
 .plat-list{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.plat-list li{border:1.5px solid rgba(255,255,255,.55);border-radius:999px;padding:0 16px;min-height:48px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
+.plat-list li{gap:6px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;padding:0 16px;min-height:48px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
 .plat-list a{color:inherit;display:flex;gap:6px;align-items:center;min-height:48px;text-decoration:none}
 .plat-list span{font-weight:500;opacity:.8}
 .cred-line{margin-top:14px;color:rgba(255,255,255,.78);font-size:15px;max-width:44ch}
@@ -381,7 +382,7 @@ if(story&&!reduce){
   var paint=function(){
     queued=false;
     var r=story.getBoundingClientRect(),total=r.height-pin.offsetHeight;
-    var p=total>0?clamp(-r.top/total,0,1):0;
+    var hh=parseFloat(getComputedStyle(pin).top)||0,p=total>0?clamp((hh-r.top)/total,0,1):0; /* pinned from the moment it reaches the header to the moment it lets go */
     var pos=p*(n-1);
     var cover=-1,t=[];
     for(var j=0;j<n;j++){var u=j===0?1:clamp((pos-(j-0.72))/0.42,0,1);t[j]=u*u*(3-2*u);if(j>0&&u>=0.995)cover=j}
@@ -579,7 +580,7 @@ export function generateCinematic(form, d, deps) {
   if (d.years) factList.push(`${d.years} year${d.years === 1 ? "" : "s"} in business`);
   if (d.emergency) factList.push("Open 24/7 for emergencies");
   if (d.insured) factList.push("Licensed and insured");
-  const proofBadges = [...(d.emergency ? [{ label: "Open 24/7", sub: "for emergencies" }] : []), ...credBadges(d)];
+  const proofBadges = [...(d.emergency ? [{ label: "Open 24/7 for emergencies", sub: "" }] : []), ...credBadges(d)];
   const factsSec = proofBadges.length ? `<section class="facts" aria-label="At a glance"><div class="wrap"><ul>${credProofLis(proofBadges, esc, "", svgIcon('<path d="M5 12.5l4.5 4.5L19 7"/>', 18))}</ul></div></section>` : "";
 
   // 2. Pick your style
@@ -611,7 +612,7 @@ export function generateCinematic(form, d, deps) {
   ${allCards.map((c, i) => { const price = variantPrice(prices0, c.label); return `<div class="pk-panel" role="tabpanel" id="panel-${i}" aria-labelledby="tab-${i}"${i ? " hidden" : ""}>
     <div class="ba" data-pos="0"><img class="after" src="${esc(slotSrc(c.after, `${c.label}, after`, { labelSide: "right" }))}"${safeImage(images[c.after]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[1]).toLowerCase()}"${i ? ' loading="lazy"' : ""} decoding="async"><img class="before" src="${esc(slotSrc(c.before, `${c.label}, before`, { labelSide: "left" }))}"${safeImage(images[c.before]) ? ' data-real="1"' : ""} alt="${esc(c.label)}, ${esc(baTags(d.tradeKey)[0]).toLowerCase()}"${i ? ' loading="lazy"' : ""} decoding="async">
       <div class="ba-handle" role="slider" tabindex="0" aria-label="${esc(c.label)}: ${esc(baTags(d.tradeKey)[0]).toLowerCase()} and ${esc(baTags(d.tradeKey)[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 percent"><span class="ba-knob">${svgIcon('<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>', 22)}</span></div></div>
-    <div class="pk-cap"><h3 class="pk-name">${esc(c.label)}</h3><p class="pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c))}</p>${price ? `<p class="pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}<div class="pk-btns"><button type="button" class="btn btn-glass pk-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
+    <div class="pk-cap"><h3 class="pk-name">${esc(c.label)}</h3><p class="pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c, d.tradeKey))}</p>${price ? `<p class="pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}<div class="pk-btns"><button type="button" class="btn btn-glass pk-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
   </div>`; }).join("")}
 </div></section>` : "";
 

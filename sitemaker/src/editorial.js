@@ -229,7 +229,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-proof b{font-weight:700}.ed-proof span{font-weight:500;color:var(--ed-muted)}
 .ed-proof a,.ed-plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
 .ed-plat-list{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.ed-plat-list li{border:1.5px solid rgba(22,20,18,.45);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans)}
+.ed-plat-list li{gap:6px;border:1.5px solid rgba(22,20,18,.45);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans)}
 .ed-plat-list span{font-weight:500;color:var(--ed-muted)}
 .ed-cred-line{margin-top:12px;color:rgba(236,229,220,.78);font-size:15px}
 .ed-rvw-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:16px}
@@ -601,7 +601,7 @@ export function generateEditorial(form, d, deps) {
   ${allCards.map((c, i) => { const price = variantPrice(offeredPrices(kit, cine.prices), c.label); return `<div class="ed-pk" role="tabpanel" id="ed-panel-${i}" aria-labelledby="ed-tab-${i}"${i ? " hidden" : ""} data-ed="pick-panel">
     <div class="ed-pk-pic"><div class="ed-cmp" style="--pos:0"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
     <input type="range" class="ed-cmp-r" min="0" max="100" value="0" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p></div>
-    <div class="ed-pk-cap"><h3>${esc(c.label)}</h3><p class="ed-pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c))}</p>${price ? `<p class="ed-pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}
+    <div class="ed-pk-cap"><h3>${esc(c.label)}</h3><p class="ed-pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c, d.tradeKey))}</p>${price ? `<p class="ed-pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}
       <div class="ed-pk-btns"><button type="button" class="ed-btn ghost ed-pk-cmp" aria-pressed="false">Compare before and after</button><a class="ed-btn" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
   </div>`; }).join("")}
 </div></section>` : "";

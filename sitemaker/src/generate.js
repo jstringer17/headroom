@@ -16,13 +16,14 @@
 // }
 import { TRADES, TRADE_ORDER } from "./trades.js";
 import { THEMES, THEME_ORDER } from "./themes.js";
-import { generateCinematic, offeredPrices } from "./cinematic.js";
+import { generateCinematic, offeredPrices, cineUnit } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
 import { mobileBarHtml, ACTIONS_JS } from "./actions.js";
 import { credOf, credRatings, credBadges, credTop, credLine, credLd, credProofLis, credPlatformLis } from "./credibility.js";
 import { variantCards, kitVariant, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
+import { pickerItems, pickerHtml, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { cineLook, placeholderArt, blueprintArt } from "./cine-look.js";
 
 // Cinematic mode needs the art files' CINE_KIT, cineLook and placeholderArt.
@@ -249,6 +250,10 @@ export function generateSite(form) {
   const allCards = variantCards(CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.offer);
   const cinePrices = (() => { try { return offeredPrices(CINE.CINE_KIT[d.tradeKey], form.cine.prices); } catch (_) { return null; } })();
   const L = LAYOUTS[lay];
+  // One picker for every variation (round 2): chips, the picture, its before and after, Ask about this.
+  const anyRealCl = Object.values(cineImgs).some((v) => safeImage(v));
+  const pickItems = CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey] && allCards.length >= 2 ? pickerItems(CINE.CINE_KIT[d.tradeKey], kitVariant(CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant), allCards, d.tradeKey) : [];
+  const pickImg = (id, label, attrs) => `<img src="${esc(safeImage(cineImgs[id]) || phArt(d.tradeKey, id, label, anyRealCl ? { quiet: true } : undefined))}" alt="${esc(label)}" ${attrs}>`;
   const tradeName = t.label.replace(/ \(.*\)$/, "");
   // The Classic hero uses the form's hero picture, else the finished-job picture the owner or the library gave this trade.
   const finishedId = (() => { try { const k = CINE && CINE.CINE_KIT[d.tradeKey]; const st = k && kitVariant(k, form && form.cine && form.cine.variant).story; return st && st.length ? st[st.length - 1].id : ""; } catch (_) { return ""; } })();
@@ -348,10 +353,7 @@ export function generateSite(form) {
   <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
   <div class="body">${services}</div>
 </div></section>`,
-    all: (tint) => allCards.length >= 2 ? `<section class="sec${tint}" id="styles"><div class="wrap">
-  <h2 class="rv">Pick your ${esc(PICK_NOUN[d.tradeKey] || "style")}</h2>
-  <ul class="all-list">${allCards.map((c) => { const price = variantPrice(cinePrices, c.label); return `<li class="rv"><img class="all-thumb" src="${esc(cineImgs[c.after] && safeImage(cineImgs[c.after]) ? cineImgs[c.after] : phArt(d.tradeKey, c.after, `${c.label}, after`, Object.values(cineImgs).some((v) => safeImage(v)) ? { quiet: true } : undefined))}" alt="${esc(c.label)}" width="120" height="90" loading="lazy"><span class="all-name">${esc(c.label)}</span><span class="all-note">${esc(variantNote(CINE && CINE.CINE_KIT[d.tradeKey], c))}${price ? ` <b>${esc(price)}</b>` : ""}</span><a class="all-ask btn-line" href="#contact" data-job="${esc(c.label)}">Ask about this</a></li>`; }).join("")}</ul>
-</div></section>` : "",
+    all: (tint) => pickerHtml({ items: pickItems, tradeKey: d.tradeKey, tradeName, img: pickImg, prices: cinePrices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, form && form.cine && form.cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: `sec cl-vp${tint}` }),
     process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
@@ -390,7 +392,7 @@ export function generateSite(form) {
     return out;
   }).join("\n");
 
-  const options = d.services.map(([n]) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
+  const options = [...pickItems.map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i).map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
 
   return `<!doctype html>
 <html lang="en">
@@ -404,6 +406,12 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <style>
+${PICKER_CSS}
+.cl-vp{--vp-ink:var(--ink);--vp-bg:var(--paper);--vp-muted:var(--muted);--vp-accent:var(--accent);--vp-accent-ink:var(--accent-ink);--vp-em:var(--ink);--vp-chip-bg:var(--light);--vp-chip-ink:var(--ink);--vp-chip-line:var(--line);--vp-on-bg:var(--dark);--vp-on-ink:#fff;--vp-head:var(--display);--vp-sans:var(--body);--vp-stage-bg:var(--light);--vp-max:var(--max);--vp-r:10px;--vp-btn-r:6px}
+.cl-vp.tint{--vp-bg:var(--light);--vp-chip-bg:var(--paper);background:var(--light)}
+.cl-vp h2{font-weight:800;text-transform:uppercase;letter-spacing:0}
+.cl-vp h2 em{font-style:normal}
+.cl-vp .vp-name{font-weight:800;text-transform:uppercase}
 /* One accent, two neutrals. Big Shoulders (built, signage letters) for hero and section titles only; Hanken Grotesk for everything else. 12-column grid, 8px rhythm. */
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--paper:#ffffff;
 --on-dark:#ffffff;--on-dark-2:rgba(255,255,255,.76);--rule-dark:rgba(255,255,255,.18);
@@ -536,7 +544,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .hero-trust{margin:16px 0 0;font-size:15px;font-weight:600;opacity:.92}
 .proof-sec{padding-block:20px}
 .proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.proof li,.plat-list li{border:1.5px solid var(--line);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font-size:15px;font-weight:600;background:#fff}
+.proof li,.plat-list li{gap:6px;border:1.5px solid var(--line);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font-size:15px;font-weight:600;background:#fff}
 .proof span,.plat-list span{font-weight:500;color:var(--muted)}
 .proof a,.plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
 .plat-list{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
@@ -704,6 +712,7 @@ ${liveScript(`(function(){
   function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}
   addEventListener("scroll",past,{passive:true});past();
   ${ACTIONS_JS}
+  ${PICKER_JS}
   if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   var els=[].slice.call(document.querySelectorAll(".rv"));
   els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
