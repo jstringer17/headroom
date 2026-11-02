@@ -649,7 +649,7 @@ const ED_LINES = {
   garage: ["A new face for the house.", "face"], plumbing: ["Pipes, drains and water heaters.", "water"],
   electrical: ["Power, wired neatly.", "neatly"], pest: ["Pests out, gaps sealed.", "sealed"],
   junk: ["Room to breathe again.", "breathe"], cleaning: ["Come home to clean.", "clean"],
-  towing: ["Stuck? Help on the road.", "road"],
+  towing: ["Roadside help, right where you are.", "right"],
 };
 for (const [t, [headline, accent]] of Object.entries(ED_LINES)) {
   if (CINE_KIT[t]) CINE_KIT[t].editorial = { ...(CINE_KIT[t].editorial || {}), headline, accent };

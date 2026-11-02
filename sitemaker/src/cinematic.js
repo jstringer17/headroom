@@ -642,7 +642,7 @@ export function generateCinematic(form, d, deps) {
   // trade's before and after plus its styles. Drag on the picture once Compare is on; the page's only slider.
   const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
   const vpImg = (id, label, attrs, side) => `<img src="${esc(slotSrc(id, label, side ? { labelSide: side === baTags(d.tradeKey)[0] ? "left" : "right" } : undefined))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="${esc(label)}" ${attrs}>`;
-  const vpSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: vpImg, prices: prices0, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "sec dark-sec cine-vp", jobs: [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)] });
+  const vpSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: vpImg, prices: prices0, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "sec dark-sec cine-vp", jobs: [...vpItems.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)] });
 
   // 4. Price estimator: typed ranges only, hidden when there are none
   let priceSec = "";
@@ -703,7 +703,7 @@ export function generateCinematic(form, d, deps) {
   ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
   ${d.rv.link ? `<p class="rvw-more rv"><a class="btn btn-accent" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
-  const jobNames = [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
+  const jobNames = [...vpItems.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
   const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="sec final" id="contact"><div class="wrap grid">
   <div class="head rv">

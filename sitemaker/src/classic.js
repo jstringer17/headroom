@@ -24,7 +24,7 @@ const clStars = (n, s = 22) => `<span class="cl-stars" role="img" aria-label="${
 // The accent word of a headline in the highlight color.
 const clAccent = (text, word) => { const i = word ? text.indexOf(word) : -1; return i < 0 ? esc(text) : `${esc(text.slice(0, i))}<em>${esc(word)}</em>${esc(text.slice(i + word.length))}`; };
 // A tag for a service card from its own words (no claims: what kind of job it is).
-const clTag = (n, d) => /emergenc|storm|24/i.test(n) ? (d.emergency ? "24/7" : "Urgent") : /repair|fix|patch|leak/i.test(n) ? "Repair" : /inspect|check|estimate/i.test(n) ? (d.freeEstimates ? "Free check" : "Inspection") : /clean|wash/i.test(n) ? "Cleaning" : /new|install|replace|build/i.test(n) ? "New install" : "Service";
+const clTag = (n, d) => /emergenc|storm|24/i.test(n) ? (d.emergency ? "24/7" : "Urgent") : /repair|fix|patch|leak/i.test(n) ? "Repair" : /inspect|check|estimate/i.test(n) ? (d.freeEstimates ? "Free check" : "Inspection") : /clean|wash/i.test(n) ? "Cleaning" : /new|install|replace|build|pour/i.test(n) ? "New install" : /trim|prun|mow|lawn|yard/i.test(n) ? "Upkeep" : /remov|haul|stump/i.test(n) ? "Removal" : /paint|stain|seal/i.test(n) ? "Finish" : /tow|jump|lockout|tire|fuel/i.test(n) ? "Roadside" : /gutter|gate|door|window|drain|pipe|wir|panel|duct/i.test(n) ? "Repair or new" : "Service";
 // Headline size that keeps the H1 to 3 lines or fewer (Archivo 800 is ~0.56em per character).
 const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.min(46, Math.floor((2.55 * 335) / (n * 0.62)))}px;--h1d:${Math.min(66, Math.floor((2.5 * 600) / (n * 0.6)))}px`; };
 
@@ -75,7 +75,8 @@ export function generateClassic(form, d, o) {
   if (checks.length < 3 && d.emergency) checks.push("Open 24/7 for emergencies");
   if (checks.length < 3) checks.push(`Serving ${areaPhrase}`);
   const top = credTop(d);
-  const jobNames = [...allCards.map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
+  const items = kitFull ? pickerItems(kitFull, kit, allCards, d.tradeKey) : [];
+  const jobNames = [...items.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
   const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const formCard = `<div class="cl-formcard" id="contact">
       <h2>${d.freeEstimates ? "Get a free estimate" : "Ask for a price"}</h2>
@@ -115,7 +116,6 @@ export function generateClassic(form, d, o) {
 
   // 5. The one picker (pictures and the page's only before/after slider).
   const anyRealCl = anyReal;
-  const items = kitFull ? pickerItems(kitFull, kit, allCards, d.tradeKey) : [];
   const pickImg = (id, label, attrs) => `<img src="${esc(safeImage(imgs[id]) || phArt(d.tradeKey, id, label, anyRealCl ? { quiet: true } : undefined))}" alt="${esc(label)}" ${attrs}>`;
   const picker = pickerHtml({ items, tradeKey: d.tradeKey, tradeName, img: pickImg, prices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: kitFull ? cineUnit(d.tradeKey, form && form.cine && form.cine.unit) : "", tags: baTags(d.tradeKey), cls: "sec tint cl-vp", jobs: jobNames });
 
@@ -275,7 +275,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
-.brand-name{display:block;line-height:48px;min-height:48px;font:800 20px/1.1 var(--head);letter-spacing:-.02em;text-decoration:none;color:var(--dark);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand-name{display:block;min-height:48px;font:800 20px/48px var(--head);letter-spacing:-.02em;text-decoration:none;color:var(--dark);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav{display:none;gap:22px;font-weight:600;font-size:15px}
 .nav a{text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;min-height:48px}
 @media (hover:hover){.nav a:hover{color:var(--accent)}}
@@ -289,9 +289,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-art{position:absolute;left:0;right:0;bottom:0;width:100%;height:46%;z-index:-1}
 .cl-art.solid path{fill:color-mix(in srgb,var(--accent) 26%,var(--dark2))}
 .cl-art.strokes path{fill:none;stroke:color-mix(in srgb,var(--accent) 45%,var(--dark2));stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
-.cl-hero:not(.has-photo){background:radial-gradient(120% 90% at 85% 0%,color-mix(in srgb,var(--accent) 22%,var(--dark)) 0%,var(--dark) 60%)}
+.cl-hero:not(.has-photo){background:radial-gradient(120% 90% at 85% 0%,color-mix(in srgb,var(--accent) 22%,var(--dark)) 0%,var(--dark) 60%) var(--dark)}
 .cl-hero-grid{display:grid;gap:28px;padding-block:36px 40px}
-.cl-pill{display:inline-flex;align-items:center;gap:8px;font:700 13px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--hi);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);padding:8px 12px;border-radius:999px}
+.cl-pill{background:rgba(0,0,0,.45)!important;display:inline-flex;align-items:center;gap:8px;font:700 13px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--hi);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);padding:8px 12px;border-radius:999px}
 .cl-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--hi)}
 .cl-hero-text{display:flex;flex-direction:column;align-items:flex-start}
 .cl-hero h1{margin-top:16px;font-weight:800;font-size:var(--h1m);line-height:1.04}
@@ -302,7 +302,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-checks li{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:16px}
 .cl-checks svg{flex:none;margin-top:3px;color:#0b0b0b;background:var(--hi);border-radius:50%;padding:3px;width:22px;height:22px}
 .hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;align-self:stretch}
-@media (max-width:1023px){.cl-hero-text .hero-cta{order:1;margin-top:18px}.cl-hero-text .hero-sub{order:2;margin-top:20px}.cl-hero-text .cl-checks{order:3}}
+@media (max-width:1023px){.cl-hero .hero-img{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:16/10;object-position:50% 55%;z-index:0}.cl-hero.has-photo::before{display:none}.cl-hero-text .hero-cta{order:1;margin-top:18px}.cl-hero-text .hero-sub{order:2;margin-top:20px}.cl-hero-text .cl-checks{order:3}}
 .hero-cta .btn{flex:1 1 220px}
 .cl-formcard{background:#fff;color:var(--ink);border-radius:var(--r);padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
 .cl-formcard h2{font-size:26px;font-weight:800}

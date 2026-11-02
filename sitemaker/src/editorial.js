@@ -602,7 +602,7 @@ export function generateEditorial(form, d, deps) {
   // Round 3: the one shared picker (src/picker.js): offered variations (one is enough) or the trade's before and after plus styles.
   const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
   const vpHd = pickerHead(d.tradeKey, vpItems);
-  const pickSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: (id, label, attrs) => pic(id, `${attrs} alt="${esc(label)}"`).replace(' alt="" ', " "), prices: offeredPrices(kit, cine.prices), usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "ed-sec ed-vp", jobs: [...vpItems.filter((x) => allCards.length).map((x) => x.label), ...d.services.map(([n]) => n)],
+  const pickSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: (id, label, attrs) => pic(id, `${attrs} alt="${esc(label)}"`).replace(' alt="" ', " "), prices: offeredPrices(kit, cine.prices), usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "ed-sec ed-vp", jobs: [...vpItems.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)],
     head: `<div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2 id="vp-h">${vpHd.h2}</h2><p class="ed-note">${vpHd.lede}</p></div>` });
 
   // Services: large numbered rows, the open row swaps the picture
@@ -658,7 +658,7 @@ export function generateEditorial(form, d, deps) {
   ${d.rv.items.length ? rvwList(d.rv, esc, "ed-") : ""}
   ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
-  const jobNames = [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
+  const jobNames = [...vpItems.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
   const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
   <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
