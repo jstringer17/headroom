@@ -19,7 +19,7 @@ import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
-import { variantCards } from "./variants.js";
+import { variantCards, kitVariant } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
 import { cineLook, placeholderArt, blueprintArt } from "./cine-look.js";
 
@@ -239,7 +239,9 @@ export function generateSite(form) {
   const allCards = variantCards(CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.offer);
   const L = LAYOUTS[lay];
   const tradeName = t.label.replace(/ \(.*\)$/, "");
-  const hero = safeImage(form && form.heroImage);
+  // The Classic hero uses the form's hero picture, else the finished-job picture the owner or the library gave this trade.
+  const finishedId = (() => { try { const k = CINE && CINE.CINE_KIT[d.tradeKey]; const st = k && kitVariant(k, form && form.cine && form.cine.variant).story; return st && st.length ? st[st.length - 1].id : ""; } catch (_) { return ""; } })();
+  const hero = safeImage(form && form.heroImage) || (finishedId ? safeImage(((form && form.cine && form.cine.images) || {})[finishedId]) : "");
   const name = esc(d.company);
   const area = d.city ? esc(d.city) : "";
   const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";

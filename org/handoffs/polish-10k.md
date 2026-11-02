@@ -15,4 +15,17 @@ Do not change hosting/ (backend). Keep Classic, Editorial, Cinematic all working
 10. MASTERPIECE PASS (judge with impeccable critique): after 1-9, push every look to >= 4.3 avg: hero impact, typography rhythm, spacing, picture cropping, motion polish, trust, mobile. Re-run the rubric in org/art/qa-10k-report.txt and put the new score table in Result.
 
 ## Result
-(fill in: head sha, test counts, score table)
+Skills: `impeccable` and `ui-ux-pro-max` are not installed in this session (Skill tool: "Unknown skill"), so the critique was done by hand from screenshots (375 and 1280, all three looks).
+
+Fixes 1-9 are done, each with a failing-first check in `sitemaker/test-polish.mjs` (also run by `npm run test:sitemaker`):
+1. Everything we do (Cinematic): settles on one card when scrolling stops; one dot button per card (arrow keys, Home/End); only the active card is focusable (others inert).
+2. Cinematic reviews beat is a dark section now: accent word and labels >= 4.5:1 (pressure, roofing, fencing). Editorial small accent text is darkened until it reads 4.5:1 on cream.
+3. Editorial "The work": three different pictures (three different variations, picked one first) with different Job, Type and Where per card.
+4. "Ask about this" (Editorial dialog and Cinematic): closes the dialog, scrolls to the form, preselects the matching job (the form's job list now includes the variations).
+5. Phone: 10 or 11 digits become +1..., "ext. 12" becomes ;ext=12, "+" numbers keep their country code, anything else is no phone (no call link, no placeholder); the maker shows a plain warning.
+6. Estimator: cents kept ($0.25 to $0.45), a low above the high is swapped and the maker warns, a quantity box gives a job total for per sq ft, per linear foot and per hour.
+7. No "Phone number here" anywhere; Download and Copy use quiet drawings without the "Sample picture: make in Higgsfield" note (the preview keeps the honest note).
+8. `<meta charset="utf-8">` in maker.html (generated pages already had it).
+9. Call pill hidden over Everything we do, long names cut with an ellipsis in the Cinematic header, empty sample form asks for name and phone, reviews cut at a word with an ellipsis, Editorial headline differs per variation, Cinematic phone hero text 48 px, Classic hero uses the library's finished picture.
+
+Not done / honest gaps: the 36-site QA rubric was not re-run (it lives outside this session), so there is no new score table; my own read is Editorial strongest, Cinematic close, Classic plainest (it is the "older, plain" look by design). Not touched: house silhouette on the flat-roof and storefront drawings (art files), font-swap CLS, page weight (downloads are 2-5 MB with the full library; extras are already shrunk to 960 px).
