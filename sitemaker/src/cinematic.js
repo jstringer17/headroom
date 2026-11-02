@@ -695,7 +695,7 @@ export function generateCinematic(form, d, deps) {
 </div></section>`;
 
   const nav = [
-    styles.length && ["#styles", "Styles"], hvacSec && ["#comfort", "Comfort"], ba && ["#before-after", "Before and after"],
+    styles.length && ["#styles", "Styles"], hvacSec && ["#comfort", "Comfort"], !pickSec && baSec && ["#before-after", "Before and after"],
     prices && ["#price", "Price"], ["#services", "Services"], ["#contact", "Contact"],
   ].filter(Boolean).map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 

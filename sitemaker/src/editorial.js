@@ -553,8 +553,9 @@ export function generateEditorial(form, d, deps) {
     ["estimate", "Price first", "We tell you the price before any work starts."],
     ["area", "Local", area ? `${area} and nearby towns.` : "Your area and nearby towns."],
     ["home", "Home or business", "Big jobs and small ones, just ask."],
+    ["estimate", "Tidy finish", "We do the job you agreed to and leave the place clean."],
   ];
-  for (const g of generic) { if (facts.length >= 3) break; if (!facts.some((f) => f[0] === g[0])) facts.push(g); }
+  for (const g of generic) { if (facts.length >= (inProof ? 4 : 3)) break; if (!facts.some((f) => f[1] === g[1] || (f[0] === g[0] && g[1] !== "Tidy finish"))) facts.push(g); }
   const cells = facts.slice(0, 4);
   const proofBadges = credBadges(d);
   const proofBar = proofBadges.length ? `<section class="ed-proof-sec" aria-label="Credentials"><div class="ed-wrap"><ul class="ed-proof" data-ed="proof">${credProofLis(proofBadges, esc, "ed-")}</ul></div></section>` : "";

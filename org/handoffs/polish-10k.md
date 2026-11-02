@@ -53,3 +53,29 @@ Not done / not verified at push time:
 - The full `npm run test:sitemaker` was still running when I was told to stop. test.mjs (classic), test-cine, test-features, test-library and test-variants-maker were NOT re-run after the round-2 structure change; expect some of their checks to need updating (they still assume old section ids / counts in places). Run the suite first and fix those before anything else.
 - E (re-run the rubric, each look >= 4.3) was not done. No hosted-admin work (owner-admin should read the `cred` keys above).
 - The impeccable and ui-ux-pro-max skills are not installed in this session.
+
+## Result, CEO round 2 (Opus builder, took over from cine-engine; 2 Nov)
+Skills: `impeccable` and `ui-ux-pro-max` are not installed here (Skill tool: "Unknown skill"); critique done by hand from Playwright screenshots I looked at (375, 390, 1280).
+Built on the cine-engine push (its `cred` keys and maker group stay the contract). What I fixed or added on top:
+- **Blocker fixed:** the style picker called `scrollIntoView` on load, so Cinematic and Editorial opened ~1,800-3,000 px down the page (at the picker). Now only the chip row scrolls sideways. Checked by `test-round2` ("page opens at the top", every look/trade at 375, 390, 1280); it failed before the fix.
+- **A/B in Classic:** Classic had only a thumbnail list (no chips, no compare). It now uses the shared picker (`src/picker.js`): chips for every offered variation, big picture, plain one-line note per variation (`VARIANT_NOTES` in `src/variants.js`, used by all looks), price range if typed, Compare (the one drag line; pointer, touch, arrow keys), prev/next buttons and swipe, Ask about this (picks the job; the form now lists the variations).
+- Cinematic nav had a dead "Before and after" link (section merged away): removed; `test-round2` now fails on any link to a missing section.
+- F: the pinned story's progress was offset by the header height, so the last frame finished while the section was already letting go. Progress now runs 0..1 exactly over the pinned runway (tested). Pins use svh; story pictures fill the frame (no letterbox, tested at 375/390). Phone crops of all 18 roofing/fencing/pressure variations looked at frame by frame: the roof/fence/driveway stays in frame and the headline sits over lawn/sky, not the subject. Story scroll under 4x CPU throttle: p95 frame 16.8 ms (roofing, fencing, pressure), max 50 ms. Load layout shift < 0.1 on phones (tested).
+- C: "warranty warranty" doubled text fixed; badge label/value spacing fixed; Editorial's 4-cell strip no longer repeats facts already in the proof chips.
+- Tests: full `node sitemaker/test-all.mjs` passes, all 13 steps (classic, engine, looks, library, variants 748, variants-maker, polish, buttons, features 245/245, live 866, round2 468/0; WebKit skipped). New `sitemaker/test-round2.mjs` (in `test-all`): A-F checks with the real library. Old checks updated to the round-2 rules (header call always visible = up to 2 call buttons in the first screen; rating may show in hero strip + proof bar + reviews; accent contrast measured on the section it sits on; Classic picker chips counted).
+- Before/after phone sheets (375, every look, 3 trades): `org/art/round2/{cinematic,editorial,classic}-375-before-after.jpg`. Harness: `node sitemaker/qa/round2-shots.mjs`, story frames: `node sitemaker/qa/story-frames.mjs <out> roofing`.
+
+Self-score on the rubric (mine, NOT independent; the qa-reviewer must re-score):
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 4 | 4 | 3 |
+| 2 Photos and motion | 4 | 4 | 3 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 3 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 4 | 4 | 4 |
+| 8 Editorial craft | - | 4 | - |
+| Average | 4.29 | 4.25 | 3.71 |
+E is NOT met: no look clearly reaches 4.3 by my own read, Classic is well below (it is the plain look by design). Biggest remaining gaps: Cinematic hero still opens on the problem ("Every roof shows its age."), not a promise (consultant fix 1); Editorial phone proof chips are busy (9+ chips); Classic hero is a template.
+Not verified: iOS Safari/WebKit (WebKit is not installed in this container; `test-round2` prints SKIPPED for it). No hosted-admin work (owner-admin reads the `cred` keys listed above).

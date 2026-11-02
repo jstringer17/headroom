@@ -31,6 +31,8 @@ for (const look of LOOKS) for (const trade of TRADES) {
   const h = generateSite(form(look, trade));
   const n = CINE_KIT[trade].variants.length;
   ok(!/id="before-after"/.test(h) && !/class="all-item"|data-ed="all-card"|class="all-list"/.test(h), `A ${look}/${trade}: an old before/after or Everything-we-do section is still there`);
+  const dead = [...new Set([...h.matchAll(/href="#([A-Za-z][\w-]*)"/g)].map((x) => x[1]))].filter((id) => !h.includes(`id="${id}"`));
+  ok(!dead.length, `A ${look}/${trade}: links to missing sections #${dead.join(", #")}`);
   const tabs = (h.match(/role="tab"/g) || []).length;
   ok(tabs === n, `B ${look}/${trade}: picker has ${tabs} chips, expected ${n}`);
   const sliders = (h.match(/role="slider"/g) || []).length, rng = (h.match(/type="range"/g) || []).length;
