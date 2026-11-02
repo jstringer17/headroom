@@ -155,3 +155,46 @@ Real progress since 3e475f5 (+0.28 / +0.50 / +0.72), and no line is below 4 in C
 13/13 steps OK, exit 0, "all steps passed": build (test library) OK; classic PASS all checks; engine PASS (19 trades x 2 widths); looks test-cine criteria 4/5/D/E/R/S all PASS; library PASS; variants PASS (748); variants-maker PASS; polish PASS; buttons PASS; features 245/245; live PASS (866, 19 trades x 3 looks); round2 513 pass / 0 fail with **WebKit SKIPPED (not installed)**; build (full library, lazy) maker.html 489.9 KB, 116 pictures 21.48 MB not embedded. Note: the suites pass while MAJOR 1-5 above exist, so no test guards them; add checks for frame-0 picture = finished picture when a promise is shown, promise H1 for every trade, Classic phone page height budget, and header-name ellipsis.
 
 **Not verified:** WebKit/iOS Safari (not installed), real devices, the hosted admin, page weight on download.
+
+### Independent QA of 338323a (Opus qa-reviewer, 2 Nov): FAIL, close. Cinematic 4.29, Editorial 4.25, Classic 4.14 (floor 4.3, no line < 4 is now met by all three)
+Method: evidence regenerated cold at 338323a: refreshed org/art/round3/*.jpg; my `round2-shots.mjs --out=/tmp/qa4` (3 looks x 3 trades x 375/1280, 108 shots); story frames of all 18 variations (/tmp/qa3story, 89 frames, looked at as sheets); full-page edge cases (one ticked `offer:["metal"]`, hvac, towing, empty profile, 82-char name + no phone; 3 looks x 375/1280, /tmp/qa3edge); Playwright probes (drag, phone bar vs every field at 375/430, Ask per chip, taps < 44 px, header text alignment, phone wrap, hero pill contrast). test-all not re-run (coordinator runs it at 2714e20; my a4f4922 run was 13/13). **WebKit is not installed: iOS Safari NOT verified.**
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 4 | 4 | 4 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 4 | 4 | 4 |
+| 8 Editorial craft | - | 4 | - |
+| **Average** | **4.29 FAIL (0.01 short)** | **4.25 FAIL** | **4.14 FAIL** |
+No line is below 4 in any look. The gaps are now small and specific (below).
+
+**a4f4922 findings: FIXED / NOT FIXED**
+- M1 Cinematic promise over the before picture: FIXED. Frame 1/5 shows the finished picture (clean driveway, finished cedar fence; /tmp/qa4/cinematic-pressure-driveway-1280-0top.jpg, all 18 story sheets), then the story.
+- M2 promise for all trades: FIXED for Cinematic and Classic (hvac "Heating and air that keep every room comfortable.", towing "Towing and roadside help when you need it."). Editorial kept its own lines by choice; towing's "STUCK? HELP ON THE road." is still problem-first (minor, below).
+- M3 Classic phone length: FIXED. 2-column compact service cards, no steps block; pages 5,259-6,676 px at 375 (were 8,243-8,323).
+- M4 Classic pictures: FIXED on desktop (house reads beside the form, /tmp/qa4/classic-roofing-shingle-1280-0top.jpg; hvac gets drawing + glow). On phones the roofing hero shows mostly flat grey sky (org/art/round3/classic-375.jpg row 1 col 1): see MAJOR 2.
+- M5 Classic name ellipsis: FIXED ("Northeastern Oklahoma ...", "Bright Side Pressure Was..."), but the fix introduced MAJOR 1.
+- m Cinematic phone wraps at 1280: FIXED (1 line, src/cine-look.js:192-193). m hvac Dirty/Clean: FIXED (Old/New, chip "Old to new"). m "Before and after" chip: FIXED for hvac; towing still says "Before and after" (acceptable). m phone glyph with no phone: FIXED (arrow). m initials: FIXED ("N"). m proof strip spread: FIXED. m Editorial header phone: FIXED (text centre 31 = button centre 31). m picker under phone bar: FIXED. m Classic "Or call" 30 px link: FIXED (no target < 44 px in any look at 375).
+- m hvac Ask about this: FIXED as no-wrong-job ("Central air" and "Ductless mini-split" -> "Something else"), but it now loses the job; see MINOR.
+- Not changed by choice (agree they are minor, still open): Cinematic last-frame zoom jump, Editorial silhouette peak clipped, fencing-vinyl subject tiny, no owner photo slot.
+- Regression checks: one ticked variation still 1 chip + 1 slider in all looks; hvac/towing exactly one before/after (Cinematic hvac also has the thermostat tool); no "undefined/NaN/Phone number here/Higgsfield" text in edge pages; no sideways scroll; no page errors; drag on picture works in all 3 looks; phone bar steps aside for every field at 375/430.
+
+**BLOCKER**: none.
+
+**MAJOR**
+1. Classic header name is no longer vertically centred (regression from the ellipsis fix), on every Classic page at every width: name text centre y=69 vs Call button centre y=82 at 1280 (13 px high), same at 375 vs the round call button (/tmp/qa4/classic-roofing-shingle-1280-0top.jpg; org/art/round3/classic-375.jpg every frame). Cause: src/classic.js:278 `line-height:48px` is reset by the later `font:800 20px/1.1` shorthand in the same rule (computed line-height 22px). Fix: put `line-height:48px` after the `font` shorthand (or `font:800 20px/48px var(--head)`); add a test that the name's text centre is within 2 px of the header button's.
+2. Classic phone hero after the lighter overlay: the "ROOFING IN TULSA, OK" pill is orange rgb(242,122,31) on about rgb(105,117,132) = 1.7:1 (pressure yellow 3.7:1; fencing 4.7:1 passes), and at 375 the roofing hero picture shows mostly flat grey sky, no house (org/art/round3/classic-375.jpg row 1). Fix: on phones keep the darker overlay (or a solid dark pill background, e.g. rgba(0,0,0,.55)), set the hero `object-position` so the house is in frame at 375, and add the pill to the contrast test.
+
+**MINOR**
+- hvac (and every trade without variations) "Ask about this" now picks "Something else" for "Central air" and "Ductless mini-split": no wrong job, but the lead loses what was asked. Fix: add the style chips to the job list as roofing does (`#f-job` in /tmp/qa3edge/classic-hvac.html lacks them).
+- Editorial towing H1 "STUCK? HELP ON THE road." is problem-first, against the round-3 "one promise hero" (coordinator chose to keep Editorial lines; flag only).
+- Classic service tags are still mostly the generic "SERVICE" (Lifetime: Most popular / Emergency / Same day / Free). Fix: tag from the owner's ticks (emergency, free estimates) and leave the rest untagged.
+- Cinematic phone first screen: picture fills the top half only, headline + 2 buttons + 2 lines below on dark; strong, but not the rubric's full-bleed single-button 5. Optional: one button on the first frame.
+- Carried over by choice: Cinematic last-frame crop jump, Editorial silhouette peak, fencing-vinyl subject size, pressure-driveway story has 4 frames (others 5).
+
+**To reach 4.3+:** fix MAJOR 1-2 (Classic phone first screen goes to 5 on line 7 and keeps line 1 at 4+), give Cinematic one more point (line 3: pressure's display face mixes a sans headline with a serif italic accent; or line 7 by a single primary button on the first phone frame), Editorial line 8 (silhouette peak, header/price glyph spacing "$ 4.50").
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, the coordinator's fresh-clone test-all at 2714e20.
