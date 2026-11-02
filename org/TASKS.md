@@ -8,6 +8,6 @@
 | T6 | Open 5 accounts (Cloudflare, Stripe test, Resend, Places, domain) | Mac session session_013FPdmwbLdMfXvspZb6UcJx (env agency) + CEO types secrets | working: Cloudflare done, token waiting for CEO | key block delivered, nothing bought without CEO yes | CEO |
 | T7 | Test deploy of one site on test domain, Stripe test mode | chief of staff | waiting on T5 QA3 + T6 | e2e on real Cloudflare passes, QA | qa-reviewer |
 | T8 | Other 16 trades (pictures + variations) | chief | waiting on CEO go (HVAC first) | same as top 3 | - |
-| T9 | CEO decisions: price + setup fee, domain ownership on leave, grace days (suggest 14), email-only alerts, terms/privacy wording | CEO | waiting on CEO | decided in DECISIONS.md | - |
+| T9 | CEO decisions: DONE except price + setup fee (suggested $99 + $199) | CEO | waiting on CEO | decided in DECISIONS.md | - |
 | T10 | Open question: which picture is "that" in 'Don't make that the first animation but use it for one of the slides' | CEO | waiting on CEO | answered | - |
 | T11 | Polish the generated sites to the $10k bar (org/handoffs/polish-10k.md) | cine-engine (session_01YGYsKC6XTRzHNCdH4pyFdu) | review: fixes 1-9 done and tested, masterpiece pass partly done, rubric not re-run | all 9 fixes pass test-polish; each look >= 4.3 on the QA rubric | qa-reviewer |
