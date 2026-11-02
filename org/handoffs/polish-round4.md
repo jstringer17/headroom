@@ -2,6 +2,24 @@
 Model: opus. Branch claude/inspiring-edison-6s7ude. Start: `git pull origin claude/inspiring-edison-6s7ude`. Report: org/inbox/chief.md (10 lines, newest first) + push. Do not touch hosting/.
 Why a new session: the round-2/3 builder session ran out of room (chief's rule: write this file and stop). Round 3 ended at 7f068a2 (site code), b55c0fb (records).
 
+## SCOPE CHANGE (chief, 2 Nov 21:17, CEO): read this first
+The CEO says round 3 did NOT take the Lifetime inspo (format, form placement, font sizes, call buttons, badges). Round 4 =
+**org/inspiration/lifetime/SPEC.md (measured, with DO decisions) applied to ALL 3 looks**, plus the 4.5 target. Apply
+org/inspiration/kai-stone.md too if it exists when you start (a research note may land). The independent Opus reviewer must
+check the SPEC items ONE BY ONE with screenshots (give it SPEC.md and ask for a DONE / NOT DONE row per item, per look).
+SPEC DO items, short: offer top bar; header logo slot (owner upload, text wordmark fallback), <=5 links, Call + Free estimate
+buttons 48px; H1 Classic bold sans 900 ~56/34px, Cinematic/Editorial serif but heavier/shorter max ~72/40px, who+where+promise;
+sub line + 3 check bullets from the credibility profile; FORM IN THE HERO on desktop in all looks (Cinematic: a right card over
+the first story frame), phone: big button jumping to the form; one primary CTA >= 60px tall + "or call (xxx)" text link;
+badge row under the hero (only owner-typed certifications; manufacturer logos only if the owner uploads them, else styled text);
+phone bottom bar = 2 half buttons Call / Free estimate (today it is 3: Call, Text, Free estimate); sections: credentials,
+services grid with tags, featured project (before/after + scope bullets), what's included, FAQ, service areas, final CTA band,
+full footer. Each look keeps its personality (Cinematic scroll story under the hero, Editorial photo cards, Classic = Lifetime).
+Note: Classic (src/classic.js) already has most of this; compare it to SPEC numbers (H1 is Archivo 800 46/66px today; primary
+CTA 54px; phone bar 3 buttons) and close the gaps. Cinematic and Editorial need the most work (form in hero, header, CTA, badges,
+sections). Keep the tests green and extend test-round2 with SPEC checks (form visible in the first desktop screen in all looks,
+primary CTA >= 60px, phone bar 2 buttons, H1 sizes, <= 5 nav links).
+
 ## Where it stands (read these, nothing else first)
 - Scores, independent Opus qa-reviewer, cold, at 7f068a2: Cinematic 4.43, Editorial 4.38, Classic 4.43; no line < 4; no blockers/majors. Its last section in org/handoffs/polish-10k.md ("Independent QA of 7f068a2") lists the way to 4.5.
 - Tests: fresh clone of 7f068a2, `node sitemaker/test-all.mjs` 13/13 OK (~35 min; run in background). WebKit is NOT installed (round2 prints SKIPPED). Never claim green without a fresh clone run.

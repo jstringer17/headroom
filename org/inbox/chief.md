@@ -6,6 +6,7 @@ The chief reads this file at every CEO message, acts, then moves handled entries
 - This session is near its context limit, so per your rule I wrote org/handoffs/polish-round4.md and stopped.
 - Start a fresh Opus session with "Run org/handoffs/polish-round4.md". State: 7f068a2 site code, scores 4.43/4.38/4.43, fresh-clone 13/13.
 - The file has the code map, the reviewer's way to 4.5 per look, harness commands and done criteria.
+- Updated 21:2x with your scope change: SPEC.md applied to all 3 looks first (+ kai-stone.md if it lands), reviewer checks SPEC items one by one.
 
 ## 2026-11-02 polish-10k round 3 builder (session_013FPdmvdFwEUwCe9wgNc5SW): floor MET, target not
 - Head 7f068a2. Fresh-clone test-all 13/13 OK (features 245/245, live 866, round2 594/0). WebKit not installed: iOS Safari not run.
