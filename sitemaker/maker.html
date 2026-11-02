@@ -3866,11 +3866,15 @@ function credLd(d) {
 }
 
 // Markup helpers (text badges styled by each look). p = class prefix ("" or "ed-"), esc = the look's escaper.
+// Phones show the 4 strongest and a "+N more" button (impeccable critique, Working Memory Rule: 8+ items overload);
+// without JavaScript, and on wider screens, every badge shows.
+const PROOF_KEEP = 4;
 function credProofLis(badges, esc, p = "", icon = "") {
-  return badges.map((b) => {
+  const more = badges.length > PROOF_KEEP + 1 ? `<li class="pb-more"><button type="button" aria-expanded="false">+${badges.length - PROOF_KEEP} more</button></li>` : "";
+  return badges.map((b, i) => {
     const inner = `${icon}<b>${esc(b.label)}</b>${b.sub ? ` <span>${esc(b.sub)}</span>` : ""}`;
-    return `<li class="${p}rv">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
-  }).join("");
+    return `<li class="${p}rv${more && i >= PROOF_KEEP ? " pb-x" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
+  }).join("") + more;
 }
 // Where the other rating sites go in the reviews header: name, stars, count, link when typed.
 function credPlatformLis(d, esc, p = "") {
@@ -3891,7 +3895,13 @@ function mobileBarHtml(d, esc, cls, askLabel) {
 const ACTIONS_JS = `(function(){var r=document.documentElement,fld=function(t){return t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!/^(range|checkbox|radio|button|submit)$/.test(t.type||"")};
 function f(e){if(fld(e.target))r.classList.toggle("kbd",e.type==="focusin")}
 document.addEventListener("focusin",f);document.addEventListener("focusout",f);
-if(window.visualViewport)visualViewport.addEventListener("resize",function(){r.classList.toggle("kbd",visualViewport.height<innerHeight*0.75)})})();`;
+if(window.visualViewport)visualViewport.addEventListener("resize",function(){r.classList.toggle("kbd",visualViewport.height<innerHeight*0.75)});
+document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".pb-more button");if(!b)return;var u=b.closest("ul");u.classList.add("pb-open");[].forEach.call(u.querySelectorAll(".pb-x"),function(x){x.classList.add("in")});b.parentNode.parentNode.removeChild(b.parentNode);u.setAttribute("tabindex","-1");u.focus({preventScroll:true})})})();
+`;
+// Shared rule for the "+N more" proof badges (each look styles the chips themselves).
+const PROOF_MORE_CSS = `ul>li.pb-more{display:none}
+@media (max-width:639px){.js ul:not(.pb-open)>li.pb-x{display:none}.js ul>li.pb-more{display:flex}.pb-more button{min-height:48px;padding:0 18px;border-radius:999px;border:1.5px solid currentColor;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer}}
+ul.pb-open:focus{outline:none}`;
 
 // Sample Site Maker: Cinematic mode.
 // generateCinematic(form, d, deps) builds one scroll-story site as a single
@@ -4081,6 +4091,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .facts a{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;min-height:48px;padding:0 16px;border:1.5px solid rgba(0,0,0,.5);border-radius:999px}
 @media (max-width:639px){.facts ul{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;padding:16px 0}.facts li{align-items:flex-start;flex-wrap:wrap;gap:0 8px;font-size:14px;line-height:1.3}.facts li>span{flex-basis:100%;padding-left:26px}.facts li:has(>a){grid-column:1/-1}.facts li svg{margin-top:1px}}
 .story-trust{flex:1 1 100%;margin:0;font:600 14px/1.4 var(--sans);color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
+.story-where{flex:1 1 100%;margin:0 0 -6px;font:700 14px/1.4 var(--sans);color:var(--hi);text-shadow:0 1px 10px rgba(0,0,0,.65)}
 .plat-list{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .plat-list li{gap:6px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;padding:0 16px;min-height:48px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
 .plat-list a{color:inherit;display:flex;gap:6px;align-items:center;min-height:48px;text-decoration:none}
@@ -4465,7 +4476,7 @@ function generateCinematic(form, d, deps) {
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}
-    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
+    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a><p class="story-where">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
     <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${story.length}</span>
   </div>
 </section>`;
@@ -4611,6 +4622,7 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--ink:${th.ink};--muted:${th.muted}}
 ${ENGINE_CSS}
 ${look && look.css ? look.css : ""}
+${PROOF_MORE_CSS}
 </style>
 </head>
 <body>
@@ -4635,6 +4647,7 @@ ${contact}
 ${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(ENGINE_JS, d)}
+${ACTIONS_JS}
 <\/script>
 ${liveBeacon(d)}</body>
 </html>
@@ -5338,6 +5351,7 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--ed-accent:color-mix(in srgb,${th.accent} ${edAccentPct(th.accent)}%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
+${PROOF_MORE_CSS}
 </style>
 </head>
 <body class="ed">
@@ -6031,6 +6045,7 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
   footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
   .foot-base{grid-column:1/-1}
 }
+${PROOF_MORE_CSS}
 </style>
 </head>
 <body>

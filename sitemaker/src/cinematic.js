@@ -16,7 +16,7 @@
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
 import { rvwList } from "./reviews.js";
-import { mobileBarHtml, ACTIONS_JS } from "./actions.js";
+import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
@@ -186,6 +186,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .facts a{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;min-height:48px;padding:0 16px;border:1.5px solid rgba(0,0,0,.5);border-radius:999px}
 @media (max-width:639px){.facts ul{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;padding:16px 0}.facts li{align-items:flex-start;flex-wrap:wrap;gap:0 8px;font-size:14px;line-height:1.3}.facts li>span{flex-basis:100%;padding-left:26px}.facts li:has(>a){grid-column:1/-1}.facts li svg{margin-top:1px}}
 .story-trust{flex:1 1 100%;margin:0;font:600 14px/1.4 var(--sans);color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
+.story-where{flex:1 1 100%;margin:0 0 -6px;font:700 14px/1.4 var(--sans);color:var(--hi);text-shadow:0 1px 10px rgba(0,0,0,.65)}
 .plat-list{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .plat-list li{gap:6px;border:1.5px solid rgba(255,255,255,.55);border-radius:999px;padding:0 16px;min-height:48px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
 .plat-list a{color:inherit;display:flex;gap:6px;align-items:center;min-height:48px;text-decoration:none}
@@ -570,7 +571,7 @@ export function generateCinematic(form, d, deps) {
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${story.length}" aria-label="Intro">
   <div class="pin">${steps}
-    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
+    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a><p class="story-where">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
     <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${story.length}</span>
   </div>
 </section>`;
@@ -716,6 +717,7 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--ink:${th.ink};--muted:${th.muted}}
 ${ENGINE_CSS}
 ${look && look.css ? look.css : ""}
+${PROOF_MORE_CSS}
 </style>
 </head>
 <body>
@@ -740,6 +742,7 @@ ${contact}
 ${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(ENGINE_JS, d)}
+${ACTIONS_JS}
 </script>
 ${liveBeacon(d)}</body>
 </html>

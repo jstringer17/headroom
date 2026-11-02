@@ -89,6 +89,9 @@ for (const engineName of ["chromium", "webkit"]) {
       ok(job[0] === job[1], `B ${tag}: Ask about this picked "${job[1]}" not "${job[0]}"`);
     }
     if (w < 600) {
+      // proof badges: 4 strongest + "+N more" on phones (impeccable Working Memory Rule); the button reveals every one
+      const pb = await page.evaluate(() => { const b = document.querySelector(".pb-more button"); if (!b) return null; const u = b.closest("ul"); const vis = () => [...u.children].filter((li) => !li.classList.contains("pb-more") && getComputedStyle(li).display !== "none").length; const total = u.children.length - 1, before = vis(); b.click(); return { before, after: vis(), total, btn: !!u.querySelector(".pb-more") }; });
+      ok(pb && pb.before <= 4 && pb.after === pb.total && !pb.btn, `C ${tag}: proof badges on phones ${JSON.stringify(pb)}`);
       // action bar: hidden while a field has focus, never on top of the focused field
       await page.evaluate(() => { const f = document.getElementById("f-name"); scrollTo(0, f.getBoundingClientRect().top + scrollY - innerHeight + 140); }); await page.waitForTimeout(300);
       await page.focus("#f-name"); await page.waitForTimeout(450);

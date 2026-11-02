@@ -19,7 +19,7 @@ import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic, offeredPrices, cineUnit } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
-import { mobileBarHtml, ACTIONS_JS } from "./actions.js";
+import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
 import { credOf, credRatings, credBadges, credTop, credLine, credLd, credProofLis, credPlatformLis } from "./credibility.js";
 import { variantCards, kitVariant, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
@@ -659,6 +659,7 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
   footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
   .foot-base{grid-column:1/-1}
 }
+${PROOF_MORE_CSS}
 </style>
 </head>
 <body>

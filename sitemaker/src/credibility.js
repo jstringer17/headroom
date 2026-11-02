@@ -114,11 +114,15 @@ export function credLd(d) {
 }
 
 // Markup helpers (text badges styled by each look). p = class prefix ("" or "ed-"), esc = the look's escaper.
+// Phones show the 4 strongest and a "+N more" button (impeccable critique, Working Memory Rule: 8+ items overload);
+// without JavaScript, and on wider screens, every badge shows.
+export const PROOF_KEEP = 4;
 export function credProofLis(badges, esc, p = "", icon = "") {
-  return badges.map((b) => {
+  const more = badges.length > PROOF_KEEP + 1 ? `<li class="pb-more"><button type="button" aria-expanded="false">+${badges.length - PROOF_KEEP} more</button></li>` : "";
+  return badges.map((b, i) => {
     const inner = `${icon}<b>${esc(b.label)}</b>${b.sub ? ` <span>${esc(b.sub)}</span>` : ""}`;
-    return `<li class="${p}rv">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
-  }).join("");
+    return `<li class="${p}rv${more && i >= PROOF_KEEP ? " pb-x" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
+  }).join("") + more;
 }
 // Where the other rating sites go in the reviews header: name, stars, count, link when typed.
 export function credPlatformLis(d, esc, p = "") {
