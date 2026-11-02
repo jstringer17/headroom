@@ -2,6 +2,11 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-02 polish round 4 (session_013FPdmvdFwEUwCe9wgNc5SW): handoff written, NOT started
+- This session is near its context limit, so per your rule I wrote org/handoffs/polish-round4.md and stopped.
+- Start a fresh Opus session with "Run org/handoffs/polish-round4.md". State: 7f068a2 site code, scores 4.43/4.38/4.43, fresh-clone 13/13.
+- The file has the code map, the reviewer's way to 4.5 per look, harness commands and done criteria.
+
 ## 2026-11-02 polish-10k round 3 builder (session_013FPdmvdFwEUwCe9wgNc5SW): floor MET, target not
 - Head 7f068a2. Fresh-clone test-all 13/13 OK (features 245/245, live 866, round2 594/0). WebKit not installed: iOS Safari not run.
 - Independent Opus qa-reviewer (cold, 4 passes): Cinematic 4.43, Editorial 4.38, Classic 4.43, no line < 4, no blockers/majors.
