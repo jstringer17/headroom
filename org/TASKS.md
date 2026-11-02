@@ -1,8 +1,12 @@
 | id | task | owner | status | done-criteria | review |
 |---|---|---|---|---|---|
-| T1 | Build Sample Site Maker (Step 1) | org:builder | done | plan.md Step 1 criteria 1-6 | qa-reviewer PASS 1-5. Artifact https://claude.ai/artifact/73v4S1BSpREDeXxZM8PxJQ ; tests: node sitemaker/test.mjs |
-| T2 | Share Lead Desk with partner | CEO | waiting on CEO | partner is Editor | - |
-| T3 | Add GOOGLE_PLACES_API_KEY to env | CEO | waiting on CEO | env var set | - |
-| T4a | cine-engine (scroll engine + tools) | session_01YGYsKC6XTRzHNCdH4pyFdu | review | plan.md Step 1b checks | qa-reviewer |
-| T4b | cine-art (look, placeholder art, Higgsfield kit) | session_01U2n9BtAeNi8Dr5AAxizSnZ | review | plan.md Step 1b checks | qa-reviewer |
-| T4c | cine-qa (scroll capture + rubric) | session_01VzHNC4CtX1HpfK9nPKtQxo | working | rubric avg >= 4.3, no line < 4 | CEO final |
+| T1 | Sample Site Maker (Cinematic default, Editorial, Classic; reviews; Everything we do; services checkboxes) | cine-engine session_01YGYsKC6XTRzHNCdH4pyFdu | done, live v19 | tests green, live copy tested | chief of staff tested live |
+| T2 | Pictures: roofing, fencing, pressure, 6 variations each, 116 in library | CEO + chief | done, live | all variations load, no console errors | tested live |
+| T3 | Backend: host-core (hosting, forms, SEO) | session_013FPdmwi4C8SotBnwLBgPvc | done | npm test, e2e-local 9/9 | QA1, QA2 |
+| T4 | Backend: owner-admin | session_013FPdmyMpb5v5Hq5DHWTX1V | done (59bf1b4) | atomic publish, media host check | QA2 PASS |
+| T5 | Backend: billing + desk | session_013FPdmxdDGUJn2NpbdS1buf | done (1a41f69), needs QA3 | N1-N3 fixed, Stripe API version pinned | QA3 pending |
+| T6 | Open 5 accounts (Cloudflare, Stripe test, Resend, Places, domain) | Mac session session_013FPdmwbLdMfXvspZb6UcJx (env agency) + CEO types secrets | working: Cloudflare done, token waiting for CEO | key block delivered, nothing bought without CEO yes | CEO |
+| T7 | Test deploy of one site on test domain, Stripe test mode | chief of staff | waiting on T5 QA3 + T6 | e2e on real Cloudflare passes, QA | qa-reviewer |
+| T8 | Other 16 trades (pictures + variations) | chief | waiting on CEO go (HVAC first) | same as top 3 | - |
+| T9 | CEO decisions: price + setup fee, domain ownership on leave, grace days (suggest 14), email-only alerts, terms/privacy wording | CEO | waiting on CEO | decided in DECISIONS.md | - |
+| T10 | Open question: which picture is "that" in 'Don't make that the first animation but use it for one of the slides' | CEO | waiting on CEO | answered | - |
