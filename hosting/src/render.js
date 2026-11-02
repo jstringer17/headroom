@@ -4,6 +4,7 @@ import { generateSite, esc } from "../../sitemaker/src/generate.js";
 import { getSite, logEvent } from "./db.js";
 import { siteReviews, googleCreditHtml } from "./reviews/index.js";
 import { sitemapXml } from "./seo.js";
+import { LIBRARY_INDEX, LIBRARY_SIZES } from "./library-index.js";
 
 export const MAX_BYTES = 6 * 1024 * 1024;
 export const pageKey = (id) => `sites/${id}/index.html`;
@@ -11,6 +12,34 @@ export const sitemapKey = (id) => `sites/${id}/sitemap.xml`;
 
 // Words that must never be on a live page (also checked after decoding data: URIs).
 export const BANNED = ["Sample review", "Sample picture", "This is a sample site", "Sample site", "Sample project", "Phone number here"];
+
+// Demo sites only (CEO rule: library pictures are sample-site only): form.library === true or form.hosting.demo === true.
+export const isDemo = (form) => !!(form && (form.library === true || (form.hosting && form.hosting.demo === true)));
+
+// The trade's library pictures as https URLs on this site's own domain (served from R2 by GET /library/*).
+// Every slot of every variation is listed; the generator picks the ones the chosen variation and "Everything we do" need.
+export function libraryImages(trade, domain) {
+  const idx = LIBRARY_INDEX[trade];
+  if (!idx || !domain) return {};
+  const out = {};
+  for (const [slot, file] of Object.entries(idx)) out[slot] = `https://${domain}/library/${file}`;
+  return out;
+}
+
+// Library <img> tags: add their real width/height, and lazy loading for all but the first picture on the page.
+export function tuneLibraryImgs(html) {
+  let n = 0;
+  return html.replace(/<img\b[^>]*>/g, (tag) => {
+    n++;
+    const m = tag.match(/src="https:\/\/[^/"]+\/library\/([^"]+)"/);
+    if (!m) return tag;
+    let t = tag;
+    const size = LIBRARY_SIZES[m[1]];
+    if (size && !/\swidth=/.test(t)) t = t.replace(/^<img/, `<img width="${size[0]}" height="${size[1]}"`);
+    if (n > 1 && !/\sloading=/.test(t) && !/fetchpriority=/.test(t)) t = t.replace(/^<img/, '<img loading="lazy" decoding="async"');
+    return t;
+  });
+}
 
 // The form the generator sees for a live site. sr = siteReviews(env, id) from owner-admin's reviews module:
 // { google: {rating,count,url}|null, reviewList: [{name,town,text,stars,source}] } (shown + fresh only; Google first).
@@ -25,6 +54,15 @@ export function liveForm(site, sr, env) {
   if (list.length) form.reviewList = list.map((r) => ({ name: String(r.name || "").slice(0, 40), town: r.source === "google" ? "on Google" : "", text: r.text, stars: r.stars }));
   const google = sr && sr.google;
   if (google && google.url) form.reviewLink = google.url;
+  // Pictures: the owner's always win. A demo site fills the empty slots from the library; a customer site keeps the drawing.
+  if (isDemo(site.form)) {
+    const lib = libraryImages(form.trade, site.domain);
+    if (Object.keys(lib).length) {
+      form.cine = form.cine && typeof form.cine === "object" ? form.cine : {};
+      form.cine.images = { ...lib, ...(form.cine.images || {}) };
+    }
+  }
+  delete form.library;
   form.live = {
     siteId: site.id,
     leadUrl: "/api/lead",
@@ -48,7 +86,7 @@ export async function renderForm(env, siteId, form, { render = generateSite } = 
   const site = await getSite(env, siteId);
   if (!site) throw new Error("no such site");
   const sr = await siteReviews(env, site.id);
-  return addGoogleCredit(render(liveForm(form ? { ...site, form } : site, sr, env)), sr);
+  return tuneLibraryImgs(addGoogleCredit(render(liveForm(form ? { ...site, form } : site, sr, env)), sr));
 }
 
 const decoded = (html) => html.replace(/%([0-9A-Fa-f]{2})/g, (m, h) => String.fromCharCode(parseInt(h, 16)));
@@ -72,7 +110,7 @@ export async function publishSite(env, siteId, { render = generateSite } = {}) {
   let html = "", problems;
   try {
     const sr = await siteReviews(env, site.id);
-    html = addGoogleCredit(render(liveForm(site, sr, env)), sr);
+    html = tuneLibraryImgs(addGoogleCredit(render(liveForm(site, sr, env)), sr));
     problems = checkHtml(html);
   } catch (e) {
     problems = [`render failed: ${e && e.message}`];

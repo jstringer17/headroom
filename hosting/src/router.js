@@ -4,7 +4,7 @@ import { getSiteByHost, cleanHost, logEvent } from "./db.js";
 import { pageKey, sitemapKey, publishSite } from "./render.js";
 import { handleLead, sweepHits } from "./leads.js";
 import { robotsTxt, sitemapXml } from "./seo.js";
-import { serveMedia } from "./media.js";
+import { serveMedia, serveLibrary } from "./media.js";
 import { notActivePage, notFoundPage, privacyPage } from "./notactive.js";
 
 const PAGE_HEADERS = {
@@ -72,6 +72,7 @@ export function createApp(mods = {}) {
     }
     if (path === "/privacy") return privacyPage(site);
     if (path.startsWith("/media/")) return serveMedia(request, env, site);
+    if (path.startsWith("/library/")) return serveLibrary(request, env);
     return notFoundPage(true);
   }
 

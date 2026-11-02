@@ -230,7 +230,7 @@ export function generateSite(form) {
   // A file that ships (Download, Copy: form.clean) has quiet drawings without the "Sample picture: make in Higgsfield" note.
   const cleanArt = (a, b, c, o) => placeholderArt(a, b, c, { ...(o || {}), note: false, quiet: true });
   const shipArt = live ? liveArt : form && form.clean ? cleanArt : null;
-  if (form && (form.cinematic || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, shipArt ? { ...CINE, placeholderArt: shipArt } : CINE);
+  if (form && (form.cinematic || form.look === "cinematic" || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, shipArt ? { ...CINE, placeholderArt: shipArt } : CINE);
   const phArt = shipArt || placeholderArt;
   const t = d.trade;
   const th = THEMES[d.themeKey];

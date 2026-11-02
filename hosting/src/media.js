@@ -21,3 +21,18 @@ export async function serveMedia(request, env, site) {
   if (request.method === "HEAD") return new Response(null, { headers: h });
   return new Response(obj.body, { headers: h });
 }
+
+// Built-in library pictures for demo sites: GET /library/<trade>/[<variant>/]<slot>.<ext> -> R2 library/<same path>.
+export async function serveLibrary(request, env) {
+  const url = new URL(request.url);
+  let file = "";
+  try { file = decodeURIComponent(url.pathname.slice("/library/".length)); } catch { return new Response("Not found", { status: 404 }); }
+  const ext = (file.match(/\.([a-z0-9]+)$/i) || [])[1];
+  if (!/^[a-z0-9-]+\/([a-z0-9-]+\/)?[a-z0-9-]+\.(webp|jpe?g|png)$/i.test(file) || !ext || !TYPES[ext.toLowerCase()]) return new Response("Not found", { status: 404 });
+  const obj = await env.R2.get(`library/${file}`);
+  if (!obj) return new Response("Not found", { status: 404 });
+  const h = new Headers({ "content-type": TYPES[ext.toLowerCase()], "cache-control": "public, max-age=2592000", "x-content-type-options": "nosniff" });
+  if (obj.httpEtag) h.set("etag", obj.httpEtag);
+  if (request.method === "HEAD") return new Response(null, { headers: h });
+  return new Response(obj.body, { headers: h });
+}

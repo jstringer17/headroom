@@ -370,3 +370,50 @@ describe("scripts", () => {
     expect((await env.DB.prepare("SELECT COUNT(*) AS n FROM reviews WHERE site_id = 'ns1' AND source = 'manual'").first()).n).toBe(1);
   });
 });
+
+describe("library pictures (demo sites only)", () => {
+  const DEMO = { company: "Demo Fence", trade: "fencing", city: "Austin", phone: "5125551234", look: "cinematic", library: true, cine: { variant: "aluminum" } };
+
+  it("library-index.js matches sitemaker/library", async () => {
+    const { scanLibrary } = await import("../scripts/upload-library.mjs");
+    const { LIBRARY_INDEX, LIBRARY_SIZES } = await import("../src/library-index.js");
+    expect(LIBRARY_INDEX).toEqual(scanLibrary());
+    for (const t of Object.values(LIBRARY_INDEX)) for (const f of Object.values(t)) expect(Array.isArray(LIBRARY_SIZES[f])).toBe(true);
+  });
+
+  it("a demo site uses library URLs (variation + Everything we do), small page, sized and lazy; owner pictures win", async () => {
+    const own = "https://demo.test/media/mine.jpg";
+    const id = await makeSite({ ...DEMO, cine: { variant: "aluminum", images: { "aluminum/s2": own } } }, "demo.test");
+    const html = await (await env.R2.get(pageKey(id))).text();
+    expect(html).toContain("https://demo.test/library/fencing/aluminum/s1.webp");
+    expect(html).toContain("https://demo.test/library/fencing/vinyl/after.webp"); // another variation's card
+    expect(html).toContain(own);
+    expect(html).not.toContain("library/fencing/aluminum/s2.webp");
+    expect(/src="data:image\/(webp|jpeg|png)/.test(html)).toBe(false);
+    expect(html.length < 1.5 * 1024 * 1024).toBe(true);
+    const libImgs = html.match(/<img\b[^>]*\/library\/[^>]*>/g);
+    expect(libImgs.every((t) => /width="1600" height="893"/.test(t))).toBe(true);
+    expect(libImgs.slice(1).filter((t) => /loading="lazy"|fetchpriority/.test(t)).length).toBe(libImgs.length - 1);
+    expect(html).toContain('class="story"'); // look:"cinematic" alone gives the cinematic site
+  });
+
+  it("a customer site never gets library pictures (drawing instead)", async () => {
+    const { library, ...cust } = DEMO;
+    const id = await makeSite(cust, "cust.test");
+    const html = await (await env.R2.get(pageKey(id))).text();
+    expect(html).not.toContain("/library/");
+    expect(library).toBe(true);
+  });
+
+  it("serves /library/* from R2 with long cache, rejects bad paths", async () => {
+    await makeSite(DEMO, "demo.test");
+    await env.R2.put("library/fencing/aluminum/s1.webp", new Uint8Array([82, 73, 70, 70]), { httpMetadata: { contentType: "image/webp" } });
+    const r = await get("https://demo.test/library/fencing/aluminum/s1.webp");
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toBe("image/webp");
+    expect(r.headers.get("cache-control")).toContain("max-age=2592000");
+    expect((await get("https://demo.test/library/fencing/nope.webp")).status).toBe(404);
+    expect((await get("https://demo.test/library/..%2Fsites%2Fx%2Findex.html")).status).toBe(404);
+    expect((await get("https://demo.test/library/fencing/a/b/c.webp")).status).toBe(404);
+  });
+});
