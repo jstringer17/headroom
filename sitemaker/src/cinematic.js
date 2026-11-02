@@ -180,7 +180,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
    pinned screen at ~1.3x, the subject is framed per slot (--fp), and the headline and buttons sit below it on dark. */
 @media (max-width:759px){
   .cine-motion .pin{background:var(--dark)}
-  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;overflow:hidden}
+  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;max-height:440px;overflow:hidden}
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
   .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
   .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}

@@ -97,7 +97,7 @@ export function generateClassic(form, d, o) {
     <div class="cl-hero-text">
       <p class="cl-pill">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>
       <h1 style="${clH1(h1Text)}">${promise ? clAccent(h1Text, promise.accent) : esc(h1Text)}</h1>
-      <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
+      <p class="hero-sub"><span class="cl-sub-txt">${esc(t.sub)} ${name} serves ${areaPhrase}.</span>${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
       <ul class="cl-checks">${checks.slice(0, 3).map((x) => `<li>${clIcon(CL_CHECK, 18)}<span>${x}</span></li>`).join("")}</ul>
       <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line cl-to-form" href="#ask">${askLabel}</a></div>
     </div>
@@ -110,7 +110,8 @@ export function generateClassic(form, d, o) {
   const proof = badges.length ? `<section class="cl-proof" id="proof" aria-label="Why people trust us"><div class="wrap"><ul>${badges.slice(0, 5).map((b, i) => `<li class="rv${i >= 4 ? " cl-p5" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">` : ""}<b>${esc(b.label)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}${b.url ? "</a>" : ""}</li>`).join("")}</ul></div></section>` : "";
 
   // 3b. Phones: one full-width photo of finished work between the proof strip and the cards (real pictures only).
-  const bandItem = items.find((x) => safeImage(imgs[x.after]));
+  // never the picture the hero or the picker opens on
+  const bandItem = items.slice(1).find((x) => safeImage(imgs[x.after]) && imgs[x.after] !== hero);
   const photoBand = bandItem ? `<figure class="cl-photo-band"><img src="${esc(imgs[bandItem.after])}" alt="${esc(bandItem.label)}" loading="lazy" decoding="async"><figcaption>${esc(bandItem.label)}</figcaption></figure>` : "";
   // 4. Service cards with a small tag.
   const services = `<section class="sec" id="services"><div class="wrap">
@@ -281,7 +282,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-photo-band img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .cl-photo-band figcaption{position:absolute;left:12px;bottom:12px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
 @media (max-width:1023px){.cl-photo-band{display:block}}
-@media (max-width:639px){.has-offer .cl-offer-call{display:none}}
+@media (max-width:639px){.has-offer .cl-offer-call{display:none}.cl-sub-txt{display:none}.hero-sub b{margin-top:0}.cl-hero-text .cl-to-form{display:none}}
 .cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
@@ -439,7 +440,7 @@ footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
   .cl-cards h3{font-size:17px}
   .cl-cards p{display:none}
   .cl-more{min-height:44px;font-size:15px}
-  #how{display:none} /* phones: the FAQ answers "How do I get started?"; the page stays short */
+  #how,#project{display:none} /* phones: the FAQ answers "How do I get started?" and the picker already shows a before/after; the page stays short */
   .cl-feat-pics figure{aspect-ratio:1/1}
   .sec{padding-block:52px}
 }

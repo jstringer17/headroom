@@ -3666,7 +3666,8 @@ function pickerHtml(o) {
     const pic = it.before
       ? `<div class="vp-ba" data-pos="0" style="--pos:0">${o.img(it.after, `${it.label}, after`, `class="vp-after" ${lazy}`, tags[1])}${o.img(it.before, `${it.label}, before`, `class="vp-before" ${lazy}`, tags[0])}<span class="vp-tag vp-tag-b" aria-hidden="true">${vpEsc(tags[0])}</span><span class="vp-tag vp-tag-a" aria-hidden="true">${vpEsc(tags[1])}</span><div class="vp-handle" role="slider" tabindex="-1" aria-hidden="true" aria-label="${vpEsc(it.label)}: ${vpEsc(tags[0]).toLowerCase()} and ${vpEsc(tags[1]).toLowerCase()}" aria-orientation="horizontal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-valuetext="0 percent"><span class="vp-knob">${VP_ARROWS}</span></div></div>`
       : `<div class="vp-ba vp-one">${o.img(it.after, it.label, `class="vp-after" ${lazy}`, "")}</div>`;
-    return `<div class="vp-panel" role="tabpanel" id="vp-p-${i}" aria-labelledby="vp-t-${i}" data-i="${i}">
+    const own = { metal: "50% 12%", flat: "50% 40%", slat: "50% 50%" }[it.key];
+    return `<div class="vp-panel" role="tabpanel" id="vp-p-${i}" aria-labelledby="vp-t-${i}" data-i="${i}"${own ? ` style="--fp-m:${own};--fp-d:${own}"` : ""}>
     <div class="vp-stage">${pic}<button type="button" class="vp-nav vp-prev" aria-label="Previous: ${vpEsc(items[(i - 1 + items.length) % items.length].label)}">${VP_CHEV("M15 6l-6 6 6 6")}</button><button type="button" class="vp-nav vp-next" aria-label="Next: ${vpEsc(items[(i + 1) % items.length].label)}">${VP_CHEV("M9 6l6 6-6 6")}</button><span class="vp-count" aria-hidden="true">${i + 1} / ${items.length}</span></div>
     <div class="vp-info"><h3 class="vp-name">${vpEsc(it.label)}</h3>${it.note ? `<p class="vp-note">${vpEsc(it.note)}</p>` : ""}${price ? `<p class="vp-price"><span class="vp-pr"><b>${vpEsc(price)}</b> ${vpEsc(o.unit || "")}</span><span>Estimate from the owner. The exact price comes after we look.</span></p>` : ""}
       <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label, it.key))}">Ask about this</a></div></div>
@@ -4125,7 +4126,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
    pinned screen at ~1.3x, the subject is framed per slot (--fp), and the headline and buttons sit below it on dark. */
 @media (max-width:759px){
   .cine-motion .pin{background:var(--dark)}
-  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;overflow:hidden}
+  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;max-height:440px;overflow:hidden}
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
   .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
   .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
@@ -4850,7 +4851,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:20px}
 .ed-sil{position:relative;aspect-ratio:4/3;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
 .ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
-.ed-sil img[data-real]{object-position:60% 38%}
+.ed-sil img[data-real]{object-position:60% 46%}
 .ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real],.ed-how-pic img[data-real]{object-position:72% 45%}
 .ed-beat img[data-real]{object-position:85% 50%}
 .ed-cap{position:absolute;left:12px;bottom:12px;z-index:2;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:600 11px/1 var(--ed-sans);letter-spacing:.1em;text-transform:uppercase}
@@ -5615,7 +5616,7 @@ function generateClassic(form, d, o) {
     <div class="cl-hero-text">
       <p class="cl-pill">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>
       <h1 style="${clH1(h1Text)}">${promise ? clAccent(h1Text, promise.accent) : esc(h1Text)}</h1>
-      <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
+      <p class="hero-sub"><span class="cl-sub-txt">${esc(t.sub)} ${name} serves ${areaPhrase}.</span>${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
       <ul class="cl-checks">${checks.slice(0, 3).map((x) => `<li>${clIcon(CL_CHECK, 18)}<span>${x}</span></li>`).join("")}</ul>
       <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line cl-to-form" href="#ask">${askLabel}</a></div>
     </div>
@@ -5628,7 +5629,8 @@ function generateClassic(form, d, o) {
   const proof = badges.length ? `<section class="cl-proof" id="proof" aria-label="Why people trust us"><div class="wrap"><ul>${badges.slice(0, 5).map((b, i) => `<li class="rv${i >= 4 ? " cl-p5" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">` : ""}<b>${esc(b.label)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}${b.url ? "</a>" : ""}</li>`).join("")}</ul></div></section>` : "";
 
   // 3b. Phones: one full-width photo of finished work between the proof strip and the cards (real pictures only).
-  const bandItem = items.find((x) => safeImage(imgs[x.after]));
+  // never the picture the hero or the picker opens on
+  const bandItem = items.slice(1).find((x) => safeImage(imgs[x.after]) && imgs[x.after] !== hero);
   const photoBand = bandItem ? `<figure class="cl-photo-band"><img src="${esc(imgs[bandItem.after])}" alt="${esc(bandItem.label)}" loading="lazy" decoding="async"><figcaption>${esc(bandItem.label)}</figcaption></figure>` : "";
   // 4. Service cards with a small tag.
   const services = `<section class="sec" id="services"><div class="wrap">
@@ -5799,7 +5801,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-photo-band img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .cl-photo-band figcaption{position:absolute;left:12px;bottom:12px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
 @media (max-width:1023px){.cl-photo-band{display:block}}
-@media (max-width:639px){.has-offer .cl-offer-call{display:none}}
+@media (max-width:639px){.has-offer .cl-offer-call{display:none}.cl-sub-txt{display:none}.hero-sub b{margin-top:0}.cl-hero-text .cl-to-form{display:none}}
 .cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
@@ -5957,7 +5959,7 @@ footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
   .cl-cards h3{font-size:17px}
   .cl-cards p{display:none}
   .cl-more{min-height:44px;font-size:15px}
-  #how{display:none} /* phones: the FAQ answers "How do I get started?"; the page stays short */
+  #how,#project{display:none} /* phones: the FAQ answers "How do I get started?" and the picker already shows a before/after; the page stays short */
   .cl-feat-pics figure{aspect-ratio:1/1}
   .sec{padding-block:52px}
 }
