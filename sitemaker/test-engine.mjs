@@ -250,7 +250,7 @@ for (const trade of TRADE_ORDER) {
     const r = await page.evaluate((look) => {
       const cs = (e, k) => (e ? getComputedStyle(e)[k] : ""), q = (s) => document.querySelector(s);
       if (look === "editorial") return { btn: cs(q(".ed-hero .ed-btn"), "backgroundColor"), ink: cs(q(".ed-hero .ed-btn"), "color"), em: cs(q(".ed-sec h2 em"), "color"), paper: cs(document.body, "backgroundColor"), dark: cs(q("#services"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
-      return { btn: cs(q(".btn-accent"), "backgroundColor"), ink: cs(q(".btn-accent"), "color"), em: cs(q("#styles h2 em") || q("h2 em"), "color"), paper: cs(document.body, "backgroundColor"), dark: cs(q("#contact"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
+      return { btn: cs(q(".btn-accent"), "backgroundColor"), ink: cs(q(".btn-accent"), "color"), em: cs(q("#styles h2 em") || q("h2 em"), "color"), paper: (() => { for (let e = q("#styles h2 em") || q("h2 em"); e; e = e.parentElement) { const b = getComputedStyle(e).backgroundColor; if (b && !/rgba\(0, 0, 0, 0\)|transparent/.test(b)) return b; } return cs(document.body, "backgroundColor"); })(), dark: cs(q("#contact"), "backgroundColor"), hi: cs(q("#contact h2 em"), "color") };
     }, look);
     await page.close();
     return r;
@@ -262,7 +262,7 @@ for (const trade of TRADE_ORDER) {
       const tag = `${trade}/${look}/${theme}`;
       seen.add(r.btn); darks.add(r.dark);
       ok(cr(r.ink, r.btn) >= 4.5, `colors ${tag}: button text contrast ${cr(r.ink, r.btn).toFixed(2)} < 4.5`);
-      ok(cr(r.em, r.paper) >= 4.5, `colors ${tag}: accent word on paper ${cr(r.em, r.paper).toFixed(2)} < 4.5`);
+      ok(cr(r.em, r.paper) >= 4.5, `colors ${tag}: accent word on its section ${cr(r.em, r.paper).toFixed(2)} < 4.5`);
       ok(cr(r.hi, r.dark) >= 4.5, `colors ${tag}: accent on dark ${cr(r.hi, r.dark).toFixed(2)} < 4.5`);
     }
     ok(seen.size === 4, `colors ${trade}/${look}: the 4 swatches give ${seen.size} different button colors`);

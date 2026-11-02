@@ -133,7 +133,7 @@ for (const t of TRADES) for (const look of ["cinematic", "editorial", "classic"]
   await page.waitForFunction((n) => document.querySelectorAll("#offer-box input:checked").length === n, vs.length, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1200);
   ok(await page.isVisible("#offer-wrap") && (await page.$$eval("#offer-box input", (e) => e.length)) === vs.length && (await page.$$eval("#offer-box input:checked", (e) => e.length)) === vs.length, `${t}/${look}: Services we offer is not shown with every variation ticked`);
-  const count = (h) => look === "cinematic" ? (h.match(/class="pk-panel"/g) || []).length : look === "editorial" ? (h.match(/class="ed-chip"/g) || []).length : (h.match(/class="all-thumb"/g) || []).length;
+  const count = (h) => look === "cinematic" ? (h.match(/class="pk-panel"/g) || []).length : look === "editorial" ? (h.match(/class="ed-chip"/g) || []).length : (h.match(/class="vp-chip"/g) || []).length;
   let doc = await page.$eval("#frame", (f) => f.srcdoc);
   ok(doc.includes('id="styles"') && !doc.includes('id="all"') && count(doc) === vs.length, `${t}/${look}: the style picker should list all ${vs.length} variations, found ${count(doc)}`);
   for (const c of cards) ok(doc.includes(c.label.replace(/&/g, "&amp;")) || doc.includes(c.label), `${t}/${look}: "${c.label}" is missing from Everything we do`);

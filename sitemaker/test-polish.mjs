@@ -45,7 +45,7 @@ for (const look of ["cinematic", "editorial", "classic"]) for (const trade of ["
   const html = await maker(375, async (p) => { await pick(p, trade, look); return srcdoc(p); });
   const n = CINE_KIT[trade].variants.length;
   await site(html, 375, async (page, errs) => {
-    const chips = look === "cinematic" ? "#styles [role=tab]" : look === "editorial" ? "#styles [role=tab]" : "#styles .all-list li";
+    const chips = look === "cinematic" ? "#styles [role=tab]" : look === "editorial" ? "#styles [role=tab]" : "#styles [role=tab]";
     ok((await page.$$eval(chips, (e) => e.length)) === n, `${trade}/${look}: the style picker should list all ${n} variations`);
     ok(!(await page.$("#before-after")) && !(await page.$("#all")), `${trade}/${look}: the old separate before/after or Everything we do section is still there`);
     if (look === "classic") return;

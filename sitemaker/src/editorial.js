@@ -225,7 +225,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-trust3{margin:14px 0 0;font:600 14px/1.4 var(--ed-sans);color:var(--ed-muted)}
 .ed-proof-sec{padding-block:0 8px}
 .ed-proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.ed-proof li{border:1.5px solid rgba(22,20,18,.45);border-radius:999px;background:var(--ed-paper);min-height:48px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans);color:var(--ed-ink)}
+.ed-proof li{border:1.5px solid rgba(22,20,18,.45);border-radius:999px;background:var(--ed-paper);min-height:40px;gap:6px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans);color:var(--ed-ink)}
 .ed-proof b{font-weight:700}.ed-proof span{font-weight:500;color:var(--ed-muted)}
 .ed-proof a,.ed-plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
 .ed-plat-list{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
@@ -541,10 +541,11 @@ export function generateEditorial(form, d, deps) {
 
   // Trust strip: only facts the owner ticked or typed
   const facts = [];
-  if (d.insured) facts.push(["insured", "Insured", "Licensed and insured."]);
+  const inProof = credBadges(d).length > 0; // years and insured already sit in the proof chips: the strip shows the other promises
+  if (d.insured && !inProof) facts.push(["insured", "Insured", "Licensed and insured."]);
   if (d.freeEstimates) facts.push(["estimate", "Free estimates", "We look at the job and tell you the price first."]);
   if (d.emergency) facts.push(["hours", "Open 24/7", "Call any hour for emergencies."]);
-  if (d.years) facts.push(["years", `${d.years} year${d.years === 1 ? "" : "s"}`, "In business."]);
+  if (d.years && !inProof) facts.push(["years", `${d.years} year${d.years === 1 ? "" : "s"}`, "In business."]);
   // The rating has its own block below, so it is not repeated here.
   if (area) facts.push(["area", "Service area", `${area} and nearby towns.`]);
   // Fewer than three real facts: add honest generic cells (the same promises the rest of the page makes).
