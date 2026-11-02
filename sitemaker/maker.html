@@ -130,6 +130,9 @@ details.lead[open]{display:grid;gap:10px}
     <label class="field" for="city"><span>Town</span>
       <input type="text" id="city" name="city" placeholder="Like: Tulsa, OK"></label>
 
+    <label class="field" for="areas"><span>Other towns you serve <span class="req">(optional)</span></span>
+      <input type="text" id="areas" name="areas" placeholder="Like: Jenks, Bixby, Owasso"></label>
+
     <label class="field" for="phone"><span>Phone</span>
       <input type="tel" id="phone" name="phone" placeholder="Like: (918) 555-0100"></label>
     <p class="hint bad" id="phone-warn" hidden>That phone number needs 10 digits (add + first for another country). The site leaves the call button out until it is fixed.</p>
@@ -227,6 +230,17 @@ details.lead[open]{display:grid;gap:10px}
         <button class="btn" type="button" id="hero-clear">Remove picture</button>
       </div>
       <p class="status" id="hero-status" aria-live="polite"></p>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Logo <span class="req">(optional)</span></legend>
+      <p class="hint">Shows in the header and footer. Leave empty to show the company name in the look's own type.</p>
+      <label class="btn file-btn" for="logo-file">Upload a logo<input type="file" id="logo-file" accept="image/jpeg,image/png,image/webp"></label>
+      <div class="hero-pick" id="logo-pick" hidden>
+        <img id="logo-thumb" alt="Chosen logo">
+        <button class="btn" type="button" id="logo-clear">Remove logo</button>
+      </div>
+      <p class="status" id="logo-status" aria-live="polite"></p>
     </fieldset>
 
     <div class="group" id="cine-fields" hidden>
@@ -5975,7 +5989,7 @@ const clAccent = (text, word) => { const i = word ? text.indexOf(word) : -1; ret
 // A tag for a service card from its own words (no claims: what kind of job it is).
 const clTag = (n, d) => ltTag(n, d);
 // Headline size that keeps the H1 to 3 lines or fewer (Archivo 800 is ~0.56em per character).
-const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.max(34, Math.min(40, Math.floor((3 * 335) / (n * 0.6))))}px;--h1d:${Math.max(56, Math.min(76, Math.floor((3 * 600) / (n * 0.62))))}px`; };
+const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.max(30, Math.min(40, Math.floor((3 * 335) / (n * 0.7))))}px;--h1d:${Math.max(56, Math.min(76, Math.floor((3 * 600) / (n * 0.62))))}px`; };
 
 // form, d = normalize(form) (+ live), o = { phArt, CINE }
 function generateClassic(form, d, o) {
@@ -6586,6 +6600,7 @@ const PICTURE_LIBRARY = {"fencing":{"after":"data:image/webp;base64,UklGRuqcAwBX
   let lastHtml = "";
   let downloads = null;
   let heroData = "";
+  let logoData = "";
   const hasCine = typeof CINE_KIT !== "undefined";
   const cineImages = {}; // trade -> slotId -> picture the user added (upload or link)
   // Built-in pictures per trade (sitemaker/library). PICTURE_INDEX lists them; the pictures are either
@@ -6819,6 +6834,8 @@ const PICTURE_LIBRARY = {"fencing":{"after":"data:image/webp;base64,UklGRuqcAwBX
       company: $("company").value,
       trade: tradeSel.value,
       city: $("city").value,
+      areas: $("areas").value,
+      logo: logoData,
       phone: $("phone").value,
       rating: $("rating").value,
       reviews: $("reviews").value,
@@ -7027,6 +7044,28 @@ const PICTURE_LIBRARY = {"fencing":{"after":"data:image/webp;base64,UklGRuqcAwBX
     }
     return canvas.toDataURL("image/jpeg", 0.5);
   }
+  // Logo: kept as PNG (transparency), at most 480 px wide.
+  function logoSay(msg, bad) { const s = $("logo-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); }
+  $("logo-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { logoSay("Pick a PNG, JPG, or WebP logo.", true); return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(480, img.naturalWidth), c = document.createElement("canvas");
+      c.width = w; c.height = Math.max(1, Math.round(img.naturalHeight * w / img.naturalWidth));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      logoData = c.toDataURL("image/png");
+      URL.revokeObjectURL(url); e.target.value = "";
+      $("logo-pick").hidden = false; $("logo-thumb").src = logoData;
+      logoSay("Logo added. It is saved inside the download.");
+      render();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); logoSay("Could not open that logo. Try a PNG.", true); };
+    img.src = url;
+  });
+  $("logo-clear").addEventListener("click", () => { logoData = ""; $("logo-pick").hidden = true; $("logo-thumb").removeAttribute("src"); logoSay(""); render(); });
   $("hero-file").addEventListener("change", (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
