@@ -1,4 +1,4 @@
-import { VARIANT_NOTES } from "./variants.js";
+import { VARIANT_NOTES, variantCards } from "./variants.js";
 // The one "Pick your ..." section, shared by all three looks (CEO round 2, A and B).
 // Every offered variation of the trade is a chip; the open one shows a big picture, one line,
 // the owner's price range for it (only if typed), [Compare before and after] (the page's ONLY
@@ -14,6 +14,15 @@ const VP_TITLES = {
   landscaping: ["Pick your ", "yard", "."], remodeling: ["Pick your ", "room", "."], garage: ["Pick your ", "door", "."],
 };
 export function pickerTitle(tradeKey) { return VP_TITLES[tradeKey] || ["Pick your ", "style", "."]; }
+// The heading words and the one-line hint, for one item or several. Escaped HTML.
+export function pickerHead(tradeKey, items) {
+  const [a0, em, z0] = pickerTitle(tradeKey);
+  const solo = items.length === 1, word = em === "wash" ? "clean" : em;
+  const [a, z] = solo ? ["Your ", ", before and after."] : [a0, z0];
+  const h2 = `${vpEsc(a)}<em>${vpEsc(solo ? word : em)}</em>${vpEsc(z)}`;
+  const lede = solo ? "Tap Compare, then drag the line across the picture." : items.some((x) => x.before) ? "Tap one to see it. Then compare the before and after." : "Tap one to see it.";
+  return { h2, lede };
+}
 
 const vpWords = (s) => new Set(String(s).toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !["and", "the", "only", "look", "new"].includes(w)).map((w) => w.replace(/(es|s)$/, "")));
 // The owner's price range for one variation: the estimator option that shares a word with its name,
@@ -32,15 +41,20 @@ export function vpPrice(prices, label, usd) {
 // The chips: [{ key, label, note, after, before|null }]
 export function pickerItems(fullKit, kit, cards, tradeKey) {
   const notes = (typeof VARIANT_NOTES !== "undefined" && VARIANT_NOTES[tradeKey]) || {};
-  if (cards && cards.length >= 2) {
-    const first = cards.findIndex((c) => c.key === kit.variantKey);
-    const ordered = first > 0 ? [cards[first], ...cards.filter((_, i) => i !== first)] : cards;
+  const hasVariants = ((fullKit && fullKit.variants) || []).length >= 2;
+  if (hasVariants) {
+    // Every offered variation; one ticked = one item (still its own before and after); none ticked = the picked one.
+    let list = cards && cards.length ? cards : ((typeof variantCards === "function" ? variantCards(fullKit, [kit.variantKey]) : []));
+    const first = list.findIndex((c) => c.key === kit.variantKey);
+    const ordered = first > 0 ? [list[first], ...list.filter((_, i) => i !== first)] : list;
     return ordered.map((c) => ({ key: c.key, label: c.label, note: notes[c.key] || "", after: c.after, before: c.before }));
   }
-  const out = (kit.styles || []).map((s) => ({ key: s.id, label: s.name, note: s.note || "", after: s.id, before: null }));
+  // No variations: the one before and after first, then the styles (pictures only).
+  const out = [];
   const ba = kit.beforeAfter;
   if (ba) out.push({ key: "ba", label: "Before and after", note: ba.title || "", after: (ba.after && ba.after.id) || "after", before: (ba.before && ba.before.id) || "before" });
-  return out.length >= 2 ? out : [];
+  (kit.styles || []).forEach((s) => out.push({ key: s.id, label: s.name, note: s.note || "", after: s.id, before: null }));
+  return out;
 }
 
 const vpEsc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -51,11 +65,16 @@ const VP_CHEV = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="no
 //       head (optional html replacing the default heading), askLabel }
 export function pickerHtml(o) {
   const items = o.items || [];
-  if (items.length < 2) return "";
+  if (!items.length) return "";
+  const solo = items.length === 1;
   const [a, em, z] = pickerTitle(o.tradeKey);
   const tags = o.tags || ["Before", "After"];
   const noun = em === "style" ? "styles" : em === "wash" ? "kinds of job" : `kinds of ${em}`;
-  const head = o.head || `<div class="vp-head"><span class="vp-kicker">${vpEsc(o.tradeName)}</span><h2 id="vp-h">${vpEsc(a)}<em>${vpEsc(em)}</em>${vpEsc(z)}</h2><p class="vp-lede">${items.some((x) => x.before) ? "Tap one to see it. Then compare the before and after." : "Tap one to see it."}</p></div>`;
+  const hd = pickerHead(o.tradeKey, items);
+  // "Ask about this" picks a job the form really lists: the item's own name, else a job sharing a word with it, else the first.
+  const jobs = o.jobs || [];
+  const jobFor = (label) => { if (!jobs.length || jobs.includes(label)) return label; const w = vpWords(label); return jobs.find((j) => [...vpWords(j)].some((x) => w.has(x))) || jobs[0]; };
+  const head = o.head || `<div class="vp-head"><span class="vp-kicker">${vpEsc(o.tradeName)}</span><h2 id="vp-h">${hd.h2}</h2><p class="vp-lede">${hd.lede}</p></div>`;
   const chips = items.map((it, i) => `<button type="button" class="vp-chip" role="tab" id="vp-t-${i}" aria-controls="vp-p-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${vpEsc(it.label)}</button>`).join("");
   const panels = items.map((it, i) => {
     const price = o.prices ? vpPrice(o.prices, it.label, o.usd) : null;
@@ -66,10 +85,10 @@ export function pickerHtml(o) {
     return `<div class="vp-panel" role="tabpanel" id="vp-p-${i}" aria-labelledby="vp-t-${i}" data-i="${i}">
     <div class="vp-stage">${pic}<button type="button" class="vp-nav vp-prev" aria-label="Previous: ${vpEsc(items[(i - 1 + items.length) % items.length].label)}">${VP_CHEV("M15 6l-6 6 6 6")}</button><button type="button" class="vp-nav vp-next" aria-label="Next: ${vpEsc(items[(i + 1) % items.length].label)}">${VP_CHEV("M9 6l6 6-6 6")}</button><span class="vp-count" aria-hidden="true">${i + 1} / ${items.length}</span></div>
     <div class="vp-info"><h3 class="vp-name">${vpEsc(it.label)}</h3>${it.note ? `<p class="vp-note">${vpEsc(it.note)}</p>` : ""}${price ? `<p class="vp-price"><span class="vp-pr"><b>${vpEsc(price)}</b> ${vpEsc(o.unit || "")}</span><span>Estimate from the owner. The exact price comes after we look.</span></p>` : ""}
-      <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(it.label)}">Ask about this</a></div></div>
+      <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label))}">Ask about this</a></div></div>
   </div>`;
   }).join("\n  ");
-  return `<section class="vp ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
+  return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
   ${head}
   <div class="vp-chips-wrap"><div class="vp-chips" role="tablist" aria-label="${vpEsc(noun[0].toUpperCase() + noun.slice(1))}">${chips}</div></div>
   ${panels}
@@ -118,6 +137,7 @@ export const PICKER_CSS = `
 .vp-cmp-on .vp-nav{opacity:0;pointer-events:none}
 .vp-count{position:absolute;right:12px;bottom:12px;z-index:4;font:700 12px/1 var(--vp-sans,inherit);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
 .vp-cmp-on .vp-count{opacity:0}
+.vp-solo .vp-chips-wrap,.vp-solo .vp-nav,.vp-solo .vp-count{display:none}
 .vp-info{display:grid;gap:10px;align-content:start;justify-items:start}
 .vp-name{margin:0;font:500 clamp(28px,5vw,40px)/1.08 var(--vp-head,inherit);letter-spacing:-.01em}
 .vp-note{margin:0;color:var(--vp-muted);font-size:17px;line-height:1.5;max-width:42ch}

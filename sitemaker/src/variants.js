@@ -68,6 +68,9 @@ export function offeredVariants(kit, offer) {
 export function variantCards(kit, offer) {
   return offeredVariants(kit, offer).map((v) => {
     const kv = kitVariant(kit, v.key), ba = kv.beforeAfter || {};
+    // The default variation can name a same-camera pair from its story (kit.samePair = [before, after]) when its
+    // own before/after pictures are two different shots (roofing, pressure: QA round 2).
+    if (!kv.slotPrefix && Array.isArray(kit.samePair)) return { key: v.key, label: v.label || v.key, before: kit.samePair[0], after: kit.samePair[1] };
     return { key: v.key, label: v.label || v.key, before: (ba.before && ba.before.id) || `${kv.slotPrefix}before`, after: (ba.after && ba.after.id) || `${kv.slotPrefix}after` };
   });
 }

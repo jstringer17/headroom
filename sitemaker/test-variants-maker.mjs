@@ -133,7 +133,7 @@ for (const t of TRADES) for (const look of ["cinematic", "editorial", "classic"]
   await page.waitForFunction((n) => document.querySelectorAll("#offer-box input:checked").length === n, vs.length, { timeout: 15000 }).catch(() => {});
   await page.waitForTimeout(1200);
   ok(await page.isVisible("#offer-wrap") && (await page.$$eval("#offer-box input", (e) => e.length)) === vs.length && (await page.$$eval("#offer-box input:checked", (e) => e.length)) === vs.length, `${t}/${look}: Services we offer is not shown with every variation ticked`);
-  const count = (h) => look === "cinematic" ? (h.match(/class="pk-panel"/g) || []).length : look === "editorial" ? (h.match(/class="ed-chip"/g) || []).length : (h.match(/class="vp-chip"/g) || []).length;
+  const count = (h) => (h.match(/class="vp-chip"/g) || []).length;
   let doc = await page.$eval("#frame", (f) => f.srcdoc);
   ok(doc.includes('id="styles"') && !doc.includes('id="all"') && count(doc) === vs.length, `${t}/${look}: the style picker should list all ${vs.length} variations, found ${count(doc)}`);
   for (const c of cards) ok(doc.includes(c.label.replace(/&/g, "&amp;")) || doc.includes(c.label), `${t}/${look}: "${c.label}" is missing from Everything we do`);
@@ -166,8 +166,8 @@ for (const t of TRADES) for (const look of ["cinematic", "editorial", "classic"]
   const sw = await p2.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
   ok(sw.sw <= sw.cw, `cinematic@375: sideways scroll ${sw.sw}>${sw.cw}`);
   await p2.evaluate(() => document.getElementById("styles").scrollIntoView()); await p2.waitForTimeout(300);
-  await p2.click("#styles .pk-cmp >> nth=0"); await p2.waitForTimeout(500);
-  ok((await p2.$eval("#styles .pk-panel:not([hidden]) [role=slider]", (e) => e.getAttribute("aria-valuenow"))) === "50", "cinematic: Compare did not move the slider to 50");
+  await p2.click("#styles .vp-panel:not([hidden]) .vp-cmp"); await p2.waitForTimeout(500);
+  ok((await p2.$eval("#styles .vp-panel:not([hidden]) [role=slider]", (e) => e.getAttribute("aria-valuenow"))) === "50", "cinematic: Compare did not move the slider to 50");
   ok(e2.length === 0, `cinematic@375: errors ${e2.join("; ")}`);
   await p2.close(); await page.close();
 }

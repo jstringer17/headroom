@@ -121,7 +121,7 @@ export function credProofLis(badges, esc, p = "", icon = "") {
   const more = badges.length > PROOF_KEEP + 1 ? `<li class="pb-more"><button type="button" aria-expanded="false">+${badges.length - PROOF_KEEP} more</button></li>` : "";
   return badges.map((b, i) => {
     const inner = `${icon}<b>${esc(b.label)}</b>${b.sub ? ` <span>${esc(b.sub)}</span>` : ""}`;
-    return `<li class="${p}rv${more && i >= PROOF_KEEP ? " pb-x" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
+    return `<li class="${more && i >= PROOF_KEEP ? "pb-x" : `${p}rv`}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
   }).join("") + more;
 }
 // Where the other rating sites go in the reviews header: name, stars, count, link when typed.

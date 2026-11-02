@@ -52,9 +52,9 @@ for (const look of ["cinematic", "editorial", "classic"]) for (const trade of ["
     const sliders = await page.$$eval("[role=slider],input[type=range]", (e) => e.filter((x) => { const r = x.getBoundingClientRect(); return r.width > 0 && getComputedStyle(x).visibility !== "hidden" && !x.closest("[hidden]"); }).length);
     ok(sliders === 1, `${trade}/${look}: ${sliders} before/after sliders are showing, there must be exactly one`);
     // phone: the chips scroll sideways and every one is reachable by keyboard
-    const sc = await page.$eval(look === "cinematic" ? "#styles .tabs" : "#styles .ed-chips", (e) => ({ sw: e.scrollWidth, cw: e.clientWidth, ox: getComputedStyle(e).overflowX }));
+    const sc = await page.$eval("#styles .vp-chips", (e) => ({ sw: e.scrollWidth, cw: e.clientWidth, ox: getComputedStyle(e).overflowX }));
     ok(sc.ox === "auto" && sc.sw >= sc.cw, `${trade}/${look}: the chips are not a sideways-scrolling row (${JSON.stringify(sc)})`);
-    await page.focus(look === "cinematic" ? "#styles [role=tab] >> nth=0" : "#styles .ed-chip >> nth=0");
+    await page.focus("#styles [role=tab] >> nth=0");
     for (let i = 1; i < n; i++) await page.keyboard.press("ArrowRight");
     await page.waitForTimeout(400);
     const act = await page.$$eval("#styles [role=tab]", (e) => e.map((x) => x.getAttribute("aria-selected")));

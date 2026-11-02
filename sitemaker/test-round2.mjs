@@ -39,6 +39,8 @@ for (const look of LOOKS) for (const trade of TRADES) {
   ok(sliders + rng === n, `A ${look}/${trade}: ${sliders + rng} sliders, expected one per variation (${n})`);
   const off = generateSite(form(look, trade, { cine: { images: imgs(trade), offer: CINE_KIT[trade].variants.slice(0, 3).map((v) => v.key) } }));
   ok((off.match(/role="tab"/g) || []).length === 3, `B ${look}/${trade}: unticked variations still listed`);
+  const one = generateSite(form(look, trade, { cine: { images: imgs(trade), offer: [CINE_KIT[trade].variants[1].key] } }));
+  ok((one.match(/class="vp-chip"/g) || []).length === 1 && (one.match(/class="vp-handle"/g) || []).length === 1 && !/class="(?:tab|pk-panel|ed-pk|ba)"/.test(one), `A ${look}/${trade}: one ticked variation must give the picker with that one and its one slider`);
   const t = strip(h);
   for (const w of ["BBB A+", "ROC 334512", "Since 2011", "Family", "GAF Master Elite", "10-year workmanship warranty"]) ok(t.includes(w), `C ${look}/${trade}: "${w}" missing`);
   ok(!/warranty warranty/i.test(t), `C ${look}/${trade}: "warranty warranty"`);
@@ -49,6 +51,14 @@ for (const look of LOOKS) for (const trade of TRADES) {
   ok(ld.foundingDate == 2011 || ld.foundingDate === "2011", `C ${look}/${trade}: JSON-LD foundingDate missing`);
   const liveNoCount = generateSite(form(look, trade, { rating: "", reviews: "", live: { siteId: "x" } }));
   ok(!/aggregateRating/.test(liveNoCount), `C ${look}/${trade}: aggregateRating without a typed rating and count`);
+}
+
+// trades without variations: exactly one before/after in every look, and Ask about this names a real job
+for (const look of LOOKS) for (const trade of ["hvac", "towing", "concrete"]) {
+  const h = generateSite({ company: "Plain Co", trade, look, cinematic: look === "cinematic", phone: "9185550142" });
+  ok((h.match(/class="vp-handle"/g) || []).length === 1, `A ${look}/${trade}: needs exactly one before/after, found ${(h.match(/class="vp-handle"/g) || []).length}`);
+  const opts = [...h.matchAll(/<option>([^<]*)</g)].map((x) => x[1]);
+  ok([...h.matchAll(/data-job="([^"]*)"/g)].every((x) => opts.includes(x[1])), `B ${look}/${trade}: Ask about this names a job the form does not list`);
 }
 
 // ---- browser

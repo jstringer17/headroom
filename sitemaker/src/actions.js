@@ -10,9 +10,14 @@ export const ACTIONS_JS = `(function(){var r=document.documentElement,fld=functi
 function f(e){if(fld(e.target))r.classList.toggle("kbd",e.type==="focusin")}
 document.addEventListener("focusin",f);document.addEventListener("focusout",f);
 if(window.visualViewport)visualViewport.addEventListener("resize",function(){r.classList.toggle("kbd",visualViewport.height<innerHeight*0.75)});
+/* the bar steps aside while the contact form is on screen, so it never sits on a field */
+var cf=document.getElementById("ask");if(cf&&"IntersectionObserver" in window)new IntersectionObserver(function(es){r.classList.toggle("nearform",es[0].isIntersecting)},{rootMargin:"0px 0px -15% 0px"}).observe(cf);
+/* keyboard users never land on content that is still faded out by a scroll reveal */
+document.addEventListener("focusin",function(e){var t=e.target.closest&&e.target.closest(".rv,.ed-rv");if(t)t.classList.add("in")});
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".pb-more button");if(!b)return;var u=b.closest("ul");u.classList.add("pb-open");[].forEach.call(u.querySelectorAll(".pb-x"),function(x){x.classList.add("in")});b.parentNode.parentNode.removeChild(b.parentNode);u.setAttribute("tabindex","-1");u.focus({preventScroll:true})})})();
 `;
 // Shared rule for the "+N more" proof badges (each look styles the chips themselves).
 export const PROOF_MORE_CSS = `ul>li.pb-more{display:none}
 @media (max-width:639px){.js ul:not(.pb-open)>li.pb-x{display:none}.js ul>li.pb-more{display:flex}.pb-more button{min-height:48px;padding:0 18px;border-radius:999px;border:1.5px solid currentColor;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer}}
-ul.pb-open:focus{outline:none}`;
+ul.pb-open:focus{outline:none}
+.nearform .mbar,.nearform .ed-mbar{transform:translateY(110%);visibility:hidden}`;

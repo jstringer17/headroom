@@ -252,7 +252,7 @@ export function generateSite(form) {
   const L = LAYOUTS[lay];
   // One picker for every variation (round 2): chips, the picture, its before and after, Ask about this.
   const anyRealCl = Object.values(cineImgs).some((v) => safeImage(v));
-  const pickItems = CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey] && allCards.length >= 2 ? pickerItems(CINE.CINE_KIT[d.tradeKey], kitVariant(CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant), allCards, d.tradeKey) : [];
+  const pickItems = CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey] ? pickerItems(CINE.CINE_KIT[d.tradeKey], kitVariant(CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant), allCards, d.tradeKey) : [];
   const pickImg = (id, label, attrs) => `<img src="${esc(safeImage(cineImgs[id]) || phArt(d.tradeKey, id, label, anyRealCl ? { quiet: true } : undefined))}" alt="${esc(label)}" ${attrs}>`;
   const tradeName = t.label.replace(/ \(.*\)$/, "");
   // The Classic hero uses the form's hero picture, else the finished-job picture the owner or the library gave this trade.
@@ -353,7 +353,7 @@ export function generateSite(form) {
   <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
   <div class="body">${services}</div>
 </div></section>`,
-    all: (tint) => pickerHtml({ items: pickItems, tradeKey: d.tradeKey, tradeName, img: pickImg, prices: cinePrices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, form && form.cine && form.cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: `sec cl-vp${tint}` }),
+    all: (tint) => pickerHtml({ items: pickItems, tradeKey: d.tradeKey, tradeName, img: pickImg, prices: cinePrices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, form && form.cine && form.cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: `sec cl-vp${tint}`, jobs: [...(allCards.length ? pickItems.map((x) => x.label) : []), ...d.services.map(([n]) => n)] }),
     process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
   <h2 class="rv">How it works</h2>
   <ol class="steps">${steps}</ol>
@@ -362,6 +362,7 @@ export function generateSite(form) {
   <div class="head rv"><h2>What customers say</h2></div>
   <div class="body rev rv">
     ${d.rating && lay !== "ledger" ? `<div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+    ${credPlatformLis(d, esc) ? `<ul class="plat-list">${credPlatformLis(d, esc)}</ul>` : ""}
     ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
     ${d.rv.link ? `<a class="btn btn-accent rvw-all" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a>` : ""}
   </div>
@@ -392,7 +393,7 @@ export function generateSite(form) {
     return out;
   }).join("\n");
 
-  const options = [...pickItems.map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i).map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
+  const options = [...(allCards.length ? pickItems.map((x) => x.label) : []), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i).map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
 
   return `<!doctype html>
 <html lang="en">
@@ -596,6 +597,7 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 .foot-name{font:700 24px/1.2 var(--body);letter-spacing:-.01em;color:var(--on-dark)}
 .foot-tag{margin-top:6px}
 .foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.foot-cred{grid-column:1/-1;margin:0;font-size:15px;color:var(--on-dark-2)}
 .foot-cols h3{font:600 13px/1.2 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);margin-bottom:12px}
 .foot-cols ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .foot-cols a{text-decoration:none}
@@ -701,6 +703,7 @@ ${body}
     <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
     <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}${d.cred.license ? `<li>Licensed #${esc(d.cred.license)}</li>` : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
   </div>
+  ${credLine(d) ? `<p class="foot-cred">${esc(credLine(d))}</p>` : ""}
   <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
 </div></footer>
 ${mobileBarHtml(d, esc, "mbar", askLabel)}

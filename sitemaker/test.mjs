@@ -193,10 +193,17 @@ for (const js of [true, false]) {
   const page = await mctx.newPage();
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto(pathToFileURL(join(outDir, "roofing.html")).href, { waitUntil: "load" });
-  for (let y = 0; y < 9000; y += 500) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(60); }
+  const H = await page.evaluate(() => document.documentElement.scrollHeight);
+  for (let y = 0; y < H + 500; y += 500) { await page.evaluate((v) => scrollTo(0, v), y); await page.waitForTimeout(60); }
   await page.waitForTimeout(1200);
   const hidden = await page.evaluate(() => [...document.querySelectorAll(".rv")].filter((el) => getComputedStyle(el).opacity !== "1").length);
   ok(hidden === 0, `motion: ${hidden} parts still hidden after scrolling`);
+  // a reveal part reached by Tab shows at once (no focus on faded content)
+  await page.evaluate(() => scrollTo(0, 0)); await page.reload(); await page.waitForTimeout(300);
+  const tabbed = await page.evaluate(() => { const a = [...document.querySelectorAll(".rv a, .rv button, a.rv, button.rv")].find((x) => x.closest(".rv").getBoundingClientRect().top > innerHeight * 2); if (!a) return "none"; a.focus(); return getComputedStyle(a.closest(".rv")).opacity; });
+  await page.waitForTimeout(900);
+  const after = await page.evaluate(() => { const r = document.activeElement && document.activeElement.closest(".rv"); return r ? getComputedStyle(r).opacity : "none"; });
+  ok(after === "1", `motion: a part focused by Tab stays faded (${tabbed} -> ${after})`);
   await mctx.close();
 }
 

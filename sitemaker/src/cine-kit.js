@@ -1368,6 +1368,10 @@ CINE_KIT.pressure.variants = [
 ];
 // VARIANTS:END
 
+// Same-camera before/after for the default variation (its own before.webp/after.webp are two different shots).
+CINE_KIT.roofing.samePair = ["old", "new"];
+CINE_KIT.pressure.samePair = ["dirty", "clean"];
+
 // The variants of a trade (always at least the default one).
 export function cineVariants(trade) {
   const k = CINE_KIT[trade];

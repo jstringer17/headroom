@@ -17,6 +17,7 @@
 // no ranges at all hides the section.
 import { rvwList } from "./reviews.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
+import { pickerItems, pickerHtml, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
@@ -172,9 +173,19 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-motion .story-cta>*{pointer-events:auto}
 .cine-motion .story-sub{display:none}
 .prog-bar,.prog-count{display:none}
-.frame img[data-real]{object-position:var(--fp,88% 50%)}
+.frame img{object-position:var(--fp,50% 55%)}
+/* Phones (QA round 2: frames were upscaled 2-2.6x and the buttons sat on the house): the picture takes the top of the
+   pinned screen at ~1.3x, the subject is framed per slot (--fp), and the headline and buttons sit below it on dark. */
+@media (max-width:759px){
+  .cine-motion .pin{background:var(--dark)}
+  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 132px);min-height:46%;overflow:hidden}
+  .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
+  .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 14px)}
+  .cine-motion .line .h{font-size:clamp(38px,10.6vw,48px);text-shadow:none}
+  .cine-motion .prog-count{top:12px}
+}
 .panel img[data-real],.ba img[data-real]{object-position:72% 45%}
-@media (min-width:760px){.frame img[data-real]{object-position:var(--fp,50% 50%)}}
+@media (min-width:760px){.frame img{object-position:var(--fpd,50% 50%)}}
 .cine-motion .prog-bar{display:block;position:absolute;left:0;right:0;bottom:0;height:4px;z-index:4;background:rgba(255,255,255,.18)}
 .prog-bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);will-change:transform}
 .cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
@@ -403,6 +414,7 @@ if(story&&!reduce){
   space();addEventListener("resize",space);
   var ask=function(){if(!queued){queued=true;requestAnimationFrame(paint)}};
   root.classList.add("cine-motion");
+  space(); /* measure the buttons again in the pinned layout (the long subline is hidden there) */
   paint();
   if("IntersectionObserver" in window){
     new IntersectionObserver(function(es){
@@ -414,7 +426,7 @@ if(story&&!reduce){
 }
 
 /* 2. style tabs: real buttons, arrow keys, aria-selected */
-var tabs=[].slice.call(document.querySelectorAll("#styles [role=tab]"));
+var tabs=[].slice.call(document.querySelectorAll("#styles .tab[role=tab]"));
 var panels=tabs.map(function(t){return document.getElementById(t.getAttribute("aria-controls"))});
 function pick(i,focus){
   tabs.forEach(function(t,j){var on=j===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;panels[j].hidden=!on});
@@ -616,6 +628,11 @@ export function generateCinematic(form, d, deps) {
     <div class="pk-cap"><h3 class="pk-name">${esc(c.label)}</h3><p class="pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c, d.tradeKey))}</p>${price ? `<p class="pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}<div class="pk-btns"><button type="button" class="btn btn-glass pk-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
   </div>`; }).join("")}
 </div></section>` : "";
+  // Round 3: the one shared picker (src/picker.js) for every trade: offered variations (one is enough), or the
+  // trade's before and after plus its styles. Drag on the picture once Compare is on; the page's only slider.
+  const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
+  const vpImg = (id, label, attrs, side) => `<img src="${esc(slotSrc(id, label, side ? { labelSide: side === baTags(d.tradeKey)[0] ? "left" : "right" } : undefined))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="${esc(label)}" ${attrs}>`;
+  const vpSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: vpImg, prices: prices0, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "sec dark-sec cine-vp", jobs: [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)] });
 
   // 4. Price estimator: typed ranges only, hidden when there are none
   let priceSec = "";
@@ -696,7 +713,7 @@ export function generateCinematic(form, d, deps) {
 </div></section>`;
 
   const nav = [
-    styles.length && ["#styles", "Styles"], hvacSec && ["#comfort", "Comfort"], !pickSec && baSec && ["#before-after", "Before and after"],
+    vpSec && ["#styles", vpItems.some((x) => x.before) ? "Before and after" : "Styles"], hvacSec && ["#comfort", "Comfort"],
     prices && ["#price", "Price"], ["#services", "Services"], ["#contact", "Contact"],
   ].filter(Boolean).map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 
@@ -717,7 +734,10 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--ink:${th.ink};--muted:${th.muted}}
 ${ENGINE_CSS}
 ${look && look.css ? look.css : ""}
+${PICKER_CSS}
 ${PROOF_MORE_CSS}
+.cine-vp{--vp-ink:#fff;--vp-bg:var(--dark);--vp-muted:rgba(255,255,255,.78);--vp-accent:var(--accent);--vp-accent-ink:var(--accent-ink);--vp-em:var(--accent);--vp-chip-bg:rgba(255,255,255,.12);--vp-chip-ink:#fff;--vp-chip-line:rgba(255,255,255,.4);--vp-on-bg:#fff;--vp-on-ink:var(--dark);--vp-head:var(--serif);--vp-sans:var(--sans);--vp-stage-bg:var(--dark2);--vp-max:var(--max);--vp-focus:var(--hi)}
+.cine-vp h2{font-weight:500}
 </style>
 </head>
 <body>
@@ -730,9 +750,8 @@ ${PROOF_MORE_CSS}
 <main id="top">
 ${storySec}
 ${factsSec}
-${pickSec || stylesSec}
+${vpSec}
 ${hvacSec}
-${pickSec ? "" : baSec}
 ${priceSec}
 ${services}
 ${reviews}
@@ -743,6 +762,7 @@ ${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(ENGINE_JS, d)}
 ${ACTIONS_JS}
+${PICKER_JS}
 </script>
 ${liveBeacon(d)}</body>
 </html>

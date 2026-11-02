@@ -16,6 +16,7 @@ import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, li
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS } from "./cinematic.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
+import { pickerItems, pickerHtml, pickerHead, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { kitVariant, variantCards, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { editorialLook, editorialShape } from "./cine-look.js";
@@ -395,6 +396,7 @@ if(dataEl){
 }
 ${EST_TOTAL_JS}
 ${ACTIONS_JS}
+${PICKER_JS}
 /* the floating call button shows after the hero buttons scroll away */
 var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
@@ -597,16 +599,11 @@ export function generateEditorial(form, d, deps) {
   // Pick your roof / fence / wash: chips for every variation the owner offers, a big picture, its own before and after.
   // It is the page's only before/after.
   const pickNoun = PICK_NOUN[d.tradeKey] || "style";
-  const pickSec = allCards.length >= 2 ? `<section class="ed-sec" id="styles" data-ed="pick"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2>Pick your <em>${esc(pickNoun)}</em></h2></div>
-  <div class="ed-chips" role="tablist" aria-label="${esc(tradeName)} options">${allCards.map((c, i) => `<button type="button" class="ed-chip" role="tab" id="ed-tab-${i}" aria-controls="ed-panel-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(c.label)}</button>`).join("")}</div>
-  ${allCards.map((c, i) => { const price = variantPrice(offeredPrices(kit, cine.prices), c.label); return `<div class="ed-pk" role="tabpanel" id="ed-panel-${i}" aria-labelledby="ed-tab-${i}"${i ? " hidden" : ""} data-ed="pick-panel">
-    <div class="ed-pk-pic"><div class="ed-cmp" style="--pos:0"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
-    <input type="range" class="ed-cmp-r" min="0" max="100" value="0" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p></div>
-    <div class="ed-pk-cap"><h3>${esc(c.label)}</h3><p class="ed-pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c, d.tradeKey))}</p>${price ? `<p class="ed-pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}
-      <div class="ed-pk-btns"><button type="button" class="ed-btn ghost ed-pk-cmp" aria-pressed="false">Compare before and after</button><a class="ed-btn" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
-  </div>`; }).join("")}
-</div></section>` : "";
+  // Round 3: the one shared picker (src/picker.js): offered variations (one is enough) or the trade's before and after plus styles.
+  const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
+  const vpHd = pickerHead(d.tradeKey, vpItems);
+  const pickSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: (id, label, attrs) => pic(id, `${attrs} alt="${esc(label)}"`).replace(' alt="" ', " "), prices: offeredPrices(kit, cine.prices), usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: "ed-sec ed-vp", jobs: [...vpItems.filter((x) => allCards.length).map((x) => x.label), ...d.services.map(([n]) => n)],
+    head: `<div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2 id="vp-h">${vpHd.h2}</h2><p class="ed-note">${vpHd.lede}</p></div>` });
 
   // Services: large numbered rows, the open row swaps the picture
   const svcPics = rows.map((_, i) => svcIds[i]);
@@ -657,6 +654,7 @@ export function generateEditorial(form, d, deps) {
   ${d.rating ? `<div class="ed-rev ed-rv">
   <b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p class="ed-eyebrow">Google rating</p><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div>${edStars(d.rating)}
 </div>` : ""}
+  ${credPlatformLis(d, esc, "ed-") ? `<ul class="ed-plat-list ed-rv">${credPlatformLis(d, esc, "ed-")}</ul>` : ""}
   ${d.rv.items.length ? rvwList(d.rv, esc, "ed-") : ""}
   ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
@@ -695,7 +693,11 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--ed-accent:color-mix(in srgb,${th.accent} ${edAccentPct(th.accent)}%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
+${PICKER_CSS}
 ${PROOF_MORE_CSS}
+.ed-vp{--vp-ink:var(--ed-ink);--vp-bg:var(--ed-cream);--vp-muted:var(--ed-muted);--vp-accent:var(--ed-btn,var(--ed-ink));--vp-accent-ink:var(--ed-btn-ink,var(--ed-cream));--vp-em:var(--ed-accent);--vp-chip-bg:var(--ed-paper);--vp-chip-ink:var(--ed-ink);--vp-chip-line:var(--ed-line);--vp-on-bg:var(--ed-ink);--vp-on-ink:var(--ed-cream);--vp-head:var(--ed-serif);--vp-sans:var(--ed-sans);--vp-stage-bg:var(--ed-cream2);--vp-max:var(--ed-max,1240px);--vp-r:var(--ed-card);--vp-focus:var(--ed-accent)}
+.ed-vp .ed-head{margin-bottom:24px}
+.ed-vp .vp-name{font-weight:500}
 </style>
 </head>
 <body class="ed">
