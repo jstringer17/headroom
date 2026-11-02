@@ -232,3 +232,37 @@ Classic +0.15: line 7 goes to 5 (phone first screen now photo with the house in 
 - Classic, line 2 -> 5: the picker's standing-seam metal picture is cropped so the bottom third is a dark wall under the roof (/tmp/qa3edge/classic-onemetal-375.jpg, picker), and there is no photo band between proof and services on phones (all white cards until the picker). Fix: object-position per variation for the picker slot (metal: center 30%), and one full-width featured-project photo band earlier on phones.
 - Classic offer bar wraps to 2 lines at 375 when the offer is long ("Free estimate with color samples at your door · Call (918) 555-0142"). Fix: drop the number from the bar on phones (the header button already calls).
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, coordinator's test-all at 920705e.
+
+### Independent QA of ba7f982 (Opus qa-reviewer, 2 Nov): Cinematic PASS 4.43, Editorial PASS 4.38, Classic FAIL 4.29 (floor 4.3, no line < 4 in any look)
+Method: fresh evidence at ba7f982: `round2-shots.mjs --out=/tmp/qa6` (3 looks x 3 trades x 375/1280, 108 shots; phone sheets /tmp/qa6/sheet-{cinematic,editorial,classic}.jpg, Editorial silhouettes /tmp/qa6/ed-sil.jpg); story frames of all 18 variations re-shot (/tmp/qa3story, 89 frames); 15 edge pages x 2 widths re-generated (/tmp/qa3edge: one ticked metal, hvac, towing, empty, long name + no phone): no undefined/NaN/placeholder text, no sideways scroll, no page errors; one ticked = 1 chip + 1 slider in all looks; hvac exactly one before/after. test-all not run by me (coordinator runs it at ba7f982). **WebKit not installed: iOS Safari NOT verified.**
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 4 | 4 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 4 | 4 | 5 |
+| 8 Editorial craft | - | 5 | - |
+| **Average** | **4.43 PASS** | **4.38 PASS** | **4.29 FAIL (-0.01)** |
+Target 4.5 is not reached by any look.
+
+**920705e suggestions: FIXED / NOT FIXED**
+- Cinematic phone first frame one button: FIXED. Picture, one serif line with one italic accent, one Call button, a single place line (/tmp/qa6/sheet-cinematic.jpg cols 1 and 3). Line 1 goes to 5. (Pressure still uses its sans display face with a serif italic accent: theme choice, line 3 stays 4.)
+- Editorial silhouette apex: FIXED. Roofing apex on sky, fencing on foliage, pressure on the roof; no flat clip (/tmp/qa6/ed-sil.jpg). A ~6 px white sliver remains at the very tip of the pressure silhouette (minor).
+- Editorial "$ 4.50" gap: FIXED (prices in the sans: "$4.50 to $7", sheet-editorial col 2). With the apex fix, line 8 goes to 5.
+- Picker framing per trade: FIXED for shingle, cedar and driveway (roof, fence and driveway in frame). NOT FIXED for standing-seam metal: the library picture itself is a roof close-up whose bottom third is a dark wall; object-position cannot fix it (/tmp/qa3edge/classic-onemetal-375.jpg, picker and photo band).
+- Classic phone photo band: ADDED, but see MINOR 1 (it repeats the hero picture).
+- Classic phone offer bar one line: FIXED ("Free estimate with color samples at your door", no number).
+
+**BLOCKER**: none. **MAJOR**: none.
+
+**MINOR**
+1. Classic phone shows the same photo three times within ~2,500 px: hero, the new photo band and the picker's first picture are all `roofing/new.webp` (fencing `after.webp`, pressure `clean.webp`) in /tmp/qa6/classic-*.html. This is why Classic line 2 stays 4. Fix: band uses a different real picture (another offered variation's after, or the featured project's after), never the hero's or the picker's first.
+2. Classic first screen on phones still carries a lot: 2 full-width buttons + 4-line paragraph + trust line + 2 check bullets before the form (sheet-classic col 1/3). For line 1 = 5: keep Call as the one primary, make "Get a free estimate" a text link to the form, cut the paragraph to one line on phones (the trust line and bullets already say it).
+3. Metal picture (library `roofing/metal/after.webp`) is a close-up with a dark wall in the lower third; in the band and the picker it reads as a dark block. Fix in the library (re-crop or replace) or per-picture object-position `50% 15%` for metal.
+4. Pressure Editorial silhouette tip shows a ~6 px white sky sliver (ed-sil.jpg right). Fix: move that slot's crop up 2-3%.
+5. Still open by choice: Cinematic last-frame crop jump, fencing-vinyl subject size, no owner photo slot.
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, coordinator's test-all at ba7f982.
