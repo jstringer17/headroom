@@ -16,6 +16,7 @@
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
 import { rvwList } from "./reviews.js";
+import { mobileBarHtml, ACTIONS_JS } from "./actions.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
@@ -121,7 +122,7 @@ const ENGINE_CSS = `
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:80px}
 section[id]{scroll-margin-top:80px}
-body{margin:0;background:var(--cream);color:var(--ink);font:400 18px/1.6 var(--sans);overflow-x:clip;padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+body{margin:0;background:var(--cream);color:var(--ink);font:400 18px/1.6 var(--sans);overflow-x:clip;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 h1,h2,h3,p,dl,dd,figure{margin:0}
 h1,h2{font-family:var(--serif);font-weight:500;letter-spacing:-.015em;line-height:1.04;text-wrap:balance}
 h1 em,h2 em,.line em{font-style:italic;color:var(--accent)}
@@ -136,10 +137,12 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .btn:active,.tab:active{transform:scale(.97)}
 .btn-accent{background:var(--accent);color:var(--accent-ink)}
 @media (hover:hover){.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.25)}}
-.btn-glass{color:#fff;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.4);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-.ask-link{color:#fff;font-weight:600;font-size:15px;text-underline-offset:5px;padding:12px 4px}
-.top-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
-.btn-sm{min-height:40px;padding:0 18px;font-size:15px}
+.btn-glass{color:#fff;background:rgba(0,0,0,.45);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ask-link{display:inline-flex;align-items:center;min-height:48px;padding:0 22px;border-radius:999px;color:#fff;font-weight:600;font-size:15px;text-decoration:none;background:rgba(0,0,0,.5);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);transition:transform .18s var(--ease-out),background-color .2s var(--ease-out)}
+.ask-link:active{transform:scale(.97)}
+@media (hover:hover){.ask-link:hover{background:rgba(0,0,0,.68)}}
+.top-call{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
+.btn-sm{min-height:48px;padding:0 20px;font-size:15px}
 /* header */
 .top{position:sticky;top:0;z-index:40;background:var(--dark);color:#fff;height:var(--hh)}
 .top .wrap{display:flex;align-items:center;gap:24px;height:100%}
@@ -180,11 +183,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .facts li{display:flex;align-items:center;gap:10px;font:600 15px/1.3 var(--sans)}
 .facts svg{flex:none;color:var(--accent)}
 .facts li b{font-weight:700}.facts li span{font-weight:500;color:var(--muted)}
-.facts a{display:flex;align-items:center;gap:10px;color:inherit;text-underline-offset:3px;min-height:44px}
+.facts a{display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none;min-height:48px;padding:0 16px;border:1.5px solid rgba(0,0,0,.5);border-radius:999px}
 .story-trust{flex:1 1 100%;margin:0;font:600 14px/1.4 var(--sans);color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
 .plat-list{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.plat-list li{border:1.5px solid rgba(255,255,255,.35);border-radius:999px;padding:0 14px;min-height:40px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
-.plat-list a{color:inherit;display:flex;gap:6px;align-items:center;min-height:44px;text-decoration:none}
+.plat-list li{border:1.5px solid rgba(255,255,255,.55);border-radius:999px;padding:0 16px;min-height:48px;display:flex;align-items:center;font:600 14px/1.2 var(--sans)}
+.plat-list a{color:inherit;display:flex;gap:6px;align-items:center;min-height:48px;text-decoration:none}
 .plat-list span{font-weight:500;opacity:.8}
 .cred-line{margin-top:14px;color:rgba(255,255,255,.78);font-size:15px;max-width:44ch}
 /* sections on cream */
@@ -195,7 +198,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .sec-head{margin-bottom:32px}
 /* style tabs over a photo */
 .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
-.tab{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--cream2);color:var(--ink);font:600 15px/1 var(--sans);cursor:pointer;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),transform .18s var(--ease-out)}
+.tab{min-height:48px;padding:0 20px;border:0;border-radius:999px;background:var(--cream2);color:var(--ink);font:600 15px/1 var(--sans);cursor:pointer;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),transform .18s var(--ease-out)}
 .tab[aria-selected=true]{background:var(--ink);color:var(--cream)}
 .cine-no-js .tabs{display:none}
 .panel{position:relative;border-radius:18px;overflow:hidden;display:flex;flex-direction:column;background:var(--dark);color:#fff}
@@ -217,9 +220,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .ba img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 4%;pointer-events:none;-webkit-user-drag:none}
 .ba .before{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
 .ba-cap{display:flex;justify-content:space-between;margin-top:12px;font:600 13px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.ba-handle{position:absolute;top:0;bottom:0;left:calc(var(--pos) * 1%);width:44px;margin-left:-22px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
+.ba-handle{position:absolute;top:0;bottom:0;left:calc(var(--pos) * 1%);width:48px;margin-left:-24px;z-index:3;display:grid;place-items:center;cursor:ew-resize;touch-action:pan-y}
 .ba-handle::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 12px rgba(0,0,0,.4)}
-.ba-knob{position:relative;scale:1;transition:scale .18s var(--ease-out);transform:translateX(var(--kx,0px));width:44px;height:44px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
+.ba-knob{position:relative;scale:1;transition:scale .18s var(--ease-out);transform:translateX(var(--kx,0px));width:48px;height:48px;border-radius:50%;background:#fff;color:#111;display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .ba-knob svg{width:22px;height:22px}
 /* pick your roof / fence / wash: chips for every variation, one big picture with its own before / after */
 .pk .tabs{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x proximity;margin-inline:-20px;padding:2px 20px 12px;scrollbar-width:thin}
@@ -315,17 +318,20 @@ textarea{min-height:100px;resize:vertical}
 footer{background:var(--dark2);color:rgba(255,255,255,.76);font-size:15px}
 footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;padding-block:36px}
 .foot-name{font:500 22px/1.2 var(--serif);color:#fff}
-.mobile-call{position:fixed;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50}
-.mobile-call .btn{box-shadow:0 6px 22px rgba(0,0,0,.35);min-height:48px}
-.mobile-call{transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease-out)}
-.past .mobile-call{transform:none;visibility:visible}
-.nocall .mobile-call{transform:translateY(110%);visibility:hidden}
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:rgba(14,13,12,.94);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 -8px 24px rgba(0,0,0,.3);transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease-out),visibility 0s .25s}
+.mbar-a{flex:1 1 0;min-height:48px;display:grid;place-items:center;border-radius:999px;font:700 16px/1 var(--sans);text-decoration:none;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);transition:transform .18s var(--ease-out),background-color .2s var(--ease-out)}
+.mbar-a:active{transform:scale(.97)}
+.mbar-a.go{flex:1.4 1 0;background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.mbar-a.call{background:#fff;color:#111;box-shadow:none}
+.mbar-a:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.past .mbar{transform:none;visibility:visible;transition:transform .25s var(--ease-out)}
+.nocall .mbar,.kbd .mbar{transform:translateY(110%);visibility:hidden}
 #price,#comfort{padding-bottom:120px}
 @media (prefers-reduced-motion:no-preference){
   .cine-reveal .rv{transition:opacity .8s var(--ease-out),transform .8s var(--ease-out);transition-delay:calc(var(--rvi,0) * 70ms)}
   .cine-reveal .rv:not(.in){opacity:0;transform:translateY(26px)}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.mobile-call,.opt span,.ba-knob,input,select,textarea{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.tab,.mbar,.mbar-a,.opt span,.ba-knob,input,select,textarea{transition:none}}
 @media (min-width:760px){
   .big-phone{white-space:nowrap;font-size:clamp(38px,5vw,64px)}
   .sec{padding-block:112px}
@@ -344,7 +350,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
 }
 @media (min-width:1024px){
   body{padding-bottom:0}
-  .mobile-call,.top-call{display:none}
+  .mbar,.top-call{display:none}
   .nav{display:flex}
   .top .btn{display:inline-flex}
   .line .h{max-width:16ch}
@@ -678,8 +684,8 @@ export function generateCinematic(form, d, deps) {
     ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
   </div>
   <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
-    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
-    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>
+    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
+    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
     ${liveFormFields(d)}<button class="btn btn-accent" type="submit">Send request</button>
@@ -730,7 +736,7 @@ ${reviews}
 ${contact}
 </main>
 <footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credLine(d) || factList.length ? `<p>${esc(credLine(d) || factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
-<div class="mobile-call">${callBtn("btn btn-accent")}</div>
+${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(ENGINE_JS, d)}
 </script>

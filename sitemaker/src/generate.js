@@ -19,6 +19,7 @@ import { THEMES, THEME_ORDER } from "./themes.js";
 import { generateCinematic, offeredPrices } from "./cinematic.js";
 import { generateEditorial } from "./editorial.js";
 import { reviewsOf, rvwList } from "./reviews.js";
+import { mobileBarHtml, ACTIONS_JS } from "./actions.js";
 import { credOf, credRatings, credBadges, credTop, credLine, credLd, credProofLis, credPlatformLis } from "./credibility.js";
 import { variantCards, kitVariant, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { CINE_KIT } from "./cine-kit.js";
@@ -432,7 +433,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .nav{display:none;gap:28px;font-size:15px;font-weight:500}
 .nav a{text-decoration:none;color:var(--on-dark-2);transition:color .25s}
 .nav a:hover{color:var(--on-dark)}
-.top .btn{display:none;min-height:44px;padding:0 18px;font-size:15px}
+.top .btn{display:none;min-height:48px;padding:0 18px;font-size:15px}
 /* hero */
 .hero{position:relative;background:var(--dark);color:var(--on-dark);overflow:hidden;isolation:isolate}
 .hero-text{padding-block:48px 56px}
@@ -530,14 +531,14 @@ a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var
 .all-note b{color:var(--ink)}
 .all-thumb{grid-row:1/span 3;width:96px;height:72px;object-fit:cover;border-radius:6px;display:block;background:var(--tint,#eee)}
 .all-name{font-weight:600;font-size:19px;overflow-wrap:anywhere}
-.all-ask{justify-self:start;font-weight:600;color:var(--ink);text-underline-offset:4px;padding:6px 0}
+.all-ask{justify-self:start;display:inline-flex;align-items:center;min-height:48px;padding:0 4px;font-weight:600;color:var(--ink);text-underline-offset:4px}
 @media (min-width:760px){.all-list{grid-template-columns:1fr 1fr;gap:0 40px}.all-list li{grid-template-columns:120px minmax(0,1fr)}.all-thumb{width:120px;height:90px}}
 .hero-trust{margin:16px 0 0;font-size:15px;font-weight:600;opacity:.92}
 .proof-sec{padding-block:20px}
 .proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.proof li,.plat-list li{border:1.5px solid var(--line);border-radius:999px;min-height:44px;display:flex;align-items:center;padding:0 16px;font-size:15px;font-weight:600;background:#fff}
+.proof li,.plat-list li{border:1.5px solid var(--line);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font-size:15px;font-weight:600;background:#fff}
 .proof span,.plat-list span{font-weight:500;color:var(--muted)}
-.proof a,.plat-list a{display:flex;gap:6px;align-items:center;min-height:44px;color:inherit;text-decoration:none}
+.proof a,.plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
 .plat-list{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .cred-line{margin-top:12px;color:var(--on-dark-2,rgba(255,255,255,.78));font-size:15px}
 .rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
@@ -592,10 +593,15 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 .foot-cols a{text-decoration:none}
 .foot-cols a:hover{color:var(--on-dark)}
 .foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:22px;border-top:1px solid var(--rule-dark);font-size:14px}
-.mobile-call{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:10px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.16);transition:transform .45s var(--ease)}
-.mobile-call .btn{width:100%}
-.mobile-call{transform:translateY(110%);visibility:hidden}
-.past .mobile-call{transform:none;visibility:visible}
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.2);transform:translateY(110%);visibility:hidden;transition:transform .3s var(--ease),visibility 0s .3s}
+.mbar-a{flex:1 1 0;min-height:48px;display:grid;place-items:center;border-radius:6px;font:700 16px/1 var(--body);text-decoration:none;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);transition:transform .2s var(--ease)}
+.mbar-a:active{transform:scale(.97)}
+.mbar-a.go{flex:1.4 1 0;background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.mbar-a.call{background:#fff;color:#111;box-shadow:none}
+.mbar-a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.past .mbar{transform:none;visibility:visible;transition:transform .3s var(--ease)}
+.kbd .mbar{transform:translateY(110%);visibility:hidden}
+.top-call{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
 /* motion: only when allowed; everything is visible without it */
 @media (prefers-reduced-motion:no-preference){
   .motion .rv{transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
@@ -603,7 +609,7 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
   .motion .band-art,.motion .art,.motion .stat-art{animation:rise 1.2s var(--ease) .15s both}
   @keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 }
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.svcs-list a,.svc-go,.mobile-call{transition:none}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.svcs-list a,.svc-go,.mbar,.mbar-a{transition:none}}
 @media (min-width:760px){
   .trust dl{grid-template-columns:repeat(4,1fr)}
   .cell,.cell:nth-child(even){padding:26px 24px 28px;border-left:1px solid var(--tr);border-top:0}
@@ -623,10 +629,9 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 }
 @media (min-width:1024px){
   body{padding-bottom:0}
-  .mobile-call{display:none}
+  .mbar,.top-call{display:none}
   .nav{display:flex}
   .top .btn{display:inline-flex}
-  .js:not(.past) .top .btn{display:none}
   .hero h1{font-size:var(--h1d)}
   .hero-text{padding-block:88px 96px}
   .hero-cta .btn{flex:0 0 auto}
@@ -652,7 +657,7 @@ footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
 <header class="top"><div class="wrap">
   <a class="brand-name" href="#top">${name}</a>
   <nav class="nav" aria-label="Sections"><a href="#services">Services</a><a href="#how">How it works</a><a href="#area">Service area</a><a href="#faq">Questions</a></nav>
-  ${callBtn("btn btn-accent")}
+  ${callBtn("btn btn-accent")}${d.phone && d.phone.tel ? `<a class="top-call" href="tel:${esc(d.phone.tel)}" aria-label="Call ${phoneShow}">${svg(ICON_PHONE, 22)}</a>` : ""}
 </div></header>
 <main id="top">
 ${heroSec}
@@ -671,8 +676,8 @@ ${body}
     </dl>
   </div>
   <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
-    <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name"></label>
-    <label for="f-phone">Phone<input id="f-phone" name="phone" type="tel" autocomplete="tel"></label>
+    <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
+    <label for="f-phone">Phone<input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
     ${liveFormFields(d)}<button class="btn btn-accent" type="submit">Send request</button>
@@ -689,7 +694,7 @@ ${body}
   </div>
   <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
 </div></footer>
-<div class="mobile-call">${callBtn("btn btn-accent")}</div>
+${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(`(function(){
   var root=document.documentElement;root.classList.add("js");
@@ -698,6 +703,7 @@ ${liveScript(`(function(){
   var cta=document.getElementById("hero-cta");
   function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}
   addEventListener("scroll",past,{passive:true});past();
+  ${ACTIONS_JS}
   if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
   var els=[].slice.call(document.querySelectorAll(".rv"));
   els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});

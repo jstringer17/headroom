@@ -15,6 +15,7 @@ import { rvwList } from "./reviews.js";
 import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, liveFootLink, liveBeacon } from "./generate.js";
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS } from "./cinematic.js";
+import { mobileBarHtml, ACTIONS_JS } from "./actions.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { kitVariant, variantCards, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
 import { editorialLook, editorialShape } from "./cine-look.js";
@@ -93,7 +94,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-btn:active{transform:scale(.97)}
 .ed-btn.light{background:var(--ed-cream);color:var(--ed-ink)}
 .ed-btn.ghost{background:transparent;color:var(--ed-ink);box-shadow:inset 0 0 0 1.5px var(--ed-ink)}
-.ed-btn.sm{min-height:42px;padding:0 18px;font-size:14px}
+.ed-btn.sm{min-height:48px;padding:0 20px;font-size:14px}
 .ed-link{font-weight:600;font-size:15px}
 .ed-eyebrow{display:flex;align-items:center;gap:14px;font:600 12px/1.3 var(--ed-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--ed-accent)}
 .ed-eyebrow::before{content:"";flex:none;width:36px;height:1.5px;background:currentColor}
@@ -111,7 +112,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-links a{text-decoration:none;color:var(--ed-muted)}
 @media (hover:hover){.ed-links a:hover{color:var(--ed-ink)}}
 .ed-nav .ed-tel,.ed-nav .ed-btn{display:none}
-.ed-call{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--ed-ink);color:var(--ed-cream);flex:none}
+.ed-call{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--ed-ink);color:var(--ed-cream);flex:none}
 /* hero */
 .ed-hero{padding-block:18px 44px}
 .ed-hero-grid{display:grid;gap:36px}
@@ -211,14 +212,24 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-stars-row svg{position:absolute;top:0}
 .ed-stars-row.off{color:var(--ed-line);width:100%}
 .ed-rev b{font:500 clamp(64px,16vw,110px)/.85 var(--ed-serif);font-variant-numeric:tabular-nums}
+.ed-tel{display:inline-flex;align-items:center;min-height:48px;padding:0 8px}
+.ed-form .ed-btn{width:100%;min-height:56px;font-size:17px}
+.ed-mbar{position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:rgba(245,240,232,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 -8px 24px rgba(20,17,15,.18);transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ed-out),visibility 0s .25s}
+.ed-mbar-a{flex:1 1 0;min-height:48px;display:grid;place-items:center;border-radius:999px;font:700 15px/1 var(--ed-sans);text-decoration:none;color:var(--ed-ink);box-shadow:inset 0 0 0 1.5px var(--ed-ink);transition:transform .18s var(--ed-out)}
+.ed-mbar-a:active{transform:scale(.97)}
+.ed-mbar-a.go{flex:1.4 1 0;background:var(--ed-btn,var(--ed-ink));color:var(--ed-btn-ink,var(--ed-cream));box-shadow:none}
+.ed-mbar-a.call{background:var(--ed-ink);color:var(--ed-cream);box-shadow:none}
+.ed-mbar-a:focus-visible{outline:3px solid var(--ed-accent);outline-offset:2px}
+.past .ed-mbar{transform:none;visibility:visible;transition:transform .25s var(--ed-out)}
+.nocall .ed-mbar,.kbd .ed-mbar{transform:translateY(110%);visibility:hidden}
 .ed-trust3{margin:14px 0 0;font:600 14px/1.4 var(--ed-sans);color:var(--ed-muted)}
 .ed-proof-sec{padding-block:0 8px}
 .ed-proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.ed-proof li{border:1.5px solid var(--ed-line);border-radius:999px;background:var(--ed-paper);min-height:44px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans);color:var(--ed-ink)}
+.ed-proof li{border:1.5px solid rgba(22,20,18,.45);border-radius:999px;background:var(--ed-paper);min-height:48px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans);color:var(--ed-ink)}
 .ed-proof b{font-weight:700}.ed-proof span{font-weight:500;color:var(--ed-muted)}
-.ed-proof a,.ed-plat-list a{display:flex;gap:6px;align-items:center;min-height:44px;color:inherit;text-decoration:none}
+.ed-proof a,.ed-plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
 .ed-plat-list{list-style:none;margin:18px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.ed-plat-list li{border:1.5px solid var(--ed-line);border-radius:999px;min-height:44px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans)}
+.ed-plat-list li{border:1.5px solid rgba(22,20,18,.45);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font:600 14px/1.2 var(--ed-sans)}
 .ed-plat-list span{font-weight:500;color:var(--ed-muted)}
 .ed-cred-line{margin-top:12px;color:rgba(236,229,220,.78);font-size:15px}
 .ed-rvw-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:16px}
@@ -249,7 +260,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-cmp>span{position:absolute;inset:0;display:block}
 .ed-cmp img{width:100%;height:100%;object-fit:cover;object-position:50% 40%;display:block}
 .ed-cmp-b{clip-path:inset(0 calc((100 - var(--pos)) * 1%) 0 0)}
-.ed-cmp-r{justify-self:stretch;width:100%;min-height:44px;accent-color:var(--ed-accent)}
+.ed-cmp-r{justify-self:stretch;width:100%;min-height:48px;accent-color:var(--ed-accent)}
 .ed-cmp-cap{justify-self:stretch;display:flex;justify-content:space-between;font:600 12px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ed-muted)}
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
@@ -296,7 +307,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
   .ed-process{grid-template-columns:1fr 1.15fr;gap:64px;align-items:center}
   .ed-process-pic{aspect-ratio:4/5}
   body{padding-bottom:0}
-  .ed-call{display:none}
+  .ed-call,.ed-mbar{display:none}
   .ed-links{display:flex;margin-left:auto}
   .ed-nav .ed-wrap{gap:20px}
   .ed-logo{flex:0 1 auto;margin-right:0}
@@ -383,6 +394,7 @@ if(dataEl){
   sizeIn.concat(optIn).forEach(function(i){i.addEventListener("change",show)});show();
 }
 ${EST_TOTAL_JS}
+${ACTIONS_JS}
 /* the floating call button shows after the hero buttons scroll away */
 var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
@@ -654,8 +666,8 @@ export function generateEditorial(form, d, deps) {
     <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will get back to you."}</p>
     ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : ""}</div>
   <form id="ask" class="ed-form ed-rv"${liveFormAttrs(d)} novalidate>
-    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name"></label>
-    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel"></label>
+    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
+    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
     <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
     <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
     ${liveFormFields(d)}<button class="ed-btn" type="submit">Send request</button>
@@ -703,6 +715,7 @@ ${process}
 ${reviews}
 ${contact}
 </main>
+${mobileBarHtml(d, esc, "ed-mbar", askLabel)}
 <footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credLine(d) ? `<p>${esc(credLine(d))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
 <script>
 ${liveScript(ED_JS, d)}
