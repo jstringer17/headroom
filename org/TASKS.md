@@ -10,4 +10,4 @@
 | T8 | Other 16 trades (pictures + variations) | chief | waiting on CEO go (HVAC first) | same as top 3 | - |
 | T9 | CEO decisions: DONE except price + setup fee (suggested $99 + $199) | CEO | waiting on CEO | decided in DECISIONS.md | - |
 | T10 | Open question: which picture is "that" in 'Don't make that the first animation but use it for one of the slides' | CEO | waiting on CEO | answered | - |
-| T11 | Polish the generated sites to the $10k bar (org/handoffs/polish-10k.md) | Opus builder (round 2; took over from cine-engine) | review: fixes 1-9 + round 2 A-D, F done and tested; E not met (self-score Cinematic 4.29, Editorial 4.25, Classic 3.71); WebKit not run | all 9 fixes pass test-polish; each look >= 4.3 on the QA rubric | qa-reviewer |
+| T11 | Polish the generated sites to the $10k bar (org/handoffs/polish-10k.md) | Opus builder (rounds 2-3) | review: floor met at 7f068a2 by independent QA (Cinematic 4.43, Editorial 4.38, Classic 4.43, no line < 4); 4.5 target not met; WebKit not run | all 9 fixes pass test-polish; each look >= 4.3 on the QA rubric | qa-reviewer |

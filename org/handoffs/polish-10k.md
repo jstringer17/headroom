@@ -297,3 +297,9 @@ Method: fresh evidence at 7f068a2: `round2-shots.mjs --out=/tmp/qa7` (3 looks x 
 - Classic line 2 or 4: no photo motion; fencing services still tagged "SERVICE" on 4 of 6 cards (/tmp/qa3edge/tile-long.jpg col 2); white card runs between the band and the picker.
 - Carried over by choice: Cinematic last-frame crop jump, fencing-vinyl story subject size, no owner photo slot.
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, coordinator's test-all at 7f068a2.
+
+## Result, round 3 (Opus builder, 2 Nov): floor met, target not
+Head 7f068a2. Independent QA (Opus qa-reviewer, cold, 4 passes): Cinematic 4.43, Editorial 4.38, Classic 4.43; no line under 4; no blockers or majors (section "Independent QA of 7f068a2" above). 4.5 target NOT reached.
+Fresh clone of 7f068a2: `node sitemaker/test-all.mjs` 13/13 OK (features 245/245, live 866, variants 748, round2 594/0). WebKit/iOS Safari NOT verified (not installed here).
+Done since QA of 3e475f5: every item of that QA; one shared picker (src/picker.js) in all looks and trades; same-camera default pairs (kit.samePair); phone story: sharp picture on top (<=1.5x at 3x), one button, words below; no load CLS (pinned layout from <head>, headline waits for fonts <=900 ms); promise headline for all 19 trades (src/promise.js), Cinematic opens on it over the FINISHED picture; Classic rebuilt on the Lifetime pattern (src/classic.js); tests updated to the round-3 rules + new checks (promise H1 per trade, finished picture behind the promise, Classic phone height budget, header ellipsis, one ticked variation, hvac one before/after, Ask-about-this job).
+Next for 4.5 (reviewer): Cinematic: close the dark gap between picture and headline on 812 px phones; Editorial: one button on the phone first screen, bring the silhouette higher; Classic: fewer generic "Service" tags, some photo motion.
