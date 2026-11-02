@@ -66,14 +66,14 @@ export function generateClassic(form, d, o) {
 
   // 2. Hero checks: license, certification, warranty, else the ticks.
   const c = d.cred, checks = [];
-  if (c.license) checks.push(`Licensed${d.insured ? " and insured" : ""} (#${esc(c.license)})`);
-  else if (d.insured) checks.push("Licensed and insured");
+  // (the license sits in the trust line just above, so the checks start with the next strongest facts)
+  if (!c.license && !d.insured && d.years) checks.push(`${d.years} year${d.years === 1 ? "" : "s"} in business`);
   if (c.certs && c.certs[0]) checks.push(`${esc(c.certs[0])} certified`);
   if (c.warranty) checks.push(esc(/warrant/i.test(c.warranty) ? c.warranty : `${c.warranty} warranty`));
   if (checks.length < 3 && d.freeEstimates) checks.push("Free estimates, no obligation");
   if (checks.length < 3 && d.emergency) checks.push("Open 24/7 for emergencies");
   if (checks.length < 3) checks.push(`Serving ${areaPhrase}`);
-  const top = credTop(d).filter((x) => !/^Licensed/.test(x)); // the license is already in the check list
+  const top = credTop(d);
   const jobNames = [...allCards.map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
   const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
   const formCard = `<div class="cl-formcard" id="contact">
@@ -94,7 +94,7 @@ export function generateClassic(form, d, o) {
     <div class="cl-hero-text">
       <p class="cl-pill">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>
       <h1 style="${clH1(h1Text)}">${promise ? clAccent(h1Text, promise.accent) : esc(h1Text)}</h1>
-      <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.${top.length ? ` <b>${esc(top.join(" · "))}</b>` : ""}</p>
+      <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
       <ul class="cl-checks">${checks.slice(0, 3).map((x) => `<li>${clIcon(CL_CHECK, 18)}<span>${x}</span></li>`).join("")}</ul>
       <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line cl-to-form" href="#ask">${askLabel}</a></div>
     </div>
@@ -130,6 +130,8 @@ export function generateClassic(form, d, o) {
   // 7. Owner card beside the reviews.
   const fine = credLine(d);
   const ownerFacts = [d.cred.founded ? `In business since ${d.cred.founded}` : d.years ? `${d.years} year${d.years === 1 ? "" : "s"} in business` : "", d.cred.family ? "Family owned" : "", d.cred.veteran ? "Veteran owned" : "", d.cred.license ? `License #${esc(d.cred.license)}` : "", d.insured ? (d.cred.bonded ? "Insured and bonded" : "Insured") : ""].filter(Boolean);
+  // every other typed fact the proof strip had no room for (jobs, awards, more certifications, ...)
+  badges.slice(5).forEach((b) => { const f = esc(`${b.label}${b.sub ? ` ${b.sub.toLowerCase()}` : ""}`); if (!ownerFacts.some((x) => x.startsWith(esc(b.label)) || f.startsWith(x))) ownerFacts.push(f); });
   const initials = esc(String(d.company).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase());
   const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec" id="reviews"><div class="wrap cl-rev-grid">
   <aside class="cl-owner rv"><span class="cl-mono" aria-hidden="true">${initials}</span><p class="cl-kicker">${d.cred.family ? "Family owned" : "Local crew"}</p><h3>${name}</h3>
@@ -349,6 +351,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-note{margin-top:14px;font-size:14px;color:var(--muted)}
 /* owner + reviews */
 .cl-rev-grid{display:grid;gap:28px}
+@media (max-width:1023px){.cl-revs{order:-1}}
 .cl-owner{border:1px solid var(--line);border-radius:var(--r);padding:24px;display:grid;gap:10px;align-content:start;background:#fff}
 .cl-mono{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--dark);color:var(--hi);font:800 26px/1 var(--head);box-shadow:0 0 0 4px #fff,0 0 0 6px var(--accent)}
 .cl-owner h3{font-size:24px;font-weight:800;color:var(--dark)}
@@ -356,7 +359,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-owner ul{list-style:none;padding:0;display:grid;gap:8px;margin-top:6px}
 .cl-owner li{display:flex;gap:8px;align-items:flex-start;font-weight:600}
 .cl-owner li svg{color:var(--dark);margin-top:4px;flex:none}
-.cl-revs{display:grid;gap:18px;align-content:start}
+.cl-revs{display:grid;gap:18px;align-content:start;min-width:0}
 .rating{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
 .rating-num{font:800 72px/.9 var(--head);color:var(--dark);letter-spacing:-.03em}
 .cl-stars{display:inline-flex;gap:2px;color:#f5a623}
@@ -369,8 +372,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .rvw{border-left:4px solid var(--accent);background:var(--light);border-radius:0 var(--r) var(--r) 0;padding:18px 20px}
 .rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;color:#f5a623}
 .rvw-tag{font:700 12px/1 var(--body);letter-spacing:.04em;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
-.rvw-q{margin:10px 0 0;font-size:18px;line-height:1.5;color:var(--ink)}
-.rvw-by{margin-top:8px;font-weight:700;color:var(--muted)}
+.rvw-q{margin:10px 0 0;font-size:18px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.rvw-by{margin-top:8px;font-weight:700;color:var(--muted);overflow-wrap:anywhere}
 .rvw-all{justify-self:start}
 /* steps, faq */
 .cl-steps{list-style:none;padding:0;display:grid;gap:14px;counter-reset:s}

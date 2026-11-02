@@ -2,6 +2,7 @@
 //   node sitemaker/test-variants-maker.mjs
 // Real maker, lazy build over http. For each variation of roofing, fencing and pressure: pick it, then check that the
 // site changes (headline, library pictures) and that only that variation's pictures were fetched. Also ingest and publish plan.
+import { promiseFor } from "./src/promise.js";
 import { createRequire } from "node:module";
 import { execSync, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
@@ -88,11 +89,11 @@ for (const t of TRADES) {
     const doc = await page.$eval("#frame", (f) => f.srcdoc);
     const text = strip(doc);
     const kv = kitVariant(CINE_KIT[t], v.key);
-    const head = kv.story[0].headline;
+    const head = (promiseFor(t, v.key) || kv.story[0]).headline; // round 3: the first frame states the promise
     ok(text.includes(head.replace(/\.$/, "")), `${t}/${v.key}: the site does not show the story headline "${head}"`);
     heads.add(head);
     ok((doc.match(/data:image\/webp;base64,/g) || []).length >= 1, `${t}/${v.key}: the site has no library pictures`);
-    for (const o of vs) if (o !== v && o !== vs[0]) ok(!text.includes(kitVariant(CINE_KIT[t], o.key).story[0].headline), `${t}/${v.key}: shows the headline of ${o.key}`);
+    for (const o of vs) if (o !== v && o !== vs[0]) ok(!text.includes((promiseFor(t, o.key) || kitVariant(CINE_KIT[t], o.key).story[0]).headline), `${t}/${v.key}: shows the headline of ${o.key}`);
     // Download inlines this variation's pictures only
     const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#download")]);
     const html = readFileSync(await dl.path(), "utf8");

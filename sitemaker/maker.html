@@ -154,7 +154,8 @@ details.lead[open]{display:grid;gap:10px}
       <div class="row3"><label class="field" for="cred-yelp-rating"><span>Yelp stars</span><input type="number" id="cred-yelp-rating" data-cred placeholder="4.5" min="1" max="5" step="0.1" inputmode="decimal"></label><label class="field" for="cred-yelp-count"><span>Yelp reviews</span><input type="number" id="cred-yelp-count" data-cred placeholder="38" min="0" inputmode="numeric"></label><label class="field" for="cred-yelp-url"><span>Yelp link</span><input type="url" id="cred-yelp-url" data-cred placeholder="https://..." inputmode="url"></label></div>
       <div class="row3"><label class="field" for="cred-angi-rating"><span>Angi stars</span><input type="number" id="cred-angi-rating" data-cred placeholder="4.9" min="1" max="5" step="0.1" inputmode="decimal"></label><label class="field" for="cred-angi-count"><span>Angi reviews</span><input type="number" id="cred-angi-count" data-cred placeholder="22" min="0" inputmode="numeric"></label><label class="field" for="cred-angi-url"><span>Angi link</span><input type="url" id="cred-angi-url" data-cred placeholder="https://..." inputmode="url"></label></div>
       <div class="row2"><label class="field" for="cred-fb-rating"><span>Facebook stars</span><input type="number" id="cred-fb-rating" data-cred placeholder="4.7" min="1" max="5" step="0.1" inputmode="decimal"></label><label class="field" for="cred-fb-url"><span>Facebook link</span><input type="url" id="cred-fb-url" data-cred placeholder="https://..." inputmode="url"></label></div>
-      <div class="row3"><label class="field" for="cred-other-name"><span>Other site (Nextdoor, HomeAdvisor...)</span><input type="text" id="cred-other-name" data-cred placeholder="Nextdoor"></label><label class="field" for="cred-other-rating"><span>Stars</span><input type="number" id="cred-other-rating" data-cred placeholder="4.6" min="1" max="5" step="0.1" inputmode="decimal"></label><label class="field" for="cred-other-url"><span>Link</span><input type="url" id="cred-other-url" data-cred placeholder="https://..." inputmode="url"></label></div>
+      <div class="row3"><label class="field" for="cred-other-name"><span>Other site (Nextdoor, HomeAdvisor...)</span><input type="text" id="cred-other-name" data-cred placeholder="Nextdoor"></label><label class="field" for="cred-other-rating"><span>Stars</span><input type="number" id="cred-other-rating" data-cred placeholder="4.6" min="1" max="5" step="0.1" inputmode="decimal"></label><label class="field" for="cred-other-count"><span>Reviews</span><input type="number" id="cred-other-count" data-cred placeholder="38" min="0" step="1" inputmode="numeric"></label></div>
+      <div class="row2"><label class="field" for="cred-other-url"><span>Other site link</span><input type="url" id="cred-other-url" data-cred placeholder="https://..." inputmode="url"></label></div>
       <div class="row3"><label class="field" for="cred-license"><span>License number</span><input type="text" id="cred-license" data-cred placeholder="Like: 123456"></label><label class="field" for="cred-coverage"><span>Insurance amount</span><input type="text" id="cred-coverage" data-cred placeholder="Like: $2M"></label><label class="check"><input type="checkbox" id="cred-bonded" data-cred><span>Bonded</span></label></div>
       <div class="row2"><label class="field" for="cred-warranty"><span>Warranty</span><input type="text" id="cred-warranty" data-cred placeholder="Like: 10 year workmanship"></label><label class="field" for="cred-jobs"><span>Jobs completed</span><input type="number" id="cred-jobs" data-cred placeholder="1200" min="0" inputmode="numeric"></label></div>
       <div class="row2"><label class="check"><input type="checkbox" id="cred-family" data-cred><span>Family owned</span></label><label class="check"><input type="checkbox" id="cred-veteran" data-cred><span>Veteran owned</span></label></div>
@@ -2175,6 +2176,10 @@ CINE_KIT.pressure.variants = [
 ];
 // VARIANTS:END
 
+// Same-camera before/after for the default variation (its own before.webp/after.webp are two different shots).
+CINE_KIT.roofing.samePair = ["old", "new"];
+CINE_KIT.pressure.samePair = ["dirty", "clean"];
+
 // The variants of a trade (always at least the default one).
 function cineVariants(trade) {
   const k = CINE_KIT[trade];
@@ -3461,6 +3466,9 @@ function offeredVariants(kit, offer) {
 function variantCards(kit, offer) {
   return offeredVariants(kit, offer).map((v) => {
     const kv = kitVariant(kit, v.key), ba = kv.beforeAfter || {};
+    // The default variation can name a same-camera pair from its story (kit.samePair = [before, after]) when its
+    // own before/after pictures are two different shots (roofing, pressure: QA round 2).
+    if (!kv.slotPrefix && Array.isArray(kit.samePair)) return { key: v.key, label: v.label || v.key, before: kit.samePair[0], after: kit.samePair[1] };
     return { key: v.key, label: v.label || v.key, before: (ba.before && ba.before.id) || `${kv.slotPrefix}before`, after: (ba.after && ba.after.id) || `${kv.slotPrefix}after` };
   });
 }
@@ -3518,15 +3526,13 @@ function variantPrice(prices, label) {
 
 // Customer reviews for every look. Pure functions; each look escapes and styles the result itself.
 //   form.reviewList = [{ name, town, text, stars }] (up to 3), form.reviewLink = a Google / Facebook page URL.
-// With no review text typed, three SAMPLE reviews are shown, each marked as a sample. Typed ones are shown as the
+// With no review text typed, ONE sample review is shown, marked as a sample (QA round 2: three 5-star samples looked fake). Typed ones are shown as the
 // owner's, with no sample mark.
 const RVW_MAX = 3;
 const RVW_TEXT_MAX = 240;
 const RVW_SAMPLE_TAG = "Sample review, replace with a real one";
 const RVW_SAMPLES = [
   { name: "Sample name", town: "Your town", text: "They showed up when they said they would, explained the price before starting and left everything tidy.", stars: 5 },
-  { name: "Sample name", town: "Your town", text: "Easy to reach, quick to answer and the work looks great. We would call them again.", stars: 5 },
-  { name: "Sample name", town: "Your town", text: "Straight talk, fair price and no surprises on the bill. Worth the call.", stars: 5 },
 ];
 
 // A link only if it is a plain http(s) address.
@@ -3584,6 +3590,15 @@ const VP_TITLES = {
   landscaping: ["Pick your ", "yard", "."], remodeling: ["Pick your ", "room", "."], garage: ["Pick your ", "door", "."],
 };
 function pickerTitle(tradeKey) { return VP_TITLES[tradeKey] || ["Pick your ", "style", "."]; }
+// The heading words and the one-line hint, for one item or several. Escaped HTML.
+function pickerHead(tradeKey, items) {
+  const [a0, em, z0] = pickerTitle(tradeKey);
+  const solo = items.length === 1, word = em === "wash" ? "clean" : em;
+  const [a, z] = solo ? ["Your ", ", before and after."] : [a0, z0];
+  const h2 = `${vpEsc(a)}<em>${vpEsc(solo ? word : em)}</em>${vpEsc(z)}`;
+  const lede = solo ? "Tap Compare, then drag the line across the picture." : items.some((x) => x.before) ? "Tap one to see it. Then compare the before and after." : "Tap one to see it.";
+  return { h2, lede };
+}
 
 const vpWords = (s) => new Set(String(s).toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((w) => w.length > 2 && !["and", "the", "only", "look", "new"].includes(w)).map((w) => w.replace(/(es|s)$/, "")));
 // The owner's price range for one variation: the estimator option that shares a word with its name,
@@ -3602,15 +3617,20 @@ function vpPrice(prices, label, usd) {
 // The chips: [{ key, label, note, after, before|null }]
 function pickerItems(fullKit, kit, cards, tradeKey) {
   const notes = (typeof VARIANT_NOTES !== "undefined" && VARIANT_NOTES[tradeKey]) || {};
-  if (cards && cards.length >= 2) {
-    const first = cards.findIndex((c) => c.key === kit.variantKey);
-    const ordered = first > 0 ? [cards[first], ...cards.filter((_, i) => i !== first)] : cards;
+  const hasVariants = ((fullKit && fullKit.variants) || []).length >= 2;
+  if (hasVariants) {
+    // Every offered variation; one ticked = one item (still its own before and after); none ticked = the picked one.
+    let list = cards && cards.length ? cards : ((typeof variantCards === "function" ? variantCards(fullKit, [kit.variantKey]) : []));
+    const first = list.findIndex((c) => c.key === kit.variantKey);
+    const ordered = first > 0 ? [list[first], ...list.filter((_, i) => i !== first)] : list;
     return ordered.map((c) => ({ key: c.key, label: c.label, note: notes[c.key] || "", after: c.after, before: c.before }));
   }
-  const out = (kit.styles || []).map((s) => ({ key: s.id, label: s.name, note: s.note || "", after: s.id, before: null }));
+  // No variations: the one before and after first, then the styles (pictures only).
+  const out = [];
   const ba = kit.beforeAfter;
   if (ba) out.push({ key: "ba", label: "Before and after", note: ba.title || "", after: (ba.after && ba.after.id) || "after", before: (ba.before && ba.before.id) || "before" });
-  return out.length >= 2 ? out : [];
+  (kit.styles || []).forEach((s) => out.push({ key: s.id, label: s.name, note: s.note || "", after: s.id, before: null }));
+  return out;
 }
 
 const vpEsc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -3621,11 +3641,16 @@ const VP_CHEV = (d) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="no
 //       head (optional html replacing the default heading), askLabel }
 function pickerHtml(o) {
   const items = o.items || [];
-  if (items.length < 2) return "";
+  if (!items.length) return "";
+  const solo = items.length === 1;
   const [a, em, z] = pickerTitle(o.tradeKey);
   const tags = o.tags || ["Before", "After"];
   const noun = em === "style" ? "styles" : em === "wash" ? "kinds of job" : `kinds of ${em}`;
-  const head = o.head || `<div class="vp-head"><span class="vp-kicker">${vpEsc(o.tradeName)}</span><h2 id="vp-h">${vpEsc(a)}<em>${vpEsc(em)}</em>${vpEsc(z)}</h2><p class="vp-lede">${items.some((x) => x.before) ? "Tap one to see it. Then compare the before and after." : "Tap one to see it."}</p></div>`;
+  const hd = pickerHead(o.tradeKey, items);
+  // "Ask about this" picks a job the form really lists: the item's own name, else a job sharing a word with it, else the first.
+  const jobs = o.jobs || [];
+  const jobFor = (label) => { if (!jobs.length || jobs.includes(label)) return label; const w = vpWords(label); return jobs.find((j) => [...vpWords(j)].some((x) => w.has(x))) || jobs[0]; };
+  const head = o.head || `<div class="vp-head"><span class="vp-kicker">${vpEsc(o.tradeName)}</span><h2 id="vp-h">${hd.h2}</h2><p class="vp-lede">${hd.lede}</p></div>`;
   const chips = items.map((it, i) => `<button type="button" class="vp-chip" role="tab" id="vp-t-${i}" aria-controls="vp-p-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${vpEsc(it.label)}</button>`).join("");
   const panels = items.map((it, i) => {
     const price = o.prices ? vpPrice(o.prices, it.label, o.usd) : null;
@@ -3636,10 +3661,10 @@ function pickerHtml(o) {
     return `<div class="vp-panel" role="tabpanel" id="vp-p-${i}" aria-labelledby="vp-t-${i}" data-i="${i}">
     <div class="vp-stage">${pic}<button type="button" class="vp-nav vp-prev" aria-label="Previous: ${vpEsc(items[(i - 1 + items.length) % items.length].label)}">${VP_CHEV("M15 6l-6 6 6 6")}</button><button type="button" class="vp-nav vp-next" aria-label="Next: ${vpEsc(items[(i + 1) % items.length].label)}">${VP_CHEV("M9 6l6 6-6 6")}</button><span class="vp-count" aria-hidden="true">${i + 1} / ${items.length}</span></div>
     <div class="vp-info"><h3 class="vp-name">${vpEsc(it.label)}</h3>${it.note ? `<p class="vp-note">${vpEsc(it.note)}</p>` : ""}${price ? `<p class="vp-price"><span class="vp-pr"><b>${vpEsc(price)}</b> ${vpEsc(o.unit || "")}</span><span>Estimate from the owner. The exact price comes after we look.</span></p>` : ""}
-      <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(it.label)}">Ask about this</a></div></div>
+      <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label))}">Ask about this</a></div></div>
   </div>`;
   }).join("\n  ");
-  return `<section class="vp ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
+  return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
   ${head}
   <div class="vp-chips-wrap"><div class="vp-chips" role="tablist" aria-label="${vpEsc(noun[0].toUpperCase() + noun.slice(1))}">${chips}</div></div>
   ${panels}
@@ -3688,6 +3713,7 @@ const PICKER_CSS = `
 .vp-cmp-on .vp-nav{opacity:0;pointer-events:none}
 .vp-count{position:absolute;right:12px;bottom:12px;z-index:4;font:700 12px/1 var(--vp-sans,inherit);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:999px;font-variant-numeric:tabular-nums}
 .vp-cmp-on .vp-count{opacity:0}
+.vp-solo .vp-chips-wrap,.vp-solo .vp-nav,.vp-solo .vp-count{display:none}
 .vp-info{display:grid;gap:10px;align-content:start;justify-items:start}
 .vp-name{margin:0;font:500 clamp(28px,5vw,40px)/1.08 var(--vp-head,inherit);letter-spacing:-.01em}
 .vp-note{margin:0;color:var(--vp-muted);font-size:17px;line-height:1.5;max-width:42ch}
@@ -3739,7 +3765,7 @@ panels.forEach(function(p,i){
   ba.addEventListener("pointermove",function(e){if(drag)fromX(e.clientX)});
   ba.addEventListener("pointerup",function(e){drag=false;if(swipe){swipe=false;var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4)show(cur+(dx<0?1:-1),false)}});
   ba.addEventListener("pointercancel",function(){drag=false;swipe=false});
-  if(h)h.addEventListener("keydown",function(e){var v=+h.getAttribute("aria-valuenow"),k=e.key,nv=v;if(k==="ArrowLeft"||k==="ArrowDown")nv=v-5;else if(k==="ArrowRight"||k==="ArrowUp")nv=v+5;else if(k==="PageDown")nv=v-20;else if(k==="PageUp")nv=v+20;else if(k==="Home")nv=0;else if(k==="End")nv=100;else return;e.preventDefault();setPos(p,nv)});
+  if(h)h.addEventListener("keydown",function(e){if(!p.classList.contains("vp-cmp-on")&&/^(Arrow|Page|Home|End)/.test(e.key)){var cb=p.querySelector(".vp-cmp");p.classList.add("vp-cmp-on");h.tabIndex=0;h.removeAttribute("aria-hidden");if(cb){cb.setAttribute("aria-pressed","true");cb.querySelector("span").textContent="Hide before and after"}}var v=+h.getAttribute("aria-valuenow"),k=e.key,nv=v;if(k==="ArrowLeft"||k==="ArrowDown")nv=v-5;else if(k==="ArrowRight"||k==="ArrowUp")nv=v+5;else if(k==="PageDown")nv=v-20;else if(k==="PageUp")nv=v+20;else if(k==="Home")nv=0;else if(k==="End")nv=100;else return;e.preventDefault();setPos(p,nv)});
 });
 panels[0].hidden=false;
 /* load every picture once the section is near, so switching never flashes */
@@ -3873,7 +3899,7 @@ function credProofLis(badges, esc, p = "", icon = "") {
   const more = badges.length > PROOF_KEEP + 1 ? `<li class="pb-more"><button type="button" aria-expanded="false">+${badges.length - PROOF_KEEP} more</button></li>` : "";
   return badges.map((b, i) => {
     const inner = `${icon}<b>${esc(b.label)}</b>${b.sub ? ` <span>${esc(b.sub)}</span>` : ""}`;
-    return `<li class="${p}rv${more && i >= PROOF_KEEP ? " pb-x" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
+    return `<li class="${more && i >= PROOF_KEEP ? "pb-x" : `${p}rv`}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">${inner}</a>` : inner}</li>`;
   }).join("") + more;
 }
 // Where the other rating sites go in the reviews header: name, stars, count, link when typed.
@@ -3896,12 +3922,17 @@ const ACTIONS_JS = `(function(){var r=document.documentElement,fld=function(t){r
 function f(e){if(fld(e.target))r.classList.toggle("kbd",e.type==="focusin")}
 document.addEventListener("focusin",f);document.addEventListener("focusout",f);
 if(window.visualViewport)visualViewport.addEventListener("resize",function(){r.classList.toggle("kbd",visualViewport.height<innerHeight*0.75)});
+/* the bar steps aside while the contact form is on screen, so it never sits on a field */
+var cf=document.getElementById("ask");if(cf&&"IntersectionObserver" in window)new IntersectionObserver(function(es){r.classList.toggle("nearform",es[0].isIntersecting)},{rootMargin:"0px 0px -15% 0px"}).observe(cf);
+/* keyboard users never land on content that is still faded out by a scroll reveal */
+document.addEventListener("focusin",function(e){var t=e.target.closest&&e.target.closest(".rv,.ed-rv");if(t)t.classList.add("in")});
 document.addEventListener("click",function(e){var b=e.target.closest&&e.target.closest(".pb-more button");if(!b)return;var u=b.closest("ul");u.classList.add("pb-open");[].forEach.call(u.querySelectorAll(".pb-x"),function(x){x.classList.add("in")});b.parentNode.parentNode.removeChild(b.parentNode);u.setAttribute("tabindex","-1");u.focus({preventScroll:true})})})();
 `;
 // Shared rule for the "+N more" proof badges (each look styles the chips themselves).
 const PROOF_MORE_CSS = `ul>li.pb-more{display:none}
 @media (max-width:639px){.js ul:not(.pb-open)>li.pb-x{display:none}.js ul>li.pb-more{display:flex}.pb-more button{min-height:48px;padding:0 18px;border-radius:999px;border:1.5px solid currentColor;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer}}
-ul.pb-open:focus{outline:none}`;
+ul.pb-open:focus{outline:none}
+.nearform .mbar,.nearform .ed-mbar{transform:translateY(110%);visibility:hidden}`;
 
 // Sample Site Maker: Cinematic mode.
 // generateCinematic(form, d, deps) builds one scroll-story site as a single
@@ -3920,6 +3951,8 @@ ul.pb-open:focus{outline:none}`;
 // picture shows placeholderArt with its label. The price estimator shows only
 // ranges the owner typed; a blank cell means that choice is not offered, and
 // no ranges at all hides the section.
+
+
 
 
 
@@ -4051,7 +4084,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 /* header */
 .top{position:sticky;top:0;z-index:40;background:var(--dark);color:#fff;height:var(--hh)}
 .top .wrap{display:flex;align-items:center;gap:24px;height:100%}
-.brand{font:600 18px/1.15 var(--sans);text-decoration:none;margin-right:auto;min-width:0;flex:1 1 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand{font:600 18px/1.15 var(--sans);line-height:48px;text-decoration:none;margin-right:auto;min-width:0;flex:1 1 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav{display:none;gap:24px;font-size:15px}
 .nav a{text-decoration:none;color:rgba(255,255,255,.78)}
 @media (hover:hover){.nav a:hover{color:#fff}}
@@ -4076,10 +4109,21 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-motion .story-cta{position:absolute;left:0;right:0;bottom:4px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));padding-top:0;margin:0 auto;pointer-events:none}
 .cine-motion .story-cta>*{pointer-events:auto}
 .cine-motion .story-sub{display:none}
+.cine-wait .step .line{visibility:hidden!important}
 .prog-bar,.prog-count{display:none}
-.frame img[data-real]{object-position:var(--fp,88% 50%)}
+.frame img{object-position:var(--fp,50% 55%)}
+/* Phones (QA round 2: frames were upscaled 2-2.6x and the buttons sat on the house): the picture takes the top of the
+   pinned screen at ~1.3x, the subject is framed per slot (--fp), and the headline and buttons sit below it on dark. */
+@media (max-width:759px){
+  .cine-motion .pin{background:var(--dark)}
+  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;overflow:hidden}
+  .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
+  .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
+  .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
+  .cine-motion .prog-count{top:12px}
+}
 .panel img[data-real],.ba img[data-real]{object-position:72% 45%}
-@media (min-width:760px){.frame img[data-real]{object-position:var(--fp,50% 50%)}}
+@media (min-width:760px){.frame img{object-position:var(--fpd,50% 50%)}}
 .cine-motion .prog-bar{display:block;position:absolute;left:0;right:0;bottom:0;height:4px;z-index:4;background:rgba(255,255,255,.18)}
 .prog-bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transform:scaleX(0);will-change:transform}
 .cine-motion .prog-count{display:block;position:absolute;right:max(20px,env(safe-area-inset-right,0px));top:14px;z-index:4;font:600 13px/1 var(--sans);letter-spacing:.12em;color:#fff;background:rgba(0,0,0,.55);padding:7px 11px;border-radius:999px;font-variant-numeric:tabular-nums}
@@ -4213,7 +4257,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .rvw-more{margin:44px 0 0}
 .final{background:var(--dark);color:#fff}
 .final .lede{color:rgba(255,255,255,.78)}
-.big-phone{display:inline-block;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
+.big-phone{display:inline-flex;align-items:center;min-height:48px;max-width:100%;overflow-wrap:anywhere;margin-top:24px;font:500 clamp(26px,7vw,64px)/1.05 var(--serif);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
 .grid{display:grid;gap:36px}
 form{display:grid;gap:16px;align-content:start;background:var(--cream);color:var(--ink);border-radius:18px;padding:24px}
 label{display:grid;gap:6px;font-size:15px;font-weight:600}
@@ -4305,9 +4349,13 @@ if(story&&!reduce){
     var cur=Math.round(pos)+1;if(cur!==shown){shown=cur;count.textContent=cur+" / "+n}
   };
   var space=function(){story.style.setProperty("--cta-h",cta.offsetHeight+"px")};
-  space();addEventListener("resize",space);
+  addEventListener("resize",space);
   var ask=function(){if(!queued){queued=true;requestAnimationFrame(paint)}};
   root.classList.add("cine-motion");
+  space(); /* measured in the pinned layout; the headline shows once the web font is in (max 700 ms), so it never jumps */
+  var shown0=false,reveal=function(){if(shown0)return;shown0=true;space();root.classList.remove("cine-wait")};
+  var h0=story.querySelector(".line .h"),fam=h0?getComputedStyle(h0).fontFamily.split(",")[0]:"";
+  if(document.fonts&&document.fonts.load&&fam){var later=function(){requestAnimationFrame(function(){requestAnimationFrame(reveal)})};Promise.all([document.fonts.load("500 48px "+fam),document.fonts.load("italic 500 48px "+fam)]).then(later,later);setTimeout(reveal,900)}else reveal();
   paint();
   if("IntersectionObserver" in window){
     new IntersectionObserver(function(es){
@@ -4319,7 +4367,7 @@ if(story&&!reduce){
 }
 
 /* 2. style tabs: real buttons, arrow keys, aria-selected */
-var tabs=[].slice.call(document.querySelectorAll("#styles [role=tab]"));
+var tabs=[].slice.call(document.querySelectorAll("#styles .tab[role=tab]"));
 var panels=tabs.map(function(t){return document.getElementById(t.getAttribute("aria-controls"))});
 function pick(i,focus){
   tabs.forEach(function(t,j){var on=j===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;panels[j].hidden=!on});
@@ -4470,7 +4518,10 @@ function generateCinematic(form, d, deps) {
 
   // 1. Scroll story. The form's Hero picture box wins over any library or drawn picture.
   const heroBox = safeImage(form && form.heroImage);
-  const steps = story.map((s, i) => {
+  // Round 3 (consultant fix 1): the first frame states the result (promise), the next frames tell the story.
+  const promise = promiseFor(d.tradeKey, kit && kit.variantKey);
+  const steps = story.map((s0, i) => {
+    const s = i === 0 && promise ? { ...s0, headline: promise.headline, accent: promise.accent } : s0;
     const tag = i === 0 ? "h1" : "p";
     return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
   }).join("");
@@ -4521,6 +4572,11 @@ function generateCinematic(form, d, deps) {
     <div class="pk-cap"><h3 class="pk-name">${esc(c.label)}</h3><p class="pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c, d.tradeKey))}</p>${price ? `<p class="pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}<div class="pk-btns"><button type="button" class="btn btn-glass pk-cmp" aria-pressed="false">Compare before and after</button><a class="btn btn-accent" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
   </div>`; }).join("")}
 </div></section>` : "";
+  // Round 3: the one shared picker (src/picker.js) for every trade: offered variations (one is enough), or the
+  // trade's before and after plus its styles. Drag on the picture once Compare is on; the page's only slider.
+  const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
+  const vpImg = (id, label, attrs, side) => `<img src="${esc(slotSrc(id, label, side ? { labelSide: side === baTags(d.tradeKey)[0] ? "left" : "right" } : undefined))}"${safeImage(images[id]) ? ' data-real="1"' : ""} alt="${esc(label)}" ${attrs}>`;
+  const vpSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: vpImg, prices: prices0, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: baTags(d.tradeKey), cls: "sec dark-sec cine-vp", jobs: [...allCards.map((c) => c.label), ...d.services.map(([n]) => n)] });
 
   // 4. Price estimator: typed ranges only, hidden when there are none
   let priceSec = "";
@@ -4601,7 +4657,7 @@ function generateCinematic(form, d, deps) {
 </div></section>`;
 
   const nav = [
-    styles.length && ["#styles", "Styles"], hvacSec && ["#comfort", "Comfort"], !pickSec && baSec && ["#before-after", "Before and after"],
+    vpSec && ["#styles", vpItems.some((x) => x.before) ? "Before and after" : "Styles"], hvacSec && ["#comfort", "Comfort"],
     prices && ["#price", "Price"], ["#services", "Services"], ["#contact", "Contact"],
   ].filter(Boolean).map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 
@@ -4613,6 +4669,7 @@ function generateCinematic(form, d, deps) {
 <html lang="en" class="cine-no-js">
 <head>
 <meta charset="utf-8">
+<script>(function(){var r=document.documentElement;r.className="js"+(matchMedia("(prefers-reduced-motion: reduce)").matches?"":" cine-motion cine-wait")})()<\/script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
 <meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
@@ -4622,7 +4679,10 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--ink:${th.ink};--muted:${th.muted}}
 ${ENGINE_CSS}
 ${look && look.css ? look.css : ""}
+${PICKER_CSS}
 ${PROOF_MORE_CSS}
+.cine-vp{--vp-ink:#fff;--vp-bg:var(--dark);--vp-muted:rgba(255,255,255,.78);--vp-accent:var(--accent);--vp-accent-ink:var(--accent-ink);--vp-em:var(--accent);--vp-chip-bg:rgba(255,255,255,.12);--vp-chip-ink:#fff;--vp-chip-line:rgba(255,255,255,.4);--vp-on-bg:#fff;--vp-on-ink:var(--dark);--vp-head:var(--serif);--vp-sans:var(--sans);--vp-stage-bg:var(--dark2);--vp-max:var(--max);--vp-focus:var(--hi)}
+.cine-vp h2{font-weight:500}
 </style>
 </head>
 <body>
@@ -4635,9 +4695,8 @@ ${PROOF_MORE_CSS}
 <main id="top">
 ${storySec}
 ${factsSec}
-${pickSec || stylesSec}
+${vpSec}
 ${hvacSec}
-${pickSec ? "" : baSec}
 ${priceSec}
 ${services}
 ${reviews}
@@ -4648,6 +4707,7 @@ ${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(ENGINE_JS, d)}
 ${ACTIONS_JS}
+${PICKER_JS}
 <\/script>
 ${liveBeacon(d)}</body>
 </html>
@@ -4667,6 +4727,7 @@ ${liveBeacon(d)}</body>
 // form.editorial = { projects: [{ name, where, job, type, time } x 3] }, all optional.
 // form.cine.images / form.cine.prices / form.cine.unit work as in cinematic mode.
 // deps = { CINE_KIT, cineLook, placeholderArt, editorialLook? (optional), editorialShape? (optional) }
+
 
 
 
@@ -4755,9 +4816,9 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-eyebrow{display:flex;align-items:center;gap:14px;font:600 12px/1.3 var(--ed-sans);letter-spacing:.2em;text-transform:uppercase;color:var(--ed-accent)}
 .ed-eyebrow::before{content:"";flex:none;width:36px;height:1.5px;background:currentColor}
 /* nav */
-.ed-nav{position:sticky;top:0;z-index:40;height:var(--ed-nav);background:rgba(236,229,220,.78);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border-bottom:1px solid var(--ed-line)}
+.ed-nav{position:sticky;top:0;z-index:40;height:var(--ed-nav);background:rgba(236,229,220,.97);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border-bottom:1px solid var(--ed-line)}
 .ed-nav .ed-wrap{display:flex;align-items:center;gap:14px;height:100%}
-.ed-logo{font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;display:flex;align-items:center;gap:8px;margin-right:auto;flex:1 1 auto}
+.ed-logo{min-height:48px;font:600 22px/1 var(--ed-serif);letter-spacing:-.01em;color:var(--ed-accent);text-decoration:none;min-width:0;display:flex;align-items:center;gap:8px;margin-right:auto;flex:1 1 auto}
 .ed-logo-t{min-width:0;overflow-wrap:anywhere;line-height:1.05;font-size:clamp(15px,4.4vw,22px);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .ed-mark{flex:none}
 .ed-nav .ed-wrap{gap:10px}
@@ -4921,7 +4982,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-final{background:var(--ed-ink);color:var(--ed-cream)}
 .ed-final .ed-grid{display:grid;gap:34px}
 .ed-final h2{font-size:clamp(44px,9vw,104px)}
-.ed-phone{display:inline-block;max-width:100%;margin-top:22px;font:500 clamp(26px,7vw,64px)/1.05 var(--ed-serif);color:var(--ed-hi,var(--ed-cream));text-decoration:none;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.ed-phone{display:inline-flex;align-items:center;min-height:48px;max-width:100%;margin-top:22px;font:500 clamp(26px,7vw,64px)/1.05 var(--ed-serif);color:color-mix(in srgb,var(--ed-hi,#fff) 50%,#fff);text-decoration:none;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
 .ed-final .ed-note{color:rgba(236,229,220,.75);margin-top:14px}
 .ed-form{display:grid;gap:16px;align-content:start;background:var(--ed-cream);color:var(--ed-ink);border-radius:var(--ed-card);padding:24px}
 .ed-form label{display:grid;gap:6px;font-size:14px;font-weight:700}
@@ -5051,6 +5112,7 @@ if(dataEl){
 }
 ${EST_TOTAL_JS}
 ${ACTIONS_JS}
+${PICKER_JS}
 /* the floating call button shows after the hero buttons scroll away */
 var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
@@ -5253,16 +5315,11 @@ function generateEditorial(form, d, deps) {
   // Pick your roof / fence / wash: chips for every variation the owner offers, a big picture, its own before and after.
   // It is the page's only before/after.
   const pickNoun = PICK_NOUN[d.tradeKey] || "style";
-  const pickSec = allCards.length >= 2 ? `<section class="ed-sec" id="styles" data-ed="pick"><div class="ed-wrap">
-  <div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2>Pick your <em>${esc(pickNoun)}</em></h2></div>
-  <div class="ed-chips" role="tablist" aria-label="${esc(tradeName)} options">${allCards.map((c, i) => `<button type="button" class="ed-chip" role="tab" id="ed-tab-${i}" aria-controls="ed-panel-${i}" aria-selected="${i === 0}" tabindex="${i === 0 ? 0 : -1}">${esc(c.label)}</button>`).join("")}</div>
-  ${allCards.map((c, i) => { const price = variantPrice(offeredPrices(kit, cine.prices), c.label); return `<div class="ed-pk" role="tabpanel" id="ed-panel-${i}" aria-labelledby="ed-tab-${i}"${i ? " hidden" : ""} data-ed="pick-panel">
-    <div class="ed-pk-pic"><div class="ed-cmp" style="--pos:0"><span class="ed-cmp-a">${pic(c.after)}</span><span class="ed-cmp-b">${pic(c.before)}</span></div>
-    <input type="range" class="ed-cmp-r" min="0" max="100" value="0" aria-label="${esc(c.label)}: drag to compare before and after"><p class="ed-cmp-cap" aria-hidden="true"><span>Before</span><span>After</span></p></div>
-    <div class="ed-pk-cap"><h3>${esc(c.label)}</h3><p class="ed-pk-note">${esc(variantNote(CINE_KIT[d.tradeKey], c, d.tradeKey))}</p>${price ? `<p class="ed-pk-price">${esc(price)} ${esc(cineUnit(d.tradeKey, cine.unit))}</p>` : ""}
-      <div class="ed-pk-btns"><button type="button" class="ed-btn ghost ed-pk-cmp" aria-pressed="false">Compare before and after</button><a class="ed-btn" href="#contact" data-job="${esc(c.label)}">Ask about this</a></div></div>
-  </div>`; }).join("")}
-</div></section>` : "";
+  // Round 3: the one shared picker (src/picker.js): offered variations (one is enough) or the trade's before and after plus styles.
+  const vpItems = pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey);
+  const vpHd = pickerHead(d.tradeKey, vpItems);
+  const pickSec = pickerHtml({ items: vpItems, tradeKey: d.tradeKey, tradeName, img: (id, label, attrs) => pic(id, `${attrs} alt="${esc(label)}"`).replace(' alt="" ', " "), prices: offeredPrices(kit, cine.prices), usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: "ed-sec ed-vp", jobs: [...vpItems.filter((x) => allCards.length).map((x) => x.label), ...d.services.map(([n]) => n)],
+    head: `<div class="ed-head ed-rv"><p class="ed-eyebrow">${esc(tradeName)}</p><h2 id="vp-h">${vpHd.h2}</h2><p class="ed-note">${vpHd.lede}</p></div>` });
 
   // Services: large numbered rows, the open row swaps the picture
   const svcPics = rows.map((_, i) => svcIds[i]);
@@ -5313,6 +5370,7 @@ function generateEditorial(form, d, deps) {
   ${d.rating ? `<div class="ed-rev ed-rv">
   <b>${d.rating.toFixed(1)}</b><div class="ed-rev-text"><p class="ed-eyebrow">Google rating</p><p>${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</p></div>${edStars(d.rating)}
 </div>` : ""}
+  ${credPlatformLis(d, esc, "ed-") ? `<ul class="ed-plat-list ed-rv">${credPlatformLis(d, esc, "ed-")}</ul>` : ""}
   ${d.rv.items.length ? rvwList(d.rv, esc, "ed-") : ""}
   ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
@@ -5351,7 +5409,11 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--ed-accent:color-mix(in srgb,${th.accent} ${edAccentPct(th.accent)}%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
+${PICKER_CSS}
 ${PROOF_MORE_CSS}
+.ed-vp{--vp-ink:var(--ed-ink);--vp-bg:var(--ed-cream);--vp-muted:var(--ed-muted);--vp-accent:var(--ed-btn,var(--ed-ink));--vp-accent-ink:var(--ed-btn-ink,var(--ed-cream));--vp-em:var(--ed-accent);--vp-chip-bg:var(--ed-paper);--vp-chip-ink:var(--ed-ink);--vp-chip-line:var(--ed-line);--vp-on-bg:var(--ed-ink);--vp-on-ink:var(--ed-cream);--vp-head:var(--ed-serif);--vp-sans:var(--ed-sans);--vp-stage-bg:var(--ed-cream2);--vp-max:var(--ed-max,1240px);--vp-r:var(--ed-card);--vp-focus:var(--ed-accent)}
+.ed-vp .ed-head{margin-bottom:24px}
+.ed-vp .vp-name{font-weight:500}
 </style>
 </head>
 <body class="ed">
@@ -5384,6 +5446,498 @@ ${liveBeacon(d)}</body>
 `;
 }
 
+// One promise headline per trade and variation (org/copy/headlines.md, CEO round 3: "say the result, not the problem").
+// [headline, accent word, offer line]. The offer line is shown only when the owner ticked "Free estimates".
+// No claim the owner did not make; words from test.mjs BANNED are avoided ("done right", "same day", ...).
+const PROMISES = {
+  roofing: {
+    _: ["A new roof, start to finish.", "new", "Free roof check. A written price before any work."],
+    shingle: ["Shingle roofs that last through the storms.", "last", "Free estimate. Most roofs take a day or two."],
+    metal: ["Metal roofs built for decades.", "decades", "Free estimate with color samples at your door."],
+    tile: ["Tile roofs, set to stay.", "set", "Free estimate. We match your tile."],
+    slate: ["Slate roofs, laid by hand.", "hand", "Free estimate and side-by-side samples."],
+    shake: ["Cedar shake roofs, done by hand.", "done", "Free estimate. Ask about treated shake."],
+    flat: ["Flat roofs that stay dry.", "dry", "Free leak check."],
+  },
+  fencing: {
+    _: ["Fences that frame the yard.", "frame", "Free estimate. We mark the lines before we dig."],
+    cedar: ["Cedar privacy fences, built straight.", "built", "Free estimate. Most yards take 1 to 3 days."],
+    vinyl: ["Vinyl fences that never need paint.", "never", "Free estimate with style samples."],
+    aluminum: ["Aluminum fences with zero rust.", "zero", "Free estimate. Pool-code options."],
+    chainlink: ["Chain link fences, pulled tight.", "tight", "Free estimate and a quick install."],
+    splitrail: ["Split rail fences that fit the land.", "fit", "Free estimate for any acreage."],
+    slat: ["A modern slat fence, made to measure.", "made", "Free estimate and a drawing before we build."],
+  },
+  pressure: {
+    _: ["Years of grime, gone in a day.", "gone", "Free quote by text. Send a photo, get a price."],
+    driveway: ["Your driveway, bright again.", "bright", "Free quote from a photo."],
+    siding: ["Siding clean, without the damage.", "clean", "Free quote. Safe for plants and pets."],
+    deck: ["Decks washed and ready for summer.", "ready", "Free quote from a photo."],
+    fence: ["Fences that look new again.", "look", "Free quote. Pairs well with deck washing."],
+    roof: ["Black streaks off your roof.", "off", "Free quote. No high pressure on shingles."],
+    storefront: ["A storefront customers notice.", "notice", "Free quote. Early-morning visits so you stay open."],
+  },
+};
+
+// { headline, accent, offer } for a trade and its picked variation; null when the trade has no promise copy.
+function promiseFor(tradeKey, variantKey) {
+  const t = PROMISES[tradeKey];
+  if (!t) return null;
+  const p = (variantKey && t[variantKey]) || t._;
+  return { headline: p[0], accent: p[1], offer: p[2] };
+}
+
+// Sample Site Maker: the Classic look, rebuilt in round 3 on the pattern of a strong local contractor site
+// (org/inspiration/lifetime/NOTES.md; ideas only, no copied text or pictures):
+//   offer bar > header > hero (promise H1, proof line, 3 checks, the quote form in the hero on desktop)
+//   > proof strip (big number, small label) > service cards with a tag > the one picker (pictures + its before/after)
+//   > featured project (only with real pictures) > owner card beside reviews > how it works > FAQ
+//   > dark call-to-action band > full footer, plus the phone action bar.
+// Rules (unchanged): only facts the owner typed or ticked; samples are marked; no outside scripts; deterministic.
+
+
+
+
+
+
+
+
+
+
+const clIcon = (p, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const CL_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
+const CL_CHECK = '<path d="M5 12.5l4.5 4.5L19 7"/>';
+const CL_PLUS = '<path d="M12 5v14M5 12h14"/>';
+const CL_ARROW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
+const clStars = (n, s = 22) => `<span class="cl-stars" role="img" aria-label="${n} out of 5 stars">${Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" aria-hidden="true"><path fill="currentColor"${i + 0.5 <= n ? "" : ' opacity=".25"'} d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("")}</span>`;
+// The accent word of a headline in the highlight color.
+const clAccent = (text, word) => { const i = word ? text.indexOf(word) : -1; return i < 0 ? esc(text) : `${esc(text.slice(0, i))}<em>${esc(word)}</em>${esc(text.slice(i + word.length))}`; };
+// A tag for a service card from its own words (no claims: what kind of job it is).
+const clTag = (n, d) => /emergenc|storm|24/i.test(n) ? (d.emergency ? "24/7" : "Urgent") : /repair|fix|patch|leak/i.test(n) ? "Repair" : /inspect|check|estimate/i.test(n) ? (d.freeEstimates ? "Free check" : "Inspection") : /clean|wash/i.test(n) ? "Cleaning" : /new|install|replace|build/i.test(n) ? "New install" : "Service";
+// Headline size that keeps the H1 to 3 lines or fewer (Archivo 800 is ~0.56em per character).
+const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.min(46, Math.floor((2.7 * 335) / (n * 0.56)))}px;--h1d:${Math.min(66, Math.floor((2.6 * 600) / (n * 0.56)))}px`; };
+
+// form, d = normalize(form) (+ live), o = { phArt, CINE }
+function generateClassic(form, d, o) {
+  const { phArt, CINE } = o;
+  const t = d.trade, th = THEMES[d.themeKey];
+  const tradeName = t.label.replace(/ \(.*\)$/, "");
+  const name = esc(d.company), area = d.city ? esc(d.city) : "";
+  const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
+  const phoneShow = d.phone ? esc(d.phone.show) : "";
+  const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
+  const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
+  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${clIcon(CL_PHONE, 19)}<span>${callText}</span></a>`;
+  const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
+  const kitFull = CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey];
+  const kit = kitFull ? kitVariant(kitFull, form && form.cine && form.cine.variant) : null;
+  const imgs = (form && form.cine && form.cine.images) || {};
+  const anyReal = Object.values(imgs).some((v) => safeImage(v));
+  const allCards = kitFull ? variantCards(kitFull, form && form.cine && form.cine.offer) : [];
+  const prices = kitFull ? (() => { try { return offeredPrices(kitFull, form.cine.prices); } catch (_) { return null; } })() : null;
+
+  // Hero picture: the form's hero picture, else the finished frame the owner or the library gave the picked variation.
+  const story = (kit && kit.story) || [];
+  const finishedId = story.length ? story[story.length - 1].id : "";
+  const hero = safeImage(form && form.heroImage) || (finishedId ? safeImage(imgs[finishedId]) : "");
+  const promise = promiseFor(d.tradeKey, kit && kit.variantKey);
+  const h1Text = promise ? promise.headline : t.headline;
+  const shape = (cls) => t.fill
+    ? `<svg class="${cls} solid" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="${t.line} L1200 300 L0 300 Z"/></svg>`
+    : `<svg class="${cls} strokes" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="${t.line}"/></svg>`;
+
+  // 1. Offer bar: only what the owner ticked or typed.
+  const offerParts = [];
+  if (d.freeEstimates) offerParts.push(promise ? esc(promise.offer.split(".")[0]) : "Free estimates");
+  if (d.emergency) offerParts.push("Open 24/7 for emergencies");
+  if (d.phone) offerParts.push(`Call <a href="${callHref}">${phoneShow}</a>`);
+  const offerBar = offerParts.length ? `<div class="cl-offer"><p>${offerParts.join('<span aria-hidden="true"> · </span>')}</p></div>` : "";
+
+  // 2. Hero checks: license, certification, warranty, else the ticks.
+  const c = d.cred, checks = [];
+  // (the license sits in the trust line just above, so the checks start with the next strongest facts)
+  if (!c.license && !d.insured && d.years) checks.push(`${d.years} year${d.years === 1 ? "" : "s"} in business`);
+  if (c.certs && c.certs[0]) checks.push(`${esc(c.certs[0])} certified`);
+  if (c.warranty) checks.push(esc(/warrant/i.test(c.warranty) ? c.warranty : `${c.warranty} warranty`));
+  if (checks.length < 3 && d.freeEstimates) checks.push("Free estimates, no obligation");
+  if (checks.length < 3 && d.emergency) checks.push("Open 24/7 for emergencies");
+  if (checks.length < 3) checks.push(`Serving ${areaPhrase}`);
+  const top = credTop(d);
+  const jobNames = [...allCards.map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
+  const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
+  const formCard = `<div class="cl-formcard" id="contact">
+      <h2>${d.freeEstimates ? "Get a free estimate" : "Ask for a price"}</h2>
+      <p class="cl-formsub">${d.freeEstimates ? "No obligation. We call you back." : "Tell us the job and we call you back."}</p>
+      <form id="ask"${liveFormAttrs(d)} novalidate>
+        <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
+        <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
+        <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
+        <label for="f-msg">About the job <span class="cl-opt">(optional)</span><textarea id="f-msg" name="message" rows="2"></textarea></label>
+        ${liveFormFields(d)}<button class="btn btn-accent cl-submit" type="submit">${d.freeEstimates ? "Get my free estimate" : "Send my request"}</button>
+        <p class="form-note" id="f-note" aria-live="polite">${d.phone ? `Or call <a href="${callHref}">${phoneShow}</a>.` : "We will call you back."}</p>
+      </form>
+    </div>`;
+  const heroSec = `<section class="cl-hero${hero ? " has-photo" : ""}" aria-label="Intro" data-hero-end>
+  ${hero ? `<img class="hero-img" src="${esc(hero)}" alt="" fetchpriority="high">` : shape("cl-art")}
+  <div class="wrap cl-hero-grid">
+    <div class="cl-hero-text">
+      <p class="cl-pill">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>
+      <h1 style="${clH1(h1Text)}">${promise ? clAccent(h1Text, promise.accent) : esc(h1Text)}</h1>
+      <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
+      <ul class="cl-checks">${checks.slice(0, 3).map((x) => `<li>${clIcon(CL_CHECK, 18)}<span>${x}</span></li>`).join("")}</ul>
+      <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line cl-to-form" href="#ask">${askLabel}</a></div>
+    </div>
+    ${formCard}
+  </div>
+</section>`;
+
+  // 3. Proof strip: the strongest facts as big number + small label (4 on phones).
+  const badges = credBadges(d);
+  const proof = badges.length ? `<section class="cl-proof" id="proof" aria-label="Why people trust us"><div class="wrap"><ul>${badges.slice(0, 5).map((b, i) => `<li class="rv${i >= 4 ? " cl-p5" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">` : ""}<b>${esc(b.label)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}${b.url ? "</a>" : ""}</li>`).join("")}</ul></div></section>` : "";
+
+  // 4. Service cards with a small tag.
+  const services = `<section class="sec" id="services"><div class="wrap">
+  <div class="cl-head rv"><p class="cl-kicker">Services</p><h2>Every ${esc(tradeName.toLowerCase())} job, one crew${area ? ` in ${area}` : ""}</h2></div>
+  <ul class="cl-cards">${d.services.map(([n, desc]) => `<li class="rv"><span class="cl-tag">${esc(clTag(n, d))}</span><h3>${esc(n)}</h3><p>${esc(desc)}</p><a class="cl-more" href="#ask" data-job="${esc(n)}">${d.freeEstimates ? "Free estimate" : "Ask about this"} ${clIcon(CL_ARROW, 18)}</a></li>`).join("")}</ul>
+</div></section>`;
+
+  // 5. The one picker (pictures and the page's only before/after slider).
+  const anyRealCl = anyReal;
+  const items = kitFull ? pickerItems(kitFull, kit, allCards, d.tradeKey) : [];
+  const pickImg = (id, label, attrs) => `<img src="${esc(safeImage(imgs[id]) || phArt(d.tradeKey, id, label, anyRealCl ? { quiet: true } : undefined))}" alt="${esc(label)}" ${attrs}>`;
+  const picker = pickerHtml({ items, tradeKey: d.tradeKey, tradeName, img: pickImg, prices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: kitFull ? cineUnit(d.tradeKey, form && form.cine && form.cine.unit) : "", tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: "sec tint cl-vp", jobs: jobNames });
+
+  // 6. Featured project: the picked variation's own first and last story frames, only when they are real pictures.
+  const fb = story.length > 1 ? story[0].id : "", fa = finishedId;
+  const featured = !d.live && fb && safeImage(imgs[fb]) && safeImage(imgs[fa]) ? `<section class="sec" id="project"><div class="wrap cl-feat rv">
+  <div class="cl-feat-pics"><figure><img src="${esc(imgs[fb])}" alt="Before" loading="lazy" decoding="async"><figcaption>Before</figcaption></figure><figure><img src="${esc(imgs[fa])}" alt="After" loading="lazy" decoding="async"><figcaption>After</figcaption></figure></div>
+  <div class="cl-feat-text"><p class="cl-kicker">Sample project</p><h2>${esc((allCards.find((x) => x.key === (kit && kit.variantKey)) || {}).label || tradeName)}${area ? `, ${area}` : ""}</h2>
+    <dl>${story.slice(1).map((s, i) => `<div><dt>Step ${i + 1}</dt><dd>${esc(s.headline)}</dd></div>`).join("")}</dl>
+    <p class="cl-note">A sample to show the kind of work. Your own jobs go here when the site goes live.</p></div>
+</div></section>` : "";
+
+  // 7. Owner card beside the reviews.
+  const fine = credLine(d);
+  const ownerFacts = [d.cred.founded ? `In business since ${d.cred.founded}` : d.years ? `${d.years} year${d.years === 1 ? "" : "s"} in business` : "", d.cred.family ? "Family owned" : "", d.cred.veteran ? "Veteran owned" : "", d.cred.license ? `License #${esc(d.cred.license)}` : "", d.insured ? (d.cred.bonded ? "Insured and bonded" : "Insured") : ""].filter(Boolean);
+  // every other typed fact the proof strip had no room for (jobs, awards, more certifications, ...)
+  badges.slice(5).forEach((b) => { const f = esc(`${b.label}${b.sub ? ` ${b.sub.toLowerCase()}` : ""}`); if (!ownerFacts.some((x) => x.startsWith(esc(b.label)) || f.startsWith(x))) ownerFacts.push(f); });
+  const initials = esc(String(d.company).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase());
+  const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec" id="reviews"><div class="wrap cl-rev-grid">
+  <aside class="cl-owner rv"><span class="cl-mono" aria-hidden="true">${initials}</span><p class="cl-kicker">${d.cred.family ? "Family owned" : "Local crew"}</p><h3>${name}</h3>
+    <p>${esc(t.sub)} We answer the phone, show up when we say, and give you the price before any work starts.</p>
+    ${ownerFacts.length ? `<ul>${ownerFacts.map((x) => `<li>${clIcon(CL_CHECK, 16)}<span>${x}</span></li>`).join("")}</ul>` : ""}</aside>
+  <div class="cl-revs rv">
+    <h2>What customers say</h2>
+    ${d.rating ? `<div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${clStars(d.rating)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
+    ${credPlatformLis(d, esc) ? `<ul class="plat-list">${credPlatformLis(d, esc)}</ul>` : ""}
+    ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
+    ${d.rv.link ? `<a class="btn btn-dark rvw-all" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a>` : ""}
+  </div>
+</div></section>`;
+
+  // 8. How it works, 9. FAQ
+  const steps = [
+    ["Call or send the form", d.phone ? `Call ${phoneShow}, or send the form at the top of this page.` : "Send the form at the top of this page."],
+    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
+    ["The work gets done", "We do the job you agreed to and keep you posted."],
+  ];
+  const how = `<section class="sec tint" id="how"><div class="wrap">
+  <div class="cl-head rv"><p class="cl-kicker">How it works</p><h2>Three steps, no surprises</h2></div>
+  <ol class="cl-steps">${steps.map(([h, p], i) => `<li class="rv"><span aria-hidden="true">${i + 1}</span><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
+</div></section>`;
+  const svcList = d.services.map((s) => s[0].toLowerCase());
+  const svcSentence = svcList.length > 1 ? `${svcList.slice(0, -1).join(", ")}, and ${svcList[svcList.length - 1]}` : svcList[0];
+  const faqs = [
+    ["How much will it cost?", d.freeEstimates ? "Every job is different. We look at yours and give you a free estimate before any work starts." : "Every job is different. Call us and we will tell you the price before any work starts."],
+    ["What areas do you serve?", `${area || "Our town"} and nearby towns. Not sure about your street? Call and ask.`],
+    ["Do you take emergency calls?", d.emergency ? `Yes. We are open 24/7 for emergencies.${d.phone ? ` Call ${phoneShow}.` : ""}` : "Call us and ask about emergency service."],
+    [`What ${tradeName.toLowerCase()} work do you do?`, `${svcSentence.charAt(0).toUpperCase() + svcSentence.slice(1)}. If your job is not on the list, just ask.`],
+    ["How do I get started?", `${d.phone ? `Call ${phoneShow}` : "Call us"} or send the form at the top of the page. Have the address and a short note about the job ready.`],
+  ];
+  const faq = `<section class="sec" id="faq"><div class="wrap cl-faq-grid">
+  <div class="cl-head rv"><p class="cl-kicker">Questions</p><h2>Straight answers before you call</h2></div>
+  <div class="faq">${faqs.map(([q, a]) => `<details class="rv"><summary><span>${esc(q)}</span>${clIcon(CL_PLUS, 22)}</summary><p>${a}</p></details>`).join("")}</div>
+</div></section>`;
+
+  // 10. Final call band, 11. footer
+  const band = `<section class="cl-band-sec" aria-label="Call us"><div class="wrap"><div class="cl-band rv">
+  <h2>${d.freeEstimates ? "Get your free estimate today" : "Get a clear price today"}</h2>
+  <p>${area ? `Homes and businesses in ${area} and nearby towns.` : "Homes and businesses near you."} ${d.emergency ? "Open 24/7 for emergencies." : ""}</p>
+  ${d.phone ? `<a class="big-phone" href="${callHref}">${clIcon(CL_PHONE, 30)}<span>${phoneShow}</span></a>` : ""}
+  <a class="btn btn-line" href="#ask">${askLabel}</a>
+</div></div></section>`;
+  const footer = `<footer><div class="wrap">
+  <div><p class="foot-name">${name}</p><p class="foot-tag">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${fine ? `<p class="foot-cred">${esc(fine)}</p>` : ""}</div>
+  <div class="foot-cols">
+    <div><h3>Services</h3><ul>${d.services.slice(0, 6).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
+    <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"} and nearby towns</li><li>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</li></ul></div>
+    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
+  </div>
+  <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
+</div></footer>`;
+
+  const title = `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}`;
+  const descr = `${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}`;
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>${title}</title>
+<meta name="description" content="${descr}">
+<meta name="theme-color" content="${th.dark}">
+${liveHead(d, form, title, descr)}<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+:root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--paper:#ffffff;--on-dark:#fff;--on-dark-2:rgba(255,255,255,.8);--rule-dark:rgba(255,255,255,.2);--head:"Archivo","Arial",sans-serif;--body:"Hanken Grotesk","Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ease:cubic-bezier(.16,1,.3,1);--max:1240px;--r:14px;color-scheme:light}
+${CL_CSS}
+${PICKER_CSS}
+${PROOF_MORE_CSS}
+</style>
+</head>
+<body>
+${offerBar}
+<header class="top"><div class="wrap">
+  <a class="brand-name" href="#top">${name}</a>
+  <nav class="nav" aria-label="Sections"><a href="#services">Services</a>${picker ? `<a href="#styles">${items.some((x) => x.before) ? "Before and after" : "Styles"}</a>` : ""}<a href="#reviews">Reviews</a><a href="#faq">Questions</a></nav>
+  ${callBtn("btn btn-accent cl-top-btn")}
+  <a class="top-call" href="${callHref}" aria-label="${callText}">${clIcon(CL_PHONE, 22)}</a>
+</div></header>
+<main id="top">
+${heroSec}
+${proof}
+${services}
+${picker}
+${featured}
+${reviews}
+${how}
+${faq}
+${band}
+</main>
+${footer}
+${mobileBarHtml(d, esc, "mbar", askLabel)}
+<script>
+${liveScript(`(function(){
+  var root=document.documentElement;root.classList.add("js");
+  ${LIVE_SAMPLE_SUBMIT}
+  ${ACTIONS_JS}
+  ${PICKER_JS}
+  /* the phone bar shows once the hero's own buttons are behind you */
+  var cta=document.getElementById("hero-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
+  /* Ask about this / Free estimate on a card: pick that job in the form */
+  document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-job]");if(!a)return;var s=document.querySelector("#ask select"),v=a.getAttribute("data-job");if(s)for(var i=0;i<s.options.length;i++)if(s.options[i].text===v){s.selectedIndex=i;break}});
+  if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  var els=[].slice.call(document.querySelectorAll(".rv"));
+  els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
+  root.classList.add("motion");
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
+  els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
+})();
+`, d)}<\/script>
+${liveBeacon(d)}</body>
+</html>
+`;
+}
+
+const CL_CSS = `
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:84px}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.6 var(--body);overflow-x:clip;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+h1,h2,h3,p,dl,dd,figure,ul,ol{margin:0}
+h1,h2,h3{font-family:var(--head);letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
+a{color:inherit;text-underline-offset:3px}
+img,svg{max-width:100%}
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:max(20px,env(safe-area-inset-left,0px)) max(20px,env(safe-area-inset-right,0px))}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:0 24px;border:0;border-radius:10px;font:700 17px/1 var(--body);text-decoration:none;cursor:pointer;transition:transform .16s var(--ease),box-shadow .2s var(--ease),background-color .2s var(--ease)}
+.btn:active{transform:scale(.97)}
+.btn-accent{background:var(--accent);color:var(--accent-ink)}
+@media (hover:hover){.btn-accent:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(0,0,0,.22)}}
+.btn-line{color:#fff;box-shadow:inset 0 0 0 2px rgba(255,255,255,.85);background:rgba(0,0,0,.18)}
+@media (hover:hover){.btn-line:hover{background:rgba(255,255,255,.14)}}
+.btn-dark{background:var(--dark);color:#fff}
+/* offer bar + header */
+.cl-offer{background:var(--dark2);color:#fff;font:600 14px/1.4 var(--body);text-align:center;padding:9px 16px}
+.cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:30px}
+.top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
+.top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
+.brand-name{display:inline-flex;align-items:center;min-height:48px;font:800 20px/1.1 var(--head);letter-spacing:-.02em;text-decoration:none;color:var(--dark);margin-right:auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav{display:none;gap:22px;font-weight:600;font-size:15px}
+.nav a{text-decoration:none;color:var(--ink);display:inline-flex;align-items:center;min-height:48px}
+@media (hover:hover){.nav a:hover{color:var(--accent)}}
+.cl-top-btn{display:none;min-height:48px;font-size:15px;padding:0 18px}
+.top-call{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
+/* hero */
+.cl-hero{position:relative;isolation:isolate;background:var(--dark);color:#fff;overflow:hidden}
+.cl-hero .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 60%;z-index:-2}
+.cl-hero.has-photo::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.62) 55%,rgba(0,0,0,.35) 100%),linear-gradient(0deg,rgba(0,0,0,.5),rgba(0,0,0,0) 40%)}
+.cl-art{position:absolute;left:0;right:0;bottom:0;width:100%;height:38%;z-index:-1;opacity:.5}
+.cl-art.solid path{fill:var(--dark2)}
+.cl-art.strokes path{fill:none;stroke:var(--dark2);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
+.cl-hero-grid{display:grid;gap:28px;padding-block:36px 40px}
+.cl-pill{display:inline-flex;align-items:center;gap:8px;font:700 13px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--hi);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);padding:8px 12px;border-radius:999px}
+.cl-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--hi)}
+.cl-hero-text{display:flex;flex-direction:column;align-items:flex-start}
+.cl-hero h1{margin-top:16px;font-weight:800;font-size:var(--h1m);line-height:1.04}
+.cl-hero h1 em{font-style:normal;color:var(--hi)}
+.hero-sub{margin-top:14px;color:var(--on-dark-2);font-size:17px;max-width:46ch}
+.hero-sub b{display:block;margin-top:8px;color:#fff;font-weight:600}
+.cl-checks{list-style:none;padding:0;margin-top:18px;display:grid;gap:8px}
+.cl-checks li{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:16px}
+.cl-checks svg{flex:none;margin-top:3px;color:#0b0b0b;background:var(--hi);border-radius:50%;padding:3px;width:22px;height:22px}
+.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;align-self:stretch}
+@media (max-width:1023px){.cl-hero-text .hero-cta{order:1;margin-top:18px}.cl-hero-text .hero-sub{order:2;margin-top:20px}.cl-hero-text .cl-checks{order:3}}
+.hero-cta .btn{flex:1 1 220px}
+.cl-formcard{background:#fff;color:var(--ink);border-radius:var(--r);padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.cl-formcard h2{font-size:26px;font-weight:800}
+.cl-formsub{margin-top:6px;color:var(--muted);font-size:15px}
+#ask{display:grid;gap:12px;margin-top:16px}
+#ask label{display:grid;gap:6px;font-size:15px;font-weight:600}
+.cl-opt{font-weight:500;color:var(--muted)}
+#ask input,#ask select,#ask textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--ink);background:#fff;border:1.5px solid #9aa1ab;border-radius:10px;padding:13px 14px;min-height:50px}
+#ask textarea{min-height:76px;resize:vertical}
+#ask input:focus,#ask select:focus,#ask textarea:focus{outline:none;border-color:var(--dark);box-shadow:0 0 0 3px var(--accent)}
+.cl-submit{width:100%;margin-top:4px}
+.form-note{font-size:15px;color:var(--muted)}
+.form-note a{color:var(--ink);font-weight:700;display:inline-flex;align-items:center;min-height:44px}
+/* proof strip */
+.cl-proof{background:#fff;border-bottom:1px solid var(--line)}
+.cl-proof ul{list-style:none;padding:18px 0;display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+.cl-proof li,.cl-proof a{display:grid;gap:2px;text-decoration:none;color:inherit}
+.cl-proof a{min-height:48px}
+.cl-proof b{font:800 24px/1.1 var(--head);color:var(--dark);letter-spacing:-.02em}
+.cl-proof span{font-size:14px;color:var(--muted);font-weight:600}
+.cl-proof a span{text-decoration:underline;text-underline-offset:3px}
+.cl-proof li.cl-p5{display:none}
+/* sections */
+.sec{padding-block:64px}
+.tint{background:var(--light)}
+.cl-head{max-width:760px;margin-bottom:30px}
+.cl-kicker{display:flex;align-items:center;gap:10px;font:800 13px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--dark);margin-bottom:12px}
+.cl-kicker::before{content:"";width:28px;height:4px;border-radius:2px;background:var(--accent)}
+.cl-head h2,.cl-revs h2,.cl-feat-text h2{font-size:clamp(30px,6vw,46px);font-weight:800;color:var(--dark)}
+.cl-cards{list-style:none;padding:0;display:grid;gap:14px}
+.cl-cards li{display:grid;gap:8px;align-content:start;background:#fff;border:1px solid var(--line);border-top:4px solid var(--dark);border-radius:var(--r);padding:20px}
+.cl-tag{justify-self:start;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dark);background:var(--light);padding:7px 10px;border-radius:6px}
+.cl-cards h3{font-size:21px;font-weight:800;color:var(--dark)}
+.cl-cards p{color:var(--muted);font-size:16px}
+.cl-more{display:inline-flex;align-items:center;gap:6px;min-height:48px;font-weight:700;color:var(--dark);text-decoration:none}
+@media (hover:hover){.cl-more:hover{color:var(--accent)}}
+.cl-vp{--vp-ink:var(--ink);--vp-bg:var(--light);--vp-muted:var(--muted);--vp-accent:var(--accent);--vp-accent-ink:var(--accent-ink);--vp-em:var(--dark);--vp-chip-bg:#fff;--vp-chip-ink:var(--ink);--vp-chip-line:var(--line);--vp-on-bg:var(--dark);--vp-on-ink:#fff;--vp-head:var(--head);--vp-sans:var(--body);--vp-stage-bg:#dfe3e8;--vp-max:var(--max);--vp-r:var(--r);--vp-btn-r:10px;--vp-focus:var(--accent)}
+.cl-vp h2{font-weight:800;color:var(--dark)}
+.cl-vp h2 em{font-style:normal;color:var(--dark);box-shadow:inset 0 -.2em 0 var(--accent)}
+.cl-vp .vp-name{font-weight:800;color:var(--dark)}
+/* featured project */
+.cl-feat{display:grid;gap:24px;background:var(--light);border-radius:var(--r);padding:16px}
+.cl-feat-pics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cl-feat-pics figure{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/5;background:#ddd}
+.cl-feat-pics img{width:100%;height:100%;object-fit:cover;display:block}
+.cl-feat-pics figcaption{position:absolute;left:10px;top:10px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
+.cl-feat-text dl{display:grid;gap:10px;margin-top:16px}
+.cl-feat-text dl div{display:grid;grid-template-columns:80px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.cl-feat-text dt{font-weight:800;color:var(--dark)}
+.cl-note{margin-top:14px;font-size:14px;color:var(--muted)}
+/* owner + reviews */
+.cl-rev-grid{display:grid;gap:28px}
+@media (max-width:1023px){.cl-revs{order:-1}}
+.cl-owner{border:1px solid var(--line);border-radius:var(--r);padding:24px;display:grid;gap:10px;align-content:start;background:#fff}
+.cl-mono{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--dark);color:var(--hi);font:800 26px/1 var(--head);box-shadow:0 0 0 4px #fff,0 0 0 6px var(--accent)}
+.cl-owner h3{font-size:24px;font-weight:800;color:var(--dark)}
+.cl-owner p{color:var(--muted)}
+.cl-owner ul{list-style:none;padding:0;display:grid;gap:8px;margin-top:6px}
+.cl-owner li{display:flex;gap:8px;align-items:flex-start;font-weight:600}
+.cl-owner li svg{color:var(--dark);margin-top:4px;flex:none}
+.cl-revs{display:grid;gap:18px;align-content:start;min-width:0}
+.rating{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.rating-num{font:800 72px/.9 var(--head);color:var(--dark);letter-spacing:-.03em}
+.cl-stars{display:inline-flex;gap:2px;color:#f5a623}
+.rating-sub{display:block;margin-top:6px;color:var(--muted);font-weight:600}
+.plat-list{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.plat-list li{display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;min-height:48px;padding:0 16px;font-size:15px;font-weight:700;background:#fff}
+.plat-list span{font-weight:500;color:var(--muted)}
+.plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
+.rvw-list{list-style:none;padding:0;display:grid;gap:14px}
+.rvw{border-left:4px solid var(--accent);background:var(--light);border-radius:0 var(--r) var(--r) 0;padding:18px 20px}
+.rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;color:#f5a623}
+.rvw-tag{font:700 12px/1 var(--body);letter-spacing:.04em;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 10px}
+.rvw-q{margin:10px 0 0;font-size:18px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
+.rvw-by{margin-top:8px;font-weight:700;color:var(--muted);overflow-wrap:anywhere}
+.rvw-all{justify-self:start}
+/* steps, faq */
+.cl-steps{list-style:none;padding:0;display:grid;gap:14px;counter-reset:s}
+.cl-steps li{display:grid;grid-template-columns:48px 1fr;gap:4px 16px;background:#fff;border-radius:var(--r);padding:20px;border:1px solid var(--line)}
+.cl-steps span{grid-row:1/3;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--dark);color:var(--hi);font:800 20px/1 var(--head)}
+.cl-steps h3{font-size:20px;font-weight:800;color:var(--dark)}
+.cl-steps p{color:var(--muted)}
+.cl-faq-grid{display:grid;gap:12px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:64px;padding:12px 0;font:700 19px/1.3 var(--body);cursor:pointer;color:var(--dark)}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary svg{flex:none;transition:transform .2s var(--ease)}
+.faq details[open] summary svg{transform:rotate(45deg)}
+.faq details p{padding:0 0 18px;color:var(--muted);max-width:60ch}
+/* call band */
+.cl-band-sec{padding:12px 0 64px}
+.cl-band{background:var(--dark);color:#fff;border-radius:calc(var(--r) + 6px);padding:40px 24px;text-align:center;display:grid;gap:14px;justify-items:center}
+.cl-band h2{font-size:clamp(30px,6vw,48px);font-weight:800}
+.cl-band p{color:var(--on-dark-2);max-width:46ch}
+.big-phone{display:inline-flex;align-items:center;gap:12px;min-height:64px;padding:0 28px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:800 clamp(24px,6vw,34px)/1 var(--head);text-decoration:none;font-variant-numeric:tabular-nums}
+/* footer */
+footer{background:var(--dark);color:var(--on-dark-2);font-size:15px}
+footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
+.foot-name{font:800 22px/1.2 var(--head);color:#fff}
+.foot-tag{margin-top:4px}
+.foot-cred{margin-top:10px;max-width:52ch}
+.foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.foot-cols h3{font:800 14px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;margin-bottom:8px}
+.foot-cols ul{list-style:none;padding:0;display:grid;gap:0}
+.foot-cols li{min-height:32px;display:flex;align-items:center}
+.foot-cols a{text-decoration:none;display:inline-flex;align-items:center;min-height:48px}
+@media (hover:hover){.foot-cols a:hover{color:#fff}}
+.foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px solid var(--rule-dark);padding-top:18px;grid-column:1/-1}
+.foot-base a{display:inline-flex;align-items:center;min-height:48px}
+/* phone action bar */
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.2);transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease),visibility 0s linear .25s}
+.mbar-a{flex:1 1 0;min-height:52px;display:grid;place-items:center;border-radius:10px;font:700 16px/1 var(--body);text-decoration:none;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.mbar-a.go{flex:1.4 1 0;background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.mbar-a.call{background:#fff;color:#111;box-shadow:none}
+.mbar-a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.past .mbar{transform:none;visibility:visible;transition:transform .25s var(--ease),visibility 0s}
+.kbd .mbar{transform:translateY(110%);visibility:hidden}
+/* reveal */
+@media (prefers-reduced-motion:no-preference){.motion .rv{transition:opacity .7s var(--ease),transform .7s var(--ease)}.motion .rv:not(.in){opacity:0;transform:translateY(20px)}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.mbar,.faq summary svg{transition:none}}
+@media (min-width:640px){
+  .cl-proof ul{grid-template-columns:repeat(4,1fr)}
+  .cl-cards{grid-template-columns:1fr 1fr}
+  .cl-steps{grid-template-columns:repeat(3,1fr)}.cl-steps li{grid-template-columns:1fr}.cl-steps span{grid-row:auto}
+}
+@media (min-width:1024px){
+  body{padding-bottom:0}
+  .mbar,.top-call{display:none}
+  .nav{display:flex}
+  .cl-top-btn{display:inline-flex}
+  .cl-hero-grid{grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);gap:56px;align-items:center;padding-block:72px 80px}
+  .cl-hero h1{font-size:var(--h1d)}
+  .cl-to-form{display:none}
+  .hero-cta .btn{flex:0 0 auto}
+  .cl-formcard{padding:28px}
+  .cl-proof ul{grid-template-columns:repeat(5,1fr);padding:24px 0}
+  .cl-proof li.cl-p5{display:grid}
+  .cl-proof b{font-size:30px}
+  .sec{padding-block:96px}
+  .cl-cards{grid-template-columns:repeat(3,1fr);gap:18px}
+  .cl-feat{grid-template-columns:1.2fr 1fr;align-items:center;padding:24px;gap:40px}
+  .cl-feat-pics figure{aspect-ratio:4/3}
+  .cl-rev-grid{grid-template-columns:minmax(300px,.8fr) 1.6fr;gap:40px;align-items:start}
+  .cl-faq-grid{grid-template-columns:.8fr 1.4fr;gap:48px}
+  .cl-band{padding:64px 40px}
+  footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
+  .foot-cols{grid-template-columns:repeat(3,1fr)}
+}
+`;
+
 // Sample Site Maker: the generator.
 // generateSite(form) is a pure function: form data in, one self-contained
 // HTML document out (only Google Fonts load from the network, with system
@@ -5400,6 +5954,7 @@ ${liveBeacon(d)}</body>
 //   cinematic (default false: the scroll-story site, see cinematic.js), cine,
 //   look ("cinematic" default or "editorial", see editorial.js) and editorial
 // }
+
 
 
 
@@ -5473,18 +6028,8 @@ function normalize(form) {
   };
 }
 
-const svg = (inner, size, extra = "") =>
-  `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${inner}</svg>`;
-const ICON_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
 const STAR = '<path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/>';
 
-function stars(rating, size) {
-  const row = (fill) => Array.from({ length: 5 }, (_, i) =>
-    `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true">${STAR}</svg>`).join("");
-  const w = 5 * size + 16;
-  const on = Math.max(0, Math.min(1, rating / 5)) * w;
-  return `<span class="stars" style="width:${w}px;height:${size}px" role="img" aria-label="${rating} out of 5 stars"><span class="stars-row off">${row("currentColor")}</span><span class="stars-row on" style="width:${on.toFixed(1)}px">${row("currentColor")}</span></span>`;
-}
 
 // Only a base64 image data URI or a plain https URL is accepted as the hero picture.
 function safeImage(src) {
@@ -5599,27 +6144,6 @@ function liveBeacon(d) {
 // Live mode never shows labelled placeholder art: empty slots get the unlabelled blueprint drawing.
 function liveArt(trade) { return blueprintArt(trade); }
 
-const ICON_ARROW = '<path d="M5 12h14M13 6l6 6-6 6"/>';
-const ICON_PLUS = '<path d="M12 5v14M5 12h14"/>';
-
-// Section order and style per layout, so trades do not look like clones.
-const LAYOUTS = {
-  band: { order: ["services", "all", "process", "reviews", "area", "faq"], services: "list", trust: "dark" },
-  ledger: { order: ["services", "all", "process", "reviews", "area", "faq"], services: "numbered", trust: null },
-  split: { order: ["process", "services", "all", "reviews", "faq", "area"], services: "columns", trust: "paper" },
-  stat: { order: ["services", "all", "reviews", "area", "process", "faq"], services: "columns", trust: "tint" },
-};
-
-// Font size that keeps the headline to 3 lines (2 on wide band heroes).
-function h1Sizes(text, layout) {
-  const n = text.length;
-  const per = (lines) => n / lines + 2;
-  const mobile = Math.min(76, Math.floor(335 / (per(3) * 0.47)));
-  const wide = layout === "band" ? 1200 : 690;
-  const desk = Math.min(layout === "band" ? 150 : 128, Math.floor(wide / (per(layout === "band" ? 2 : 3) * 0.47)));
-  return `--h1m:${mobile}px;--h1d:${desk}px`;
-}
-
 function generateSite(form) {
   const live = liveOf(form);
   const d = live ? liveNormalize(normalize(form), live) : normalize(form);
@@ -5628,489 +6152,7 @@ function generateSite(form) {
   const cleanArt = (a, b, c, o) => placeholderArt(a, b, c, { ...(o || {}), note: false, quiet: true });
   const shipArt = live ? liveArt : form && form.clean ? cleanArt : null;
   if (form && (form.cinematic || form.look === "cinematic" || editorial) && CINE && CINE.CINE_KIT[d.tradeKey]) return (editorial ? generateEditorial : generateCinematic)(form, d, shipArt ? { ...CINE, placeholderArt: shipArt } : CINE);
-  const phArt = shipArt || placeholderArt;
-  const t = d.trade;
-  const th = THEMES[d.themeKey];
-  const lay = LAYOUTS[t.layout] ? t.layout : "band";
-  const cineImgs = (form && form.cine && form.cine.images) || {};
-  const allCards = variantCards(CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.offer);
-  const cinePrices = (() => { try { return offeredPrices(CINE.CINE_KIT[d.tradeKey], form.cine.prices); } catch (_) { return null; } })();
-  const L = LAYOUTS[lay];
-  // One picker for every variation (round 2): chips, the picture, its before and after, Ask about this.
-  const anyRealCl = Object.values(cineImgs).some((v) => safeImage(v));
-  const pickItems = CINE && CINE.CINE_KIT && CINE.CINE_KIT[d.tradeKey] && allCards.length >= 2 ? pickerItems(CINE.CINE_KIT[d.tradeKey], kitVariant(CINE.CINE_KIT[d.tradeKey], form && form.cine && form.cine.variant), allCards, d.tradeKey) : [];
-  const pickImg = (id, label, attrs) => `<img src="${esc(safeImage(cineImgs[id]) || phArt(d.tradeKey, id, label, anyRealCl ? { quiet: true } : undefined))}" alt="${esc(label)}" ${attrs}>`;
-  const tradeName = t.label.replace(/ \(.*\)$/, "");
-  // The Classic hero uses the form's hero picture, else the finished-job picture the owner or the library gave this trade.
-  const finishedId = (() => { try { const k = CINE && CINE.CINE_KIT[d.tradeKey]; const st = k && kitVariant(k, form && form.cine && form.cine.variant).story; return st && st.length ? st[st.length - 1].id : ""; } catch (_) { return ""; } })();
-  const hero = safeImage(form && form.heroImage) || (finishedId ? safeImage(((form && form.cine && form.cine.images) || {})[finishedId]) : "");
-  const name = esc(d.company);
-  const area = d.city ? esc(d.city) : "";
-  const areaPhrase = area ? `${area} and nearby towns` : "your area and nearby towns";
-  const phoneShow = d.phone ? esc(d.phone.show) : "";
-  const callHref = d.phone && d.phone.tel ? `tel:${esc(d.phone.tel)}` : "#contact";
-  const callText = d.phone ? `Call ${phoneShow}` : "Contact us";
-  const proofBadges = credBadges(d);
-  const proofBar = proofBadges.length ? `<section class="proof-sec" aria-label="Credentials"><div class="wrap"><ul class="proof">${credProofLis(proofBadges, esc, "")}</ul></div></section>` : "";
-  const callBtn = (cls) => `<a class="${cls}" href="${callHref}">${svg(ICON_PHONE, 19)}<span>${callText}</span></a>`;
-  const askLabel = d.freeEstimates ? "Get a free estimate" : "Ask for a price";
-
-  // The trade's drawing: a solid shape or heavy strokes.
-  const shape = (cls) => t.fill
-    ? `<svg class="${cls} solid" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="${t.line} L1200 300 L0 300 Z"/></svg>`
-    : `<svg class="${cls} strokes" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax meet" aria-hidden="true"><path d="${t.line}"/></svg>`;
-
-  // Trust bar: always four cells, each one a fact the owner typed or ticked.
-  const cells = [
-    ["Service area", area || "Your town"],
-    ["Pricing", d.freeEstimates ? "Free estimates" : "Ask for a price"],
-    ["Emergencies", d.emergency ? "Open 24/7" : "Call to ask"],
-  ];
-  if (d.years) cells.push(["In business", `${d.years} year${d.years === 1 ? "" : "s"}`]);
-  else if (d.insured) cells.push(["Coverage", "Licensed and insured"]);
-  else cells.push(["Phone", d.phone ? phoneShow : "Call us"]);
-  const trust = !L.trust ? "" : `<section class="trust trust-${L.trust}" aria-label="At a glance"><div class="wrap"><dl>${cells.map(([k, v, raw]) => `<div class="cell rv"><dt>${k}</dt><dd>${raw ? v : esc(v)}</dd></div>`).join("")}</dl></div></section>`;
-
-  // Hero
-  let stat;
-  if (d.emergency) stat = ["24/7", "<span>Open for emergencies</span>"];
-  else if (d.years) stat = [String(d.years), `<span>Year${d.years === 1 ? "" : "s"} in business</span>`];
-  else if (d.freeEstimates) stat = ["Free", "<span>Estimates</span>"];
-  else stat = [area || "Local", `<span>${area ? "Our home base" : "Serving your area"}</span>`];
-  const statBig = stat[0].length > 6 ? " long" : "";
-
-  const heroText = `<div class="hero-text">
-    <h1 style="${h1Sizes(t.headline, hero ? "split" : lay)}">${esc(t.headline)}</h1>
-    <p class="hero-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-    <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line" href="#contact">${askLabel}</a></div>
-    ${credTop(d).length ? `<p class="hero-trust">${esc(credTop(d).join(" · "))}</p>` : ""}
-  </div>`;
-  let heroInner;
-  if (hero) {
-    heroInner = `<img class="hero-img" src="${esc(hero)}" alt="" fetchpriority="high"><div class="wrap">${heroText}</div>`;
-  } else if (lay === "split") {
-    heroInner = `<div class="wrap hero-grid">${heroText}<aside class="panel" aria-label="Call us">
-      <div class="panel-art">${shape("art").replace('xMidYMax meet', 'xMidYMax slice')}</div>
-      <div class="panel-body"><p class="panel-k">${d.freeEstimates ? "Free estimates" : "Prices before work starts"}</p><p class="panel-v">${d.phone ? phoneShow : "Ask for a quote"}</p><p class="panel-n">${d.emergency ? "Open 24 hours" : area ? `Serving ${area}` : "Serving your area"}</p></div>
-    </aside></div>`;
-  } else if (lay === "ledger") {
-    const figs = [];
-    if (d.rating) figs.push([d.rating.toFixed(1), `${stars(d.rating, 18)}<span>${d.reviews ? `Google rating, ${d.reviews.toLocaleString("en-US")} reviews` : "Google rating"}</span>`]);
-    if (d.emergency) figs.push(["24/7", "<span>Open for emergencies</span>"]);
-    if (d.years) figs.push([String(d.years), `<span>Year${d.years === 1 ? "" : "s"} in business</span>`]);
-    if (d.freeEstimates) figs.push(["Free", "<span>Estimates</span>"]);
-    if (figs.length < 3) figs.push([area || "Your town", "<span>And nearby towns</span>"]);
-    if (figs.length < 3) figs.push([d.phone ? phoneShow : "Call", `<span>${d.phone ? "Call any time we are open" : "Call to ask"}</span>`]);
-    heroInner = `<div class="wrap ledger-top">${heroText}</div>${shape("ledger-art").replace("xMidYMax meet", "none")}
-    <div class="wrap"><dl class="figures">${figs.slice(0, 3).map(([v, k]) => `<div class="fig rv"><dt${v.length > 5 ? ' class="long"' : ""}>${esc(v)}</dt><dd>${k}</dd></div>`).join("")}</dl></div>`;
-  } else if (lay === "stat") {
-    heroInner = `<div class="wrap hero-grid">${heroText}<aside class="stat" aria-label="At a glance">
-      <p class="stat-v${statBig}">${esc(stat[0])}</p><div class="stat-k">${stat[1]}</div>
-      ${shape("stat-art")}
-    </aside></div>`;
-  } else {
-    heroInner = `<div class="wrap">${heroText}</div>${shape("band-art").replace("xMidYMax meet", "xMidYMax slice")}`;
-  }
-  const heroSec = `<section class="hero hero-${hero ? "photo" : lay}" aria-label="Intro">${heroInner}</section>`;
-
-  // Sections
-  const services = L.services === "numbered"
-    ? `<ol class="svcs-num">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i % 3}"><span class="num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ol>`
-    : L.services === "list"
-    ? `<ul class="svcs-list">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i}"><a href="#contact"><span class="svc-name">${esc(n)}</span><span class="svc-desc">${esc(desc)}</span><span class="svc-go">${svg(ICON_ARROW, 20)}</span></a></li>`).join("")}</ul>`
-    : `<ul class="svcs-cols">${d.services.map(([n, desc], i) => `<li class="rv" style="--i:${i % 3}"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>`;
-  const steps = [
-    ["Call or send a request", d.phone ? `Call ${phoneShow}, or fill out the form on this page.` : "Call us, or fill out the form on this page."],
-    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
-    ["The work gets done", "We do the job you agreed to."],
-  ].map(([h, p], i) => `<li class="rv" style="--i:${i}"><span class="step-n" aria-hidden="true">${i + 1}</span><h3>${esc(h)}</h3><p>${p}</p></li>`).join("");
-  const svcList = d.services.map((s) => s[0].toLowerCase());
-  const svcSentence = svcList.length > 1 ? `${svcList.slice(0, -1).join(", ")}, and ${svcList[svcList.length - 1]}` : svcList[0];
-  const faqs = [
-    ["How much will it cost?", d.freeEstimates ? "Every job is different. We look at yours and give you a free estimate before any work starts." : "Every job is different. Call us and we will tell you the price before any work starts."],
-    ["What areas do you serve?", `${area || "Our town"} and nearby towns. Not sure about your street? Call and ask.`],
-    ["Do you take emergency calls?", d.emergency ? `Yes. We are open 24/7 for emergencies.${d.phone ? ` Call ${phoneShow}.` : ""}` : "Call us and ask about emergency service."],
-    [`What ${tradeName.toLowerCase()} work do you do?`, `${svcSentence.charAt(0).toUpperCase() + svcSentence.slice(1)}. If your job is not on the list, just ask.`],
-    ["How do I get started?", `${d.phone ? `Call ${phoneShow}` : "Call us"} or send the form below. Have the address and a short note about the job ready.`],
-  ].map(([q, a]) => `<details class="rv"><summary><span>${esc(q)}</span>${svg(ICON_PLUS, 22)}</summary><p>${a}</p></details>`).join("");
-
-  const sections = {
-    services: (tint) => `<section class="sec${tint}" id="services"><div class="wrap grid">
-  <div class="head"><div class="sticky rv"><h2>What we do</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div></div>
-  <div class="body">${services}</div>
-</div></section>`,
-    all: (tint) => pickerHtml({ items: pickItems, tradeKey: d.tradeKey, tradeName, img: pickImg, prices: cinePrices, usd: (n) => "$" + (Number.isInteger(n) ? n.toLocaleString("en-US") : n.toFixed(2)), unit: cineUnit(d.tradeKey, form && form.cine && form.cine.unit), tags: d.tradeKey === "pressure" ? ["Dirty", "Clean"] : ["Before", "After"], cls: `sec cl-vp${tint}` }),
-    process: (tint) => `<section class="sec${tint}" id="how"><div class="wrap">
-  <h2 class="rv">How it works</h2>
-  <ol class="steps">${steps}</ol>
-</div></section>`,
-    reviews: (tint) => d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec${tint}" id="reviews"><div class="wrap grid">
-  <div class="head rv"><h2>What customers say</h2></div>
-  <div class="body rev rv">
-    ${d.rating && lay !== "ledger" ? `<div class="rating"><span class="rating-num">${d.rating.toFixed(1)}</span><span>${stars(d.rating, 26)}<span class="rating-sub">${d.reviews ? `From ${d.reviews.toLocaleString("en-US")} Google review${d.reviews === 1 ? "" : "s"}` : "Google rating"}</span></span></div>` : ""}
-    ${d.rv.items.length ? rvwList(d.rv, esc) : ""}
-    ${d.rv.link ? `<a class="btn btn-accent rvw-all" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a>` : ""}
-  </div>
-</div></section>`,
-    area: (tint) => `<section class="sec sec-area${tint}" id="area"><div class="wrap area">
-  <div class="area-text rv">
-    <h2>Where we work</h2>
-    <ul class="chips"><li class="chip-main">${area || "Your town"}</li><li>Nearby towns</li><li>Homes and businesses</li></ul>
-    <p class="area-sub">Not sure we come to your street? Call and ask.</p>
-  </div>
-  <svg class="map rv" viewBox="0 0 480 260" aria-hidden="true">
-    <g class="streets"><path d="M0 40H480M0 98H480M0 160H480M0 220H480M56 0V260M138 0V260M226 0V260M318 0V260M404 0V260"/></g>
-    <g class="roads"><path d="M0 248L480 52M0 124C140 104 300 196 480 168"/></g>
-    <circle class="radius" cx="240" cy="132" r="104"/>
-    <circle class="pin-ring" cx="240" cy="132" r="17"/><circle class="pin" cx="240" cy="132" r="8"/>
-  </svg>
-</div></section>`,
-    faq: (tint) => `<section class="sec${tint}" id="faq"><div class="wrap grid">
-  <div class="head"><div class="sticky rv"><h2>Questions</h2><p class="lede">Straight answers before you call.</p></div></div>
-  <div class="body faq">${faqs}</div>
-</div></section>`,
-  };
-  // Alternate paper and tint backgrounds down the page.
-  let alt = 0;
-  const body = L.order.map((k) => {
-    const out = sections[k](alt % 2 ? " tint" : "");
-    alt++;
-    return out;
-  }).join("\n");
-
-  const options = [...pickItems.map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i).map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
-
-  return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
-<meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
-<meta name="theme-color" content="${th.dark}">
-${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}`, `${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}`)}<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
-<style>
-${PICKER_CSS}
-.cl-vp{--vp-ink:var(--ink);--vp-bg:var(--paper);--vp-muted:var(--muted);--vp-accent:var(--accent);--vp-accent-ink:var(--accent-ink);--vp-em:var(--ink);--vp-chip-bg:var(--light);--vp-chip-ink:var(--ink);--vp-chip-line:var(--line);--vp-on-bg:var(--dark);--vp-on-ink:#fff;--vp-head:var(--display);--vp-sans:var(--body);--vp-stage-bg:var(--light);--vp-max:var(--max);--vp-r:10px;--vp-btn-r:6px}
-.cl-vp.tint{--vp-bg:var(--light);--vp-chip-bg:var(--paper);background:var(--light)}
-.cl-vp h2{font-weight:800;text-transform:uppercase;letter-spacing:0}
-.cl-vp h2 em{font-style:normal}
-.cl-vp .vp-name{font-weight:800;text-transform:uppercase}
-/* One accent, two neutrals. Big Shoulders (built, signage letters) for hero and section titles only; Hanken Grotesk for everything else. 12-column grid, 8px rhythm. */
-:root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--paper:#ffffff;
---on-dark:#ffffff;--on-dark-2:rgba(255,255,255,.76);--rule-dark:rgba(255,255,255,.18);
---display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",sans-serif;--body:"Hanken Grotesk","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
---ease:cubic-bezier(.16,1,.3,1);--max:1240px;color-scheme:light}
-*,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:80px}
-body{margin:0;background:var(--paper);color:var(--ink);font:400 18px/1.6 var(--body);padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
-::selection{background:var(--accent);color:var(--accent-ink)}
-h1,h2{font-family:var(--display);margin:0;text-wrap:balance;font-weight:800;text-transform:uppercase}
-h3{font:700 20px/1.25 var(--body);margin:0;letter-spacing:-.01em}
-p,dl,dd{margin:0}
-a{color:inherit;text-underline-offset:4px}
-img,svg{max-width:100%}
-.wrap{max-width:var(--max);margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
-a:focus-visible,button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;border-radius:4px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 28px;border:0;border-radius:6px;font:600 17px/1 var(--body);text-decoration:none;cursor:pointer;transition:transform .35s var(--ease),box-shadow .35s var(--ease),opacity .35s var(--ease)}
-.btn-accent{background:var(--accent);color:var(--accent-ink)}
-.btn-accent:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.2)}
-.btn-line{color:var(--on-dark);box-shadow:inset 0 0 0 1.5px var(--rule-dark)}
-.btn-line:hover{box-shadow:inset 0 0 0 1.5px var(--on-dark)}
-/* header */
-.top{position:sticky;top:0;z-index:20;background:var(--dark);color:var(--on-dark);transition:box-shadow .4s var(--ease)}
-.past .top{box-shadow:0 8px 24px rgba(0,0,0,.18)}
-.top .wrap{display:flex;align-items:center;gap:28px;min-height:68px}
-.brand-name{font:700 19px/1.15 var(--body);letter-spacing:-.01em;text-decoration:none;margin-right:auto;min-width:0}
-.nav{display:none;gap:28px;font-size:15px;font-weight:500}
-.nav a{text-decoration:none;color:var(--on-dark-2);transition:color .25s}
-.nav a:hover{color:var(--on-dark)}
-.top .btn{display:none;min-height:48px;padding:0 18px;font-size:15px}
-/* hero */
-.hero{position:relative;background:var(--dark);color:var(--on-dark);overflow:hidden;isolation:isolate}
-.hero-text{padding-block:48px 56px}
-.hero h1{font-size:var(--h1m);font-weight:900;line-height:.9}
-.hero-sub{margin-top:24px;font-size:clamp(18px,2vw,21px);line-height:1.5;color:var(--on-dark-2);max-width:36ch}
-.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-.hero-cta .btn{flex:1 1 220px}
-.band-art{display:block;width:100%;height:clamp(140px,25vw,300px);margin-top:-8px}
-.solid path{fill:var(--accent)}
-.strokes path{fill:none;stroke:var(--accent);stroke-width:9;stroke-linecap:round;stroke-linejoin:round}
-.hero-band .hero-text{padding-bottom:40px}
-.hero-grid{display:grid;gap:0}
-.panel{background:var(--dark2);border-radius:10px 10px 0 0;overflow:hidden;display:grid}
-.panel-art{padding:32px 24px 0;display:flex;align-items:flex-end;border-bottom:1px solid var(--rule-dark)}
-.panel-art .art{width:100%;height:clamp(120px,16vw,210px);display:block}
-.panel-body{padding:24px}
-.panel-k{font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--hi)}
-.panel-v{margin-top:6px;font:900 clamp(40px,5vw,60px)/1 var(--display);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.panel-n{margin-top:8px;color:var(--on-dark-2)}
-.stat{background:var(--accent);color:var(--accent-ink);border-radius:10px 10px 0 0;padding:28px 24px 0;display:grid;align-content:start;overflow:hidden}
-.stat-v{font:900 clamp(88px,14vw,168px)/.85 var(--display);letter-spacing:-.01em;font-variant-numeric:tabular-nums;text-transform:uppercase;overflow-wrap:anywhere}
-.stat-v.long{font-size:clamp(52px,7vw,84px)}
-.stat-k{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:14px;font-weight:600}
-.stat .stars{color:var(--accent-ink)}
-.stat .stars-row.off{color:rgba(0,0,0,.18)}
-.stat-art{display:block;width:100%;height:auto;margin-top:28px}
-.stat .solid path{fill:var(--accent-ink);opacity:.9}
-.stat .strokes path{stroke:var(--accent-ink)}
-.hero-photo .wrap{position:relative;padding-top:200px}
-.hero-photo img{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover}
-.hero-photo::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,rgba(0,0,0,.82) 0%,rgba(0,0,0,.5) 55%,rgba(0,0,0,.38) 100%),linear-gradient(90deg,rgba(0,0,0,.35),rgba(0,0,0,0) 70%)}
-.hero-photo .hero-sub{color:rgba(255,255,255,.9)}
-.ledger-top{display:grid;gap:0}
-.ledger-art{display:block;width:100%;height:clamp(110px,15vw,200px)}
-.ledger-art path{vector-effect:non-scaling-stroke;stroke-width:6}
-.figures{display:grid;grid-template-columns:1fr;border-top:1px solid var(--rule-dark)}
-.fig{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 18px;padding:18px 0;border-bottom:1px solid var(--rule-dark)}
-.fig dt{font:900 clamp(56px,9vw,112px)/.85 var(--display);text-transform:uppercase;color:var(--on-dark);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-.fig dt.long{font-size:clamp(40px,5vw,64px);line-height:.95}
-.fig dd{display:grid;gap:6px;color:var(--on-dark-2);font-weight:600;font-size:16px}
-.fig .stars{color:var(--hi)}
-.fig .stars-row.off{color:var(--rule-dark)}
-.fig-note{padding:18px 0 40px;color:var(--on-dark-2);font-size:15px;max-width:60ch}
-.hero-ledger .wrap:last-child{padding-bottom:0}
-.svcs-num{list-style:none;margin:0;padding:0;counter-reset:n}
-.svcs-num li{display:grid;grid-template-columns:56px 1fr;gap:2px 16px;padding:22px 0;border-top:1px solid var(--line)}
-.svcs-num li:last-child{border-bottom:1px solid var(--line)}
-.svcs-num .num{grid-row:1/3;font:900 40px/.9 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
-.svcs-num h3{font-size:22px}
-.svcs-num p{color:var(--muted)}
-/* trust bar */
-.trust dl{display:grid;grid-template-columns:1fr 1fr}
-.cell{padding:22px 16px 24px 0}
-.cell:nth-child(even){padding-left:16px;border-left:1px solid var(--tr)}
-.cell:nth-child(n+3){border-top:1px solid var(--tr)}
-.cell dt{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--tk)}
-.cell dd{margin-top:6px;font:700 clamp(19px,2.2vw,24px)/1.2 var(--body);letter-spacing:-.01em;display:flex;align-items:center;flex-wrap:wrap;gap:8px;overflow-wrap:anywhere}
-.trust-dark{background:var(--dark);color:var(--on-dark);--tr:var(--rule-dark);--tk:var(--on-dark-2)}
-.trust-dark dl{border-top:1px solid var(--rule-dark)}
-.trust-dark .stars{color:var(--hi)}
-.trust-dark .stars-row.off{color:var(--rule-dark)}
-.trust-paper{background:var(--paper);--tr:var(--line);--tk:var(--muted);border-bottom:1px solid var(--line)}
-.trust-tint{background:var(--light);--tr:var(--line);--tk:var(--muted)}
-/* sections */
-.sec{padding-block:80px}
-.tint{background:var(--light)}
-.sec h2{font-size:clamp(44px,7.5vw,80px);line-height:.92}
-.lede{margin-top:18px;color:var(--muted);max-width:36ch}
-.grid{display:grid;gap:36px}
-.svcs-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.svcs-list a{display:grid;grid-template-columns:1fr auto;gap:4px 20px;padding:22px 0;border-bottom:1px solid var(--line);text-decoration:none;transition:padding .45s var(--ease)}
-.svc-name{font:700 22px/1.2 var(--body);letter-spacing:-.01em}
-.svc-desc{grid-column:1;color:var(--muted);font-size:17px;max-width:44ch}
-.svc-go{grid-row:1/3;grid-column:2;align-self:center;display:grid;place-items:center;width:46px;height:46px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line);transition:background-color .35s var(--ease),color .35s var(--ease),box-shadow .35s var(--ease),transform .45s var(--ease)}
-.svcs-list a:hover{padding-left:10px}
-.svcs-list a:hover .svc-go{background:var(--accent);color:var(--accent-ink);box-shadow:none;transform:rotate(-45deg)}
-.svcs-cols{list-style:none;margin:0;padding:0;display:grid;gap:0 32px;grid-template-columns:1fr}
-.svcs-cols li{padding:22px 0 26px;border-top:2px solid var(--ink)}
-.svcs-cols p{margin-top:6px;color:var(--muted);font-size:17px}
-.steps{list-style:none;margin:48px 0 0;padding:0;display:grid;gap:40px}
-.step-n{display:block;font:900 104px/.8 var(--display);color:transparent;-webkit-text-stroke:1.5px var(--ink);margin-bottom:18px}
-.steps h3{font-size:22px}
-.steps p{margin-top:8px;color:var(--muted);max-width:32ch}
-.rev{display:grid;gap:24px;align-content:start}
-.rating{display:flex;align-items:center;gap:24px}
-.rating-num{font:900 112px/.8 var(--display);font-variant-numeric:tabular-nums}
-.rating-sub{display:block;margin-top:10px;color:var(--muted);font-weight:500}
-.stars{position:relative;display:block;flex:none;color:var(--accent)}
-.stars-row{position:absolute;inset:0 auto 0 0;overflow:hidden;white-space:nowrap;height:100%}
-.stars-row svg{position:absolute;top:0}
-.stars-row.off{color:var(--line);width:100%}
-.all-list{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:0}
-.all-list li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 16px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
-.all-note{grid-column:2;color:var(--muted);font-size:16px}
-.all-note b{color:var(--ink)}
-.all-thumb{grid-row:1/span 3;width:96px;height:72px;object-fit:cover;border-radius:6px;display:block;background:var(--tint,#eee)}
-.all-name{font-weight:600;font-size:19px;overflow-wrap:anywhere}
-.all-ask{justify-self:start;display:inline-flex;align-items:center;min-height:48px;padding:0 4px;font-weight:600;color:var(--ink);text-underline-offset:4px}
-@media (min-width:760px){.all-list{grid-template-columns:1fr 1fr;gap:0 40px}.all-list li{grid-template-columns:120px minmax(0,1fr)}.all-thumb{width:120px;height:90px}}
-.hero-trust{margin:16px 0 0;font-size:15px;font-weight:600;opacity:.92}
-.proof-sec{padding-block:20px}
-.proof{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.proof li,.plat-list li{gap:6px;border:1.5px solid var(--line);border-radius:999px;min-height:48px;display:flex;align-items:center;padding:0 16px;font-size:15px;font-weight:600;background:#fff}
-.proof span,.plat-list span{font-weight:500;color:var(--muted)}
-.proof a,.plat-list a{display:flex;gap:6px;align-items:center;min-height:48px;color:inherit;text-decoration:none}
-.plat-list{list-style:none;margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.cred-line{margin-top:12px;color:var(--on-dark-2,rgba(255,255,255,.78));font-size:15px}
-.rvw-list{list-style:none;margin:0;padding:0;display:grid;gap:18px}
-.rvw{border-top:1px solid var(--line);padding-top:18px}
-.rvw-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;color:var(--accent)}
-.rvw-tag{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
-.rvw-q{margin:10px 0 0;font-size:19px;line-height:1.5;overflow-wrap:anywhere}
-.rvw-by{margin:8px 0 0;color:var(--muted);font-weight:500;overflow-wrap:anywhere}
-.rvw-all{justify-self:start}
-.sec-area{padding-block:56px}
-.area{display:grid;gap:28px;align-items:center}
-.chips{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
-.chips li{padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--line);font-size:15px;font-weight:600;background:var(--paper)}
-.chips .chip-main{background:var(--ink);color:var(--paper);box-shadow:none}
-.area-sub{margin-top:16px;color:var(--muted)}
-.map{display:block;width:100%;height:auto;max-height:240px;border-radius:10px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line)}
-.tint .map{background:var(--paper)}
-.streets path{fill:none;stroke:var(--line);stroke-width:2}
-.roads path{fill:none;stroke:var(--line);stroke-width:7;stroke-linecap:round}
-.radius{fill:var(--accent);fill-opacity:.1;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 6}
-.pin-ring{fill:var(--paper);stroke:var(--accent);stroke-width:2}
-.pin{fill:var(--accent)}
-.faq{border-top:1px solid var(--line)}
-.faq details{border-bottom:1px solid var(--line)}
-.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:22px 0;cursor:pointer;font:600 20px/1.3 var(--body);letter-spacing:-.01em}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary svg{flex:none;transition:transform .4s var(--ease)}
-.faq details[open] summary svg{transform:rotate(45deg)}
-.faq details p{padding:0 0 24px;color:var(--muted);max-width:60ch}
-/* final call + form */
-.final{background:var(--dark);color:var(--on-dark)}
-.final h2{font-size:clamp(48px,8.5vw,104px)}
-.final .lede{color:var(--on-dark-2)}
-.big-phone{display:inline-block;margin-top:28px;font:900 clamp(40px,6.5vw,68px)/1 var(--display);color:var(--hi);text-decoration:none;font-variant-numeric:tabular-nums}
-.final dl{display:grid;gap:4px;margin-top:24px;color:var(--on-dark-2)}
-.final dl div{display:flex;gap:8px;flex-wrap:wrap}
-.final dt{color:var(--on-dark);font-weight:600}
-form{display:grid;gap:18px;align-content:start;background:var(--paper);color:var(--ink);border-radius:10px;padding:24px}
-label{display:grid;gap:6px;font-size:15px;font-weight:600}
-input,select,textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--ink);background:var(--paper);border:1.5px solid #9aa4ae;border-radius:6px;padding:13px 14px;transition:border-color .2s,box-shadow .2s}
-input:hover,select:hover,textarea:hover{border-color:var(--ink)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px var(--accent)}
-textarea{min-height:104px;resize:vertical}
-.form-note{font-size:15px;color:var(--muted)}
-footer{background:var(--dark2);color:var(--on-dark-2);font-size:15px}
-footer .wrap{display:grid;gap:32px;padding-block:56px 28px}
-.foot-name{font:700 24px/1.2 var(--body);letter-spacing:-.01em;color:var(--on-dark)}
-.foot-tag{margin-top:6px}
-.foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:28px}
-.foot-cols h3{font:600 13px/1.2 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--on-dark);margin-bottom:12px}
-.foot-cols ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.foot-cols a{text-decoration:none}
-.foot-cols a:hover{color:var(--on-dark)}
-.foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:22px;border-top:1px solid var(--rule-dark);font-size:14px}
-.mbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.2);transform:translateY(110%);visibility:hidden;transition:transform .3s var(--ease),visibility 0s .3s}
-.mbar-a{flex:1 1 0;min-height:48px;display:grid;place-items:center;border-radius:6px;font:700 16px/1 var(--body);text-decoration:none;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);transition:transform .2s var(--ease)}
-.mbar-a:active{transform:scale(.97)}
-.mbar-a.go{flex:1.4 1 0;background:var(--accent);color:var(--accent-ink);box-shadow:none}
-.mbar-a.call{background:#fff;color:#111;box-shadow:none}
-.mbar-a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.past .mbar{transform:none;visibility:visible;transition:transform .3s var(--ease)}
-.kbd .mbar{transform:translateY(110%);visibility:hidden}
-.top-call{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--accent);color:var(--accent-ink);flex:none}
-/* motion: only when allowed; everything is visible without it */
-@media (prefers-reduced-motion:no-preference){
-  .motion .rv{transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
-  .motion .rv:not(.in){opacity:0;transform:translateY(24px)}
-  .motion .band-art,.motion .art,.motion .stat-art{animation:rise 1.2s var(--ease) .15s both}
-  @keyframes rise{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
-}
-@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn,.svcs-list a,.svc-go,.mbar,.mbar-a{transition:none}}
-@media (min-width:760px){
-  .trust dl{grid-template-columns:repeat(4,1fr)}
-  .cell,.cell:nth-child(even){padding:26px 24px 28px;border-left:1px solid var(--tr);border-top:0}
-  .cell:first-child{padding-left:0;border-left:0}
-  .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:24px}
-  .grid>.head{grid-column:1/span 5}
-  .grid>.body{grid-column:6/span 7}
-  .svcs-cols{grid-template-columns:1fr 1fr}
-  .figures{grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--rule-dark)}
-  .fig{grid-template-columns:1fr;align-items:start;padding:28px 24px 32px;border-bottom:0;border-left:1px solid var(--rule-dark)}
-  .fig:first-child{padding-left:0;border-left:0}
-  .steps{grid-template-columns:repeat(3,1fr);gap:32px}
-  .area{grid-template-columns:5fr 7fr;gap:48px}
-  .foot-cols{grid-template-columns:repeat(3,1fr)}
-  .sec{padding-block:112px}
-  .sec-area{padding-block:72px}
-}
-@media (min-width:1024px){
-  body{padding-bottom:0}
-  .mbar,.top-call{display:none}
-  .nav{display:flex}
-  .top .btn{display:inline-flex}
-  .hero h1{font-size:var(--h1d)}
-  .hero-text{padding-block:88px 96px}
-  .hero-cta .btn{flex:0 0 auto}
-  .hero-band .hero-text{display:grid;grid-template-columns:7fr 5fr;column-gap:48px;align-items:end;padding-bottom:8px}
-  .hero-band h1{grid-column:1/-1;max-width:none}
-  .hero-band .hero-cta{justify-content:flex-end}
-  .hero-grid{grid-template-columns:7fr 5fr;gap:56px;align-items:end}
-  .hero-grid .hero-text{padding-bottom:88px}
-  .panel,.stat{margin-top:88px}
-  .hero-photo .wrap{padding-top:260px}
-  .hero-photo .hero-text{max-width:820px}
-  .svcs-cols{grid-template-columns:repeat(3,1fr)}
-  .ledger-top .hero-text{padding-bottom:48px}
-  .svcs-num li{grid-template-columns:72px 1fr 1.3fr;align-items:baseline}
-  .svcs-num .num{grid-row:auto}
-  .grid>.head .sticky{position:sticky;top:120px}
-  footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
-  .foot-base{grid-column:1/-1}
-}
-${PROOF_MORE_CSS}
-</style>
-</head>
-<body>
-<header class="top"><div class="wrap">
-  <a class="brand-name" href="#top">${name}</a>
-  <nav class="nav" aria-label="Sections"><a href="#services">Services</a><a href="#how">How it works</a><a href="#area">Service area</a><a href="#faq">Questions</a></nav>
-  ${callBtn("btn btn-accent")}${d.phone && d.phone.tel ? `<a class="top-call" href="tel:${esc(d.phone.tel)}" aria-label="Call ${phoneShow}">${svg(ICON_PHONE, 22)}</a>` : ""}
-</div></header>
-<main id="top">
-${heroSec}
-${proofBar}
-${trust}
-${body}
-<section class="sec final" id="contact"><div class="wrap grid">
-  <div class="head rv">
-    <h2>${d.freeEstimates ? "Get your free estimate" : "Ask for a price"}</h2>
-    <p class="lede">Call now, or send the form and we will call you back.</p>
-    ${credLine(d) ? `<p class="cred-line">${esc(credLine(d))}</p>` : ""}
-    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
-    <dl>
-      <div><dt>Service area:</dt><dd>${area ? `${area} and nearby towns` : "Your town and nearby towns"}</dd></div>
-      <div><dt>${d.emergency ? "Hours:" : "Emergencies:"}</dt><dd>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</dd></div>
-    </dl>
-  </div>
-  <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
-    <label for="f-name">Your name<input id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
-    <label for="f-phone">Phone<input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
-    <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
-    <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
-    ${liveFormFields(d)}<button class="btn btn-accent" type="submit">Send request</button>
-    <p class="form-note" id="f-note" aria-live="polite">We will call you back.</p>
-  </form>
-</div></section>
-</main>
-<footer><div class="wrap">
-  <div><p class="foot-name">${name}</p><p class="foot-tag">${esc(tradeName)}${area ? ` in ${area}` : ""}</p></div>
-  <div class="foot-cols">
-    <div><h3>Services</h3><ul>${d.services.slice(0, 5).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
-    <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"}</li><li>${d.emergency ? "Open 24 hours" : "Call for hours"}</li></ul></div>
-    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}${d.cred.license ? `<li>Licensed #${esc(d.cred.license)}</li>` : ""}<li><a href="#how">How it works</a></li><li><a href="#faq">Questions</a></li></ul></div>
-  </div>
-  <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
-</div></footer>
-${mobileBarHtml(d, esc, "mbar", askLabel)}
-<script>
-${liveScript(`(function(){
-  var root=document.documentElement;root.classList.add("js");
-  document.getElementById("ask").addEventListener("submit",function(e){e.preventDefault();var f=e.target,n=document.getElementById("f-note"),g=function(k){var x=f.elements[k];return x&&x.value!=null?String(x.value).trim():""};if(!g("name")||(!g("phone")&&!g("email"))){n.textContent="Please add your name and a phone number.";return}n.textContent="Thanks! This is a sample site. The form starts sending when the site goes live.";});
-  // The extra call buttons show only after the hero's own call button scrolls away.
-  var cta=document.getElementById("hero-cta");
-  function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}
-  addEventListener("scroll",past,{passive:true});past();
-  ${ACTIONS_JS}
-  ${PICKER_JS}
-  if(!("IntersectionObserver" in window)||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-  var els=[].slice.call(document.querySelectorAll(".rv"));
-  els.forEach(function(el){if(el.getBoundingClientRect().top<innerHeight)el.classList.add("in")});
-  root.classList.add("motion");
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{rootMargin:"0px 0px -8% 0px"});
-  els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
-})();
-`, d)}<\/script>
-${liveBeacon(d)}</body>
-</html>
-`;
+  return generateClassic(form, d, { phArt: shipArt || placeholderArt, CINE });
 }
 
 // Map a lead's category / niche text to a trade key.
@@ -6369,14 +6411,14 @@ const PICTURE_LIBRARY = {};
       yelp: { rating: val("cred-yelp-rating"), count: val("cred-yelp-count"), url: val("cred-yelp-url") },
       angi: { rating: val("cred-angi-rating"), count: val("cred-angi-count"), url: val("cred-angi-url") },
       facebook: { rating: val("cred-fb-rating"), url: val("cred-fb-url") },
-      other: { name: val("cred-other-name"), rating: val("cred-other-rating"), url: val("cred-other-url") },
+      other: { name: val("cred-other-name"), rating: val("cred-other-rating"), count: val("cred-other-count"), url: val("cred-other-url") },
       license: val("cred-license"), bonded: tick("cred-bonded"), coverage: val("cred-coverage"), warranty: val("cred-warranty"),
       jobs: val("cred-jobs"), family: tick("cred-family"), veteran: tick("cred-veteran"),
       awards: [1, 2, 3].map((i) => val("cred-award-" + i)), certs: [1, 2, 3].map((i) => val("cred-cert-" + i)),
     };
   }
   const SAVE_KEY = "sitemaker-business-v1";
-  const SAVED_IDS = ["company", "city", "phone", "rating", "reviews", "years", "insured"];
+  const SAVED_IDS = ["trade", "look", "company", "city", "phone", "rating", "reviews", "years", "insured"];
   const credIds = () => Array.from(document.querySelectorAll("[data-cred]")).map((e) => e.id);
   function saveBusiness() {
     try {
@@ -6389,7 +6431,9 @@ const PICTURE_LIBRARY = {};
   function reuseBusiness() {
     const o = savedBusiness();
     if (!o) { $("cred-saved").textContent = "Nothing saved in this browser yet."; return; }
-    for (const [id, v] of Object.entries(o)) { const e = $(id); if (!e) continue; if (e.type === "checkbox") e.checked = !!v; else e.value = v; }
+    // Trade and look first: picking them rebuilds the parts of the form that depend on them.
+    for (const id of ["trade", "look"]) { const e = $(id); if (e && o[id] && [...e.options].some((x) => x.value === o[id])) { e.value = o[id]; e.dispatchEvent(new Event("change", { bubbles: true })); } }
+    for (const [id, v] of Object.entries(o)) { if (id === "trade" || id === "look") continue; const e = $(id); if (!e) continue; if (e.type === "checkbox") e.checked = !!v; else e.value = v; }
     $("cred-saved").textContent = "Filled in from the last business you typed.";
     render();
   }

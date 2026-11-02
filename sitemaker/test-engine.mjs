@@ -174,7 +174,8 @@ for (const trade of TRADE_ORDER) {
     const im = document.querySelector(".frame img[data-real]"); const c = document.querySelector(".prog-count");
     return { pos: im ? getComputedStyle(im).objectPosition : "", bg: c ? getComputedStyle(c).backgroundColor : "" };
   });
-  ok(/^8\d%|88%/.test(r.pos), `cinematic: phone crop does not favour the subject side (${r.pos})`);
+  // round 3: the 88% side crop cut the roof off (QA); the phone picture now shows ~60% of the width, centered
+  ok(/^(4\d|5\d|60)%/.test(r.pos), `cinematic: phone crop is not centered on the subject (${r.pos})`);
   ok(/rgba\(0, 0, 0, 0\.5/.test(r.bg), `cinematic: story counter has no dark backing (${r.bg})`);
   await page.close();
 }

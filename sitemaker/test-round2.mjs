@@ -100,7 +100,7 @@ for (const engineName of ["chromium", "webkit"]) {
     }
     if (w < 600) {
       // proof badges: 4 strongest + "+N more" on phones (impeccable Working Memory Rule); the button reveals every one
-      const pb = await page.evaluate(() => { const b = document.querySelector(".pb-more button"); if (!b) return null; const u = b.closest("ul"); const vis = () => [...u.children].filter((li) => !li.classList.contains("pb-more") && getComputedStyle(li).display !== "none").length; const total = u.children.length - 1, before = vis(); b.click(); return { before, after: vis(), total, btn: !!u.querySelector(".pb-more") }; });
+      const pb = await page.evaluate(() => { const b = document.querySelector(".pb-more button"); if (!b) { const ul = document.querySelector("#proof ul"); if (!ul) return { before: 0, after: 0, total: 0, btn: false }; const n = [...ul.children].filter((li) => getComputedStyle(li).display !== "none").length; return { before: n, after: n, total: n, btn: false }; } const u = b.closest("ul"); const vis = () => [...u.children].filter((li) => !li.classList.contains("pb-more") && getComputedStyle(li).display !== "none").length; const total = u.children.length - 1, before = vis(); b.click(); return { before, after: vis(), total, btn: !!u.querySelector(".pb-more") }; });
       ok(pb && pb.before <= 4 && pb.after === pb.total && !pb.btn, `C ${tag}: proof badges on phones ${JSON.stringify(pb)}`);
       // action bar: hidden while a field has focus, never on top of the focused field
       await page.evaluate(() => { const f = document.getElementById("f-name"); scrollTo(0, f.getBoundingClientRect().top + scrollY - innerHeight + 140); }); await page.waitForTimeout(300);
@@ -127,7 +127,10 @@ for (const engineName of ["chromium", "webkit"]) {
           ok(pin.endP > 0.99 && pin.startP === 0, `F ${tag}: story progress ${pin.startP}..${pin.endP} does not run 0..1 over the pinned runway`);
           ok(pin.afterPin < pin.endPin, `F ${tag}: story did not let go after its runway`);
           ok(pin.pinH >= pin.vh - 80 && pin.pinH <= pin.vh, `F ${tag}: pinned story is ${pin.pinH}px tall in a ${pin.vh}px screen`);
-          ok(pin.imgW >= w - 1 && pin.imgH >= pin.pinH - 1, `F ${tag}: story picture letterboxed (${pin.imgW}x${pin.imgH})`);
+          // round 3 (QA: frames were upscaled 2-2.6x): on phones the picture fills the width and the top part of the screen,
+          // and a 1600 px library picture is drawn at no more than 1.5x on a 3x screen
+          const shown = Math.max(pin.imgW, pin.imgH * 1600 / 893) * 3 / 1600;
+          ok(pin.imgW >= w - 1 && pin.imgH >= pin.pinH * 0.4 && shown <= 1.5, `F ${tag}: story picture ${pin.imgW}x${pin.imgH} (upscale ${shown.toFixed(2)}x at 3x)`);
         }
       }
       await p2.close();

@@ -189,7 +189,7 @@ panels.forEach(function(p,i){
   ba.addEventListener("pointermove",function(e){if(drag)fromX(e.clientX)});
   ba.addEventListener("pointerup",function(e){drag=false;if(swipe){swipe=false;var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.4)show(cur+(dx<0?1:-1),false)}});
   ba.addEventListener("pointercancel",function(){drag=false;swipe=false});
-  if(h)h.addEventListener("keydown",function(e){var v=+h.getAttribute("aria-valuenow"),k=e.key,nv=v;if(k==="ArrowLeft"||k==="ArrowDown")nv=v-5;else if(k==="ArrowRight"||k==="ArrowUp")nv=v+5;else if(k==="PageDown")nv=v-20;else if(k==="PageUp")nv=v+20;else if(k==="Home")nv=0;else if(k==="End")nv=100;else return;e.preventDefault();setPos(p,nv)});
+  if(h)h.addEventListener("keydown",function(e){if(!p.classList.contains("vp-cmp-on")&&/^(Arrow|Page|Home|End)/.test(e.key)){var cb=p.querySelector(".vp-cmp");p.classList.add("vp-cmp-on");h.tabIndex=0;h.removeAttribute("aria-hidden");if(cb){cb.setAttribute("aria-pressed","true");cb.querySelector("span").textContent="Hide before and after"}}var v=+h.getAttribute("aria-valuenow"),k=e.key,nv=v;if(k==="ArrowLeft"||k==="ArrowDown")nv=v-5;else if(k==="ArrowRight"||k==="ArrowUp")nv=v+5;else if(k==="PageDown")nv=v-20;else if(k==="PageUp")nv=v+20;else if(k==="Home")nv=0;else if(k==="End")nv=100;else return;e.preventDefault();setPos(p,nv)});
 });
 panels[0].hidden=false;
 /* load every picture once the section is near, so switching never flashes */

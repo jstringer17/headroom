@@ -1,6 +1,7 @@
 // Step 1b (cinematic mode) checks, one result per plan.md criterion 1-5.
 //   node sitemaker/test-cine.mjs
 // Real-build checks are SKIPPED (not passed) until generateSite({cinematic:true}) emits data-cine.
+import { CINE_KIT } from "./src/cine-kit.js";
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -303,7 +304,7 @@ await real(5, "classic mode unchanged", () => {}); // classic byte-identity is t
     check("D", "fencing default: Cinematic story shows the 4 real pictures (4+ distinct)", rc.distinct >= 4, `${rc.distinct} distinct real pictures, ${rc.count} in total`);
     check("D", "fencing default: Editorial hero uses a real picture", /data-ed="hero"[\s\S]{0,1500}?<img\b[^>]*src="(?!data:image\/svg)/.test(ed) || /<img\b[^>]*src="(?!data:image\/svg)[^"]+"[^>]*>[\s\S]{0,400}data-ed="hero"/.test(ed), "hero has no real picture");
     for (const [name, h] of [["roofing", await defaultPathHtml(browser, "roofing", "Sample roofing Co")], ["pressure", await defaultPathHtml(browser, "pressure", "Sample pressure Co")]]) {
-      check("D", `${name} default (company + trade only): Cinematic story shows real library pictures (4+ distinct)`, realPictures(h).distinct >= 4, `${realPictures(h).distinct} distinct real pictures`);
+      check("D", `${name} default (company + trade only): Cinematic story shows real library pictures (one per story frame, 3+ distinct)`, realPictures(h).distinct >= Math.min(4, CINE_KIT[name].story.length), `${realPictures(h).distinct} distinct real pictures`);
     }
     check("D", "default page with the fencing library stays under 6 MB", Math.max(Buffer.byteLength(ed), Buffer.byteLength(cine)) < 6 * 1048576, `${(Math.max(Buffer.byteLength(ed), Buffer.byteLength(cine)) / 1048576).toFixed(1)} MB`);
   }

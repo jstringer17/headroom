@@ -173,15 +173,16 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .cine-motion .story-cta{position:absolute;left:0;right:0;bottom:4px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));padding-top:0;margin:0 auto;pointer-events:none}
 .cine-motion .story-cta>*{pointer-events:auto}
 .cine-motion .story-sub{display:none}
+.cine-wait .step .line{visibility:hidden!important}
 .prog-bar,.prog-count{display:none}
 .frame img{object-position:var(--fp,50% 55%)}
 /* Phones (QA round 2: frames were upscaled 2-2.6x and the buttons sat on the house): the picture takes the top of the
    pinned screen at ~1.3x, the subject is framed per slot (--fp), and the headline and buttons sit below it on dark. */
 @media (max-width:759px){
   .cine-motion .pin{background:var(--dark)}
-  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 132px);min-height:46%;overflow:hidden}
+  .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;overflow:hidden}
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
-  .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 14px)}
+  .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
   .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
   .cine-motion .prog-count{top:12px}
 }
@@ -412,10 +413,13 @@ if(story&&!reduce){
     var cur=Math.round(pos)+1;if(cur!==shown){shown=cur;count.textContent=cur+" / "+n}
   };
   var space=function(){story.style.setProperty("--cta-h",cta.offsetHeight+"px")};
-  space();addEventListener("resize",space);
+  addEventListener("resize",space);
   var ask=function(){if(!queued){queued=true;requestAnimationFrame(paint)}};
   root.classList.add("cine-motion");
-  space(); /* measure the buttons again in the pinned layout (the long subline is hidden there) */
+  space(); /* measured in the pinned layout; the headline shows once the web font is in (max 700 ms), so it never jumps */
+  var shown0=false,reveal=function(){if(shown0)return;shown0=true;space();root.classList.remove("cine-wait")};
+  var h0=story.querySelector(".line .h"),fam=h0?getComputedStyle(h0).fontFamily.split(",")[0]:"";
+  if(document.fonts&&document.fonts.load&&fam){var later=function(){requestAnimationFrame(function(){requestAnimationFrame(reveal)})};Promise.all([document.fonts.load("500 48px "+fam),document.fonts.load("italic 500 48px "+fam)]).then(later,later);setTimeout(reveal,900)}else reveal();
   paint();
   if("IntersectionObserver" in window){
     new IntersectionObserver(function(es){
@@ -729,6 +733,7 @@ export function generateCinematic(form, d, deps) {
 <html lang="en" class="cine-no-js">
 <head>
 <meta charset="utf-8">
+<script>(function(){var r=document.documentElement;r.className="js"+(matchMedia("(prefers-reduced-motion: reduce)").matches?"":" cine-motion cine-wait")})()</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}</title>
 <meta name="description" content="${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}">
