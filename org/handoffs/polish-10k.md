@@ -198,3 +198,37 @@ No line is below 4 in any look. The gaps are now small and specific (below).
 
 **To reach 4.3+:** fix MAJOR 1-2 (Classic phone first screen goes to 5 on line 7 and keeps line 1 at 4+), give Cinematic one more point (line 3: pressure's display face mixes a sans headline with a serif italic accent; or line 7 by a single primary button on the first phone frame), Editorial line 8 (silhouette peak, header/price glyph spacing "$ 4.50").
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, the coordinator's fresh-clone test-all at 2714e20.
+
+### Independent QA of 920705e (Opus qa-reviewer, 2 Nov): FAIL by a hair. Cinematic 4.29, Editorial 4.25, Classic 4.29 (floor 4.3; no line < 4 in any look)
+Method: fresh evidence at 920705e: `round2-shots.mjs --out=/tmp/qa5` (3 looks x 3 trades x 375/430/1280, 162 shots; Classic phone looked at frame by frame, sheet /tmp/qa5/sheet-classic-phone.jpg); full-page edge cases regenerated (/tmp/qa3edge: one ticked metal, hvac, towing, empty, long name + no phone); probes: header text centre, hero pill contrast on the real picture, Ask about this per chip, taps < 44 px, phone wrap. Story frames not re-shot (no Cinematic story change since 338323a). test-all not run by me (coordinator runs it). **WebKit not installed: iOS Safari NOT verified.**
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 4 | 4 | 4 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 4 | 4 | 5 |
+| 8 Editorial craft | - | 4 | - |
+| **Average** | **4.29 FAIL (-0.01)** | **4.25 FAIL (-0.05)** | **4.29 FAIL (-0.01)** |
+Classic +0.15: line 7 goes to 5 (phone first screen now photo with the house in frame, promise H1 and Call above the fold, 48 px targets everywhere, bar steps aside for every field). Cinematic and Editorial are unchanged from 338323a, because their remaining gaps were not in this round. Each look needs one more line at 5 to pass.
+
+**338323a findings: FIXED / NOT FIXED**
+- MAJOR 1 Classic name off-centre: FIXED. Name text centre 82 = button centre 82 at 375 and 1280, computed line-height 48px.
+- MAJOR 2 Classic phone hero pill + picture: FIXED. Pill on rgba(0,0,0,.45): median contrast roofing 6.7:1 (375) / 5.6:1 (1280), fencing 9.4 / 10.7, pressure 10.2 / 12.1. Phone hero is a full-width picture with the house/fence/driveway in frame above the text (/tmp/qa5/classic-*-375-0top.jpg).
+- MINOR Ask about this loses the job: FIXED. hvac chips keep their job in all 3 looks (Central air -> Central air, Heat pump -> Heat pump, Ductless -> Ductless, Old to new -> New AC and furnace).
+- MINOR Editorial towing problem-first H1: FIXED ("ROADSIDE HELP, right WHERE YOU ARE.").
+- MINOR generic Classic tags: FIXED (Repair / New install / Urgent / Free check / Repair or new; one "Service" left on Flat roofs).
+- Still open by choice: Cinematic last-frame crop jump, Editorial silhouette peak, fencing-vinyl subject size, no owner photo slot.
+- Regression checks pass: one ticked variation = 1 chip + 1 slider in all looks; hvac/towing exactly one before/after; no undefined/NaN/placeholder text, no sideways scroll, no page errors in the 15 edge pages; no tap target < 44 px at 375 in any look; Cinematic phone number one line at 1280; Editorial header phone centred.
+
+**BLOCKER**: none. **MAJOR**: none.
+
+**MINOR (what stands between each look and 4.3)**
+- Cinematic, line 1 or 7 -> 5: phone first frame stacks headline + 2 buttons + 2 text lines under a half-height picture (org/art/round3/cinematic-375.jpg col 1). Fix: one primary button (Call) on frame 1, move "Get a free estimate" and the trust line to the next frame or the proof bar; or line 3: pressure theme mixes a sans display face with a serif italic accent (cinematic-pressure-*-0top.jpg) - use the serif for the display line like roofing/fencing.
+- Editorial, line 8 -> 5: hero silhouette peak clipped flat (/tmp/qa5/editorial-fencing-cedar-1280-0top.jpg) and the Didone dollar sign sets a visible gap ("$ 4.50 to $ 7", org/art/round3/editorial-375.jpg col 3). Fix: 2-4 px clip-path headroom; render prices in the sans or with `font-feature-settings`/a negative letter-spacing on the "$".
+- Classic, line 2 -> 5: the picker's standing-seam metal picture is cropped so the bottom third is a dark wall under the roof (/tmp/qa3edge/classic-onemetal-375.jpg, picker), and there is no photo band between proof and services on phones (all white cards until the picker). Fix: object-position per variation for the picker slot (metal: center 30%), and one full-width featured-project photo band earlier on phones.
+- Classic offer bar wraps to 2 lines at 375 when the offer is long ("Free estimate with color samples at your door · Call (918) 555-0142"). Fix: drop the number from the bar on phones (the header button already calls).
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, coordinator's test-all at 920705e.
