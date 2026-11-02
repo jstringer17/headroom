@@ -362,7 +362,7 @@ var pkTabs=[].slice.call(document.querySelectorAll(".ed-chip")),pkPanels=pkTabs.
 function pkPick(i,focus){
   pkTabs.forEach(function(t,j){var on=j===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;pkPanels[j].hidden=!on});
   if(focus)pkTabs[i].focus();
-  if(pkTabs[i].scrollIntoView&&!reduce)pkTabs[i].scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
+  (function(t){var s=t.parentNode;if(s&&s.scrollWidth>s.clientWidth+2){var l=s.scrollLeft+t.getBoundingClientRect().left-s.getBoundingClientRect().left-24;if(s.scrollTo)s.scrollTo({left:Math.max(0,l),behavior:reduce?"auto":"smooth"});else s.scrollLeft=l}})(pkTabs[i]); /* only the chip row scrolls sideways, never the page */
 }
 pkTabs.forEach(function(t,i){
   t.addEventListener("click",function(){pkPick(i,false)});
