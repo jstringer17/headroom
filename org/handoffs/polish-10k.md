@@ -266,3 +266,34 @@ Target 4.5 is not reached by any look.
 4. Pressure Editorial silhouette tip shows a ~6 px white sky sliver (ed-sil.jpg right). Fix: move that slot's crop up 2-3%.
 5. Still open by choice: Cinematic last-frame crop jump, fencing-vinyl subject size, no owner photo slot.
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, coordinator's test-all at ba7f982.
+
+### Independent QA of 7f068a2 (Opus qa-reviewer, 2 Nov): PASS on the floor for all three. Cinematic 4.43, Editorial 4.38, Classic 4.43 (floor 4.3, no line < 4). Target 4.5 NOT reached.
+Method: fresh evidence at 7f068a2: `round2-shots.mjs --out=/tmp/qa7` (3 looks x 3 trades x 375/1280, 108 shots; Classic + Cinematic phone sheet /tmp/qa7/sheet.jpg); all 18 story variations re-shot (/tmp/qa3story, 89 frames; first frames sheet /tmp/qa3story/f0.jpg); 15 edge pages x 2 widths (/tmp/qa3edge): no undefined/NaN/placeholder text, no sideways scroll, no page errors; one ticked metal = 1 chip + 1 slider in all looks and no photo band (correct: no second variation to show); hvac exactly one before/after. test-all not run by me (coordinator runs it at 7f068a2). **WebKit not installed: iOS Safari NOT verified.**
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 4 | 5 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 4 | 4 | 5 |
+| 8 Editorial craft | - | 5 | - |
+| **Average** | **4.43 PASS** | **4.38 PASS** | **4.43 PASS** |
+
+**ba7f982 findings: FIXED / NOT FIXED**
+- MINOR 1 band repeats the hero: FIXED. Band = `roofing/metal/after`, `fencing/vinyl/after`, `pressure/siding/after`, never the hero or the picker's first picture; with one offered variation there is no band.
+- MINOR 2 busy Classic phone first screen: FIXED. Photo, pill, H1 with one accent word, one Call button, trust line, checks; form follows (/tmp/qa7/classic-*-375-0top.jpg). Classic line 1 goes to 5. Phone page 5,112-6,292 px (was up to 6,966).
+- MINOR 3 metal picture framing: FIXED in the picker (50% 12%).
+- MINOR 4 Editorial pressure apex: PARTLY. Apex is now the house roof, but a ~15 px pale overcast-sky tip remains and reads as a blunt point against the cream (/tmp/qa7/apex.jpg). Cosmetic.
+- Cinematic picture cap 440 px: checked; all 18 first frames show the finished picture, one button, no letterbox (f0.jpg).
+
+**BLOCKER**: none. **MAJOR**: none.
+
+**MINOR (the way to 4.5; each look needs about one more line at 5)**
+- Cinematic line 7 or 4: story frames keep ~40 px of empty dark between picture and headline and the bottom quarter is empty on 812 px phones (f0.jpg); tighten so the picture can grow to the 1.5x cap or the headline sits higher. Line 3: pressure display face is sans with a serif italic accent (theme choice).
+- Editorial line 1 or 5: the phone first screen shows headline + 2 buttons + trust line with the silhouette mostly below the fold (round 3 sheets col 1); line 5 tools are the plain picker/estimator.
+- Classic line 2 or 4: no photo motion; fencing services still tagged "SERVICE" on 4 of 6 cards (/tmp/qa3edge/tile-long.jpg col 2); white card runs between the band and the picker.
+- Carried over by choice: Cinematic last-frame crop jump, fencing-vinyl story subject size, no owner photo slot.
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, coordinator's test-all at 7f068a2.
