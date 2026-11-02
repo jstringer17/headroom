@@ -115,9 +115,38 @@ for (const engineName of ["chromium", "webkit"]) {
     }
     if (w < 600 && look === "classic") {
       // round 3 (QA: 8,300 px of stacked white cards): the Classic phone page stays under a height budget
+      // (round 4 adds the Lifetime sections: featured project, what's included, service areas; budget 9800)
       const H = await page.evaluate(() => document.documentElement.scrollHeight);
-      ok(H <= 7400, `R3 ${tag}: Classic phone page is ${H}px tall (budget 7400)`);
+      ok(H <= 9800, `R3 ${tag}: Classic phone page is ${H}px tall (budget 9800)`);
     }
+    // round 4: the Lifetime spec (org/inspiration/lifetime/SPEC.md) + Kai Stone note, measured in every look
+    const r4 = await page.evaluate((desk) => {
+      const vis = (e) => { if (!e) return null; const r = e.getBoundingClientRect(), cs = getComputedStyle(e); return cs.display !== "none" && cs.visibility !== "hidden" && r.width > 0 && r.height > 0 ? r : null; };
+      const h1 = document.querySelector("h1"), cs = getComputedStyle(h1);
+      const sub = document.querySelector("#ask [type=submit]"), prim = document.querySelector(".lt-primary");
+      const bar = document.querySelector(".mbar, .ed-mbar");
+      const nav = document.querySelectorAll("header nav a");
+      const tel = [...document.querySelectorAll("header a[href^='tel:']")].map(vis).filter(Boolean);
+      const est = [...document.querySelectorAll("header a[href='#ask'], header a[href='#contact']")].map(vis).filter(Boolean);
+      const rs = vis(sub), rp = vis(prim);
+      return { size: parseFloat(cs.fontSize), weight: parseInt(cs.fontWeight, 10), form: rs ? Math.round(rs.bottom) : -1, subH: rs ? Math.round(rs.height) : 0,
+        prim: rp ? [Math.round(rp.bottom), Math.round(rp.height)] : null, orcall: !!vis(document.querySelector(".lt-orcall a")), rate: !!document.querySelector(".lt-rate"),
+        bar: bar ? bar.children.length : 0, nav: nav.length, offer: !!vis(document.querySelector(".lt-offer")), tel: tel.length ? Math.round(tel[0].height) : 0, est: est.length ? Math.round(est[0].height) : 0,
+        secs: ["included", "faq", "areas", "call", "services", "contact"].filter((id) => !document.getElementById(id)), foot: !!document.querySelector("footer.lt-foot .lt-foot-cols"), checks: document.querySelectorAll(".lt-checks li").length >= 3, ih: innerHeight };
+    }, w >= 1024);
+    const serif = look !== "classic";
+    if (w >= 1024) {
+      ok(r4.form > 0 && r4.form <= r4.ih, `R4 ${tag}: the quote form's button is not in the first desktop screen (bottom ${r4.form}, screen ${r4.ih})`);
+      ok(r4.subH >= 60, `R4 ${tag}: the form's primary button is ${r4.subH}px tall (>= 60)`);
+      ok(serif ? r4.size <= 72 && r4.size >= 56 : r4.size >= 56 && r4.size <= 76, `R4 ${tag}: desktop H1 is ${r4.size}px (${serif ? "serif 56-72" : "Classic 56-76"})`);
+      ok(r4.tel >= 48 && r4.est >= 48, `R4 ${tag}: header Call pill (${r4.tel}px) and Free estimate button (${r4.est}px) must be >= 48px`);
+    } else {
+      ok(r4.prim && r4.prim[1] >= 60 && r4.prim[0] <= r4.ih, `R4 ${tag}: phone primary button ${JSON.stringify(r4.prim)} must be >= 60px and in the first screen`);
+      ok(serif ? r4.size <= 40 : r4.size >= 30 && r4.size <= 40, `R4 ${tag}: phone H1 is ${r4.size}px (${serif ? "<= 40" : "30-40, fits 3 lines"})`);
+      ok(r4.bar === 2, `R4 ${tag}: phone bar has ${r4.bar} buttons (2: Call, Free estimate)`);
+    }
+    ok(r4.weight >= (serif ? 600 : 900), `R4 ${tag}: H1 weight ${r4.weight}`);
+    ok(r4.nav <= 5 && r4.offer && r4.orcall && r4.rate && r4.checks && r4.foot && !r4.secs.length, `R4 ${tag}: SPEC blocks ${JSON.stringify(r4)}`);
     if (w < 600) {
       // a long company name ends with an ellipsis in the header, never cut mid-letter
       const nm = await page.evaluate(() => { const e = document.querySelector(".brand-name, .brand, .ed-logo-t"); if (!e) return "none"; const cs = getComputedStyle(e); return e.scrollWidth <= e.clientWidth + 1 || (cs.textOverflow === "ellipsis" && !/flex|grid/.test(cs.display)) ? "ok" : `${cs.display}/${cs.textOverflow}`; });

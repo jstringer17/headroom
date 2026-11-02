@@ -9,6 +9,7 @@
   let lastHtml = "";
   let downloads = null;
   let heroData = "";
+  let logoData = "";
   const hasCine = typeof CINE_KIT !== "undefined";
   const cineImages = {}; // trade -> slotId -> picture the user added (upload or link)
   // Built-in pictures per trade (sitemaker/library). PICTURE_INDEX lists them; the pictures are either
@@ -242,6 +243,8 @@
       company: $("company").value,
       trade: tradeSel.value,
       city: $("city").value,
+      areas: $("areas").value,
+      logo: logoData,
       phone: $("phone").value,
       rating: $("rating").value,
       reviews: $("reviews").value,
@@ -450,6 +453,28 @@
     }
     return canvas.toDataURL("image/jpeg", 0.5);
   }
+  // Logo: kept as PNG (transparency), at most 480 px wide.
+  function logoSay(msg, bad) { const s = $("logo-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); }
+  $("logo-file").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) { logoSay("Pick a PNG, JPG, or WebP logo.", true); return; }
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const w = Math.min(480, img.naturalWidth), c = document.createElement("canvas");
+      c.width = w; c.height = Math.max(1, Math.round(img.naturalHeight * w / img.naturalWidth));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      logoData = c.toDataURL("image/png");
+      URL.revokeObjectURL(url); e.target.value = "";
+      $("logo-pick").hidden = false; $("logo-thumb").src = logoData;
+      logoSay("Logo added. It is saved inside the download.");
+      render();
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); logoSay("Could not open that logo. Try a PNG.", true); };
+    img.src = url;
+  });
+  $("logo-clear").addEventListener("click", () => { logoData = ""; $("logo-pick").hidden = true; $("logo-thumb").removeAttribute("src"); logoSay(""); render(); });
   $("hero-file").addEventListener("change", (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;

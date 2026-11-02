@@ -95,11 +95,11 @@ async function checkPage(page, label, imgCount = 0, fontsLoaded = true) {
     }).slice(0, 3).map((el) => el.tagName + "." + el.className);
     const h1 = document.querySelector("h1");
     const h1Lines = Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight));
-    const calls = [...document.querySelectorAll('a[href^="tel:"].btn, a[href="#contact"].btn')].filter((a) => {
+    const calls = [...document.querySelectorAll('a[href^="tel:"].btn, a[href="#contact"].btn, a[href="#ask"].btn')].filter((a) => {
       const b = a.getBoundingClientRect(); const cs = getComputedStyle(a);
       let vis = b.width > 0 && b.bottom > 0 && b.top < innerHeight && cs.visibility !== "hidden" && cs.opacity !== "0";
       for (let el = a; el && vis; el = el.parentElement) { const c = getComputedStyle(el); if (c.opacity === "0" || c.display === "none") vis = false; if (el.classList.contains("mbar") && c.transform !== "none" && el.getBoundingClientRect().top >= innerHeight - 1) vis = false; }
-      return vis && /Call|Contact/.test(a.textContent);
+      return vis && /Call|Contact|free estimate|price/i.test(a.textContent); // round 4: the primary button jumps to the form
     }).length;
     return { sw: doc.scrollWidth, cw: doc.clientWidth, empty, wide, imgs: [...document.images].filter((i) => !i.classList.contains("all-thumb") && !i.closest("[data-vp]")).length, h1Lines, calls };
   });

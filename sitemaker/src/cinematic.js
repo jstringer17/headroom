@@ -17,6 +17,7 @@
 // no ranges at all hides the section.
 import { rvwList } from "./reviews.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
+import { ltBrand, ltOffer, ltChecksHtml, ltRating, ltCta, ltForm, ltTag, ltTrust, ltIncluded, ltFeatured, ltSteps, ltFaq, ltAreas, ltBand, ltFooter, LT_CSS } from "./lifetime.js";
 import { pickerItems, pickerHtml, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { promiseFor } from "./promise.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
@@ -160,7 +161,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
 .frame img{display:block;width:100%;height:100%;object-fit:cover}
 .frame::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.28) 48%,rgba(0,0,0,.18) 100%)}
 .line{position:relative;z-index:2;width:100%;max-width:var(--max);margin:0 auto;padding:0 max(20px,env(safe-area-inset-left,0px)) 56px}
-.line .h{display:block;font:500 clamp(46px,12.8vw,104px)/1 var(--serif);letter-spacing:-.02em;max-width:14ch;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+.line .h{display:block;font:600 clamp(40px,9vw,72px)/1.02 var(--serif);letter-spacing:-.025em;max-width:15ch;text-wrap:balance;text-shadow:0 2px 24px rgba(0,0,0,.35)}
 .story-cta{position:relative;z-index:3;display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:28px max(20px,env(safe-area-inset-left,0px));max-width:var(--max);margin:0 auto}
 .story-sub{flex:1 1 100%;color:rgba(255,255,255,.88);max-width:44ch;font-size:clamp(17px,2vw,20px);line-height:1.5}
 .cine-motion .story{height:calc(var(--n) * 80vh + 20vh);height:calc(var(--n) * 80svh + 20svh)}
@@ -183,7 +184,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
   .cine-motion .frame{bottom:auto;height:calc(100% - var(--cta-h,200px) - 150px);min-height:44%;max-height:440px;overflow:hidden}
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
   .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
-  .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
+  .cine-motion .line .h{font-size:40px;text-shadow:none}
   .cine-motion .story-cta .ask-link,.cine-motion .story-cta .story-trust{display:none}
   .cine-motion .prog-count{top:12px}
 }
@@ -370,6 +371,43 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 
   .nav{display:flex}
   .top .btn{display:inline-flex}
   .line .h{max-width:16ch}
+}
+`;
+
+// Round 4: the shared Lifetime blocks in the Cinematic look (serif heads, pill buttons, cream paper, dark band).
+const CINE_LT_CSS = `
+:root{--hh:100px;--lt-head:var(--serif);--lt-body:var(--sans);--lt-hw:500;--lt-ink:var(--ink);--lt-muted:var(--muted);--lt-paper:var(--cream);--lt-tint:var(--cream2);--lt-card:#fffdf8;--lt-line:var(--c-line,#d9cfbd);--lt-dark:var(--dark);--lt-accent:var(--accent);--lt-accent-ink:var(--accent-ink);--lt-hi:var(--hi);--lt-em:var(--accent-text,var(--accent));--lt-r:16px;--lt-btn-r:999px;--lt-max:var(--max);--lt-check-ink:var(--accent-ink);--lt-pad-d:112px}
+html{scroll-padding-top:116px}section[id]{scroll-margin-top:116px}
+main{position:relative}
+.top{height:auto}.top .wrap{height:64px}
+.top .lt-offer{height:36px;padding:0 16px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--dark) 72%,#000);font-size:13px}
+.top-est{color:#fff}
+.lt-h2 em{font-style:italic}
+.lt-band h2 em,.lt-foot em{color:var(--hi)!important;background:none!important;padding:0!important}
+.story .lt-cta{flex:1 1 100%;margin-top:0}
+.story .lt-orcall{color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
+.story .lt-orcall a{color:var(--hi)}
+.story .lt-rate{flex:1 1 100%;margin:0;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.65)}
+.story .lt-bbb{text-shadow:none}
+.h-sub{margin-top:16px;max-width:46ch;font:400 18px/1.5 var(--sans);color:rgba(255,255,255,.9);text-shadow:0 1px 12px rgba(0,0,0,.6)}
+.h-checks{text-shadow:0 1px 10px rgba(0,0,0,.6)}
+.h-sub,.h-checks{display:none}
+.cine-formwrap{background:var(--cream);padding:28px 0 40px}
+.cine-form-checks{margin:0 0 18px;color:var(--ink)}
+.cine-formwrap .lt-form{box-shadow:0 1px 0 var(--lt-line),0 18px 44px rgba(0,0,0,.14);border:1px solid var(--lt-line)}
+.svc-tag{display:inline-block;font:700 12px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--cream2);padding:7px 11px;border-radius:999px;margin-bottom:10px}
+.svc-more{display:inline-flex;align-items:center;gap:6px;min-height:48px;margin-top:4px;font-weight:700;font-size:16px;color:var(--accent-text,var(--ink));text-decoration:none}
+.mbar-a.go{flex:1 1 0!important}.mbar-a{min-height:52px!important;font-size:17px!important}
+@media (max-width:759px){.svcs{grid-template-columns:1fr 1fr!important;gap:0 14px!important}.svcs li{padding:16px 0}.svcs h3{font-size:20px!important}.svcs p{display:none}.svc-more{font-size:15px;min-height:44px}}
+@media (min-width:1024px){
+  .cine-formwrap{position:absolute;left:0;right:0;top:28px;z-index:6;padding:0;background:none;pointer-events:none}
+  .cine-formwrap .wrap{display:flex;justify-content:flex-end}
+  .cine-formwrap .lt-form{pointer-events:auto;width:400px;border:0;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+  .cine-form-checks{display:none}
+  .h-sub,.h-checks{display:block}.h-checks{display:grid}
+  .story .line,.story-cta{padding-right:calc(400px + 72px)}
+  .story-cta .lt-primary{display:none}
+  .cine-motion .prog-count{right:auto;left:max(20px,env(safe-area-inset-left,0px))}
 }
 `;
 
@@ -590,11 +628,11 @@ export function generateCinematic(form, d, deps) {
   const frames = promise && story.length ? [{ id: story[story.length - 1].id, headline: promise.headline, accent: promise.accent }, ...story] : story;
   const steps = frames.map((s, i) => {
     const tag = i === 0 ? "h1" : "p";
-    return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : i === frames.length - 1 && promise ? 'loading="lazy"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}></div></div>`;
+    return `<div class="step" data-step="${i}"><div class="frame">${i === 0 && heroBox ? `<img src="${esc(heroBox)}" data-real="1" alt="" fetchpriority="high">` : pic(s.id, i === 0 ? 'fetchpriority="high"' : i === frames.length - 1 && promise ? 'loading="lazy"' : '')}</div><div class="line"><${tag} class="h">${accentHtml(s.headline, s.accent)}</${tag}>${i === 0 ? `<p class="h-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${ltChecksHtml(d, "lt-checks h-checks")}` : ""}</div></div>`;
   }).join("");
   const storySec = `<section class="story" id="story" style="--n:${frames.length}" aria-label="Intro">
   <div class="pin">${steps}
-    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${callBtn("btn btn-accent")}<a class="ask-link" href="${prices ? "#price" : "#contact"}">${askLabel}</a><p class="story-where">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credTop(d).length ? `<p class="story-trust">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
+    <div class="story-cta"><p class="story-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>${ltCta(d, "btn btn-accent")}${ltRating(d)}${ltTrust(d).length ? `<p class="story-trust">${esc(ltTrust(d).join(" · "))}</p>` : ""}</div>
     <div class="prog-bar" aria-hidden="true"><i></i></div><span class="prog-count" aria-hidden="true">1 / ${frames.length}</span>
   </div>
 </section>`;
@@ -694,7 +732,7 @@ export function generateCinematic(form, d, deps) {
   // 5. Cream sections: services, reviews, call and contact form
   const services = `<section class="sec" id="services"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">Services</span><h2>What we <em>do</em>.</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div>
-  <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><h3>${esc(n)}</h3><p>${esc(desc)}</p></li>`).join("")}</ul>
+  <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><span class="svc-tag">${esc(ltTag(n, d))}</span><h3>${esc(n)}</h3><p>${esc(desc)}</p><a class="svc-more" href="#ask" data-job="${esc(n)}">${d.freeEstimates ? "Free estimate" : "Ask about this"} ${svgIcon('<path d="M5 12h14M13 6l6 6-6 6"/>', 18)}</a></li>`).join("")}</ul>
 </div></section>`;
   const starRow = (fill, size) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("");
   const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec dark-sec rvw-beat" id="reviews"><div class="wrap">
@@ -706,27 +744,22 @@ export function generateCinematic(form, d, deps) {
 </div></section>`;
   const jobNames = [...vpItems.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
   const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
-  const contact = `<section class="sec final" id="contact"><div class="wrap grid">
-  <div class="head rv">
-    <h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
-    <p class="lede">Call now, or send the form and we will call you back.${d.emergency ? " Open 24/7 for emergencies." : ""}</p>
-    ${credLine(d) ? `<p class="cred-line">${esc(credLine(d))}</p>` : ""}
-    ${d.phone ? `<a class="big-phone" href="${callHref}">${phoneShow}</a>` : ""}
-  </div>
-  <form id="ask" class="body rv"${liveFormAttrs(d)} novalidate>
-    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
-    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
-    <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
-    <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
-    ${liveFormFields(d)}<button class="btn btn-accent" type="submit">Send request</button>
-    <p class="form-note" id="f-note" aria-live="polite">We will call you back.</p>
-  </form>
-</div></section>`;
+  // Round 4 (Lifetime spec + Kai Stone): the quote form is a card over the first story frame on desktop, right after
+  // the story on phones (the big button jumps to it); then the shared sections (src/lifetime.js).
+  const formCard = `<div class="cine-formwrap"><div class="wrap">${ltChecksHtml(d, "lt-checks cine-form-checks")}${ltForm(d, jobNames, { btn: "btn btn-accent" })}</div></div>`;
+  const fb = story.length > 1 ? story[0].id : "", fa = story.length ? story[story.length - 1].id : "";
+  const featured = !d.live && fb && safeImage(images[fb]) && safeImage(images[fa]) ? ltFeatured(d, { before: images[fb], after: images[fa], cls: "lt-tint", title: `${(allCards.find((x) => x.key === kit.variantKey) || {}).label || tradeName}${area ? `, ${d.city}` : ""}`, steps: story.slice(1).map((x) => x.headline) }) : "";
+  const included = ltIncluded(d, { cls: "lt-tint" });
+  const how = ltSteps(d);
+  const faq = ltFaq(d, { cls: "lt-tint" });
+  const areas = ltAreas(d);
+  const band = ltBand(d);
+  const footer = ltFooter(form, d);
 
   const nav = [
     vpSec && ["#styles", vpItems.some((x) => x.before) ? "Before and after" : "Styles"], hvacSec && ["#comfort", "Comfort"],
-    prices && ["#price", "Price"], ["#services", "Services"], ["#contact", "Contact"],
-  ].filter(Boolean).map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
+    prices && ["#price", "Price"], ["#services", "Services"], ["#reviews", "Reviews"], ["#faq", "Questions"],
+  ].filter(Boolean).slice(0, 5).map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 
   const fonts = look && look.fontsHref ? `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -746,6 +779,8 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--ink:${th.ink};--muted:${th.muted}}
 ${ENGINE_CSS}
 ${look && look.css ? look.css : ""}
+${LT_CSS}
+${CINE_LT_CSS}
 ${PICKER_CSS}
 ${PROOF_MORE_CSS}
 .cine-vp{--vp-ink:#fff;--vp-bg:var(--dark);--vp-muted:rgba(255,255,255,.78);--vp-accent:var(--accent);--vp-accent-ink:var(--accent-ink);--vp-em:var(--accent);--vp-chip-bg:rgba(255,255,255,.12);--vp-chip-ink:#fff;--vp-chip-line:rgba(255,255,255,.4);--vp-on-bg:#fff;--vp-on-ink:var(--dark);--vp-head:var(--serif);--vp-sans:var(--sans);--vp-stage-bg:var(--dark2);--vp-max:var(--max);--vp-focus:var(--hi)}
@@ -753,23 +788,29 @@ ${PROOF_MORE_CSS}
 </style>
 </head>
 <body>
-<header class="top"><div class="wrap">
-  <a class="brand" href="#top">${name}</a>
+<header class="top">${ltOffer(d, promise)}<div class="wrap">
+  ${ltBrand(form, d, `<a class="brand" href="#top">${name}</a>`)}
   <nav class="nav" aria-label="Sections">${nav}</nav>
-  ${callBtn("btn btn-accent btn-sm")}
+  ${callBtn("btn btn-accent btn-sm")}<a class="btn btn-glass btn-sm top-est" href="#ask">${d.freeEstimates ? "Free estimate" : "Get a price"}</a>
   <a class="top-call" href="${callHref}" aria-label="${callText}">${svgIcon(callIco, 22)}</a>
 </div></header>
 <main id="top">
 ${storySec}
+${formCard}
 ${factsSec}
 ${vpSec}
 ${hvacSec}
 ${priceSec}
 ${services}
+${featured}
 ${reviews}
-${contact}
+${included}
+${how}
+${faq}
+${areas}
+${band}
 </main>
-<footer><div class="wrap"><div><p class="foot-name">${name}</p><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credLine(d) || factList.length ? `<p>${esc(credLine(d) || factList.join(" · "))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
+${footer}
 ${mobileBarHtml(d, esc, "mbar", askLabel)}
 <script>
 ${liveScript(ENGINE_JS, d)}

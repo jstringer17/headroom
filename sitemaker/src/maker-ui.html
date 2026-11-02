@@ -130,6 +130,9 @@ details.lead[open]{display:grid;gap:10px}
     <label class="field" for="city"><span>Town</span>
       <input type="text" id="city" name="city" placeholder="Like: Tulsa, OK"></label>
 
+    <label class="field" for="areas"><span>Other towns you serve <span class="req">(optional)</span></span>
+      <input type="text" id="areas" name="areas" placeholder="Like: Jenks, Bixby, Owasso"></label>
+
     <label class="field" for="phone"><span>Phone</span>
       <input type="tel" id="phone" name="phone" placeholder="Like: (918) 555-0100"></label>
     <p class="hint bad" id="phone-warn" hidden>That phone number needs 10 digits (add + first for another country). The site leaves the call button out until it is fixed.</p>
@@ -227,6 +230,17 @@ details.lead[open]{display:grid;gap:10px}
         <button class="btn" type="button" id="hero-clear">Remove picture</button>
       </div>
       <p class="status" id="hero-status" aria-live="polite"></p>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Logo <span class="req">(optional)</span></legend>
+      <p class="hint">Shows in the header and footer. Leave empty to show the company name in the look's own type.</p>
+      <label class="btn file-btn" for="logo-file">Upload a logo<input type="file" id="logo-file" accept="image/jpeg,image/png,image/webp"></label>
+      <div class="hero-pick" id="logo-pick" hidden>
+        <img id="logo-thumb" alt="Chosen logo">
+        <button class="btn" type="button" id="logo-clear">Remove logo</button>
+      </div>
+      <p class="status" id="logo-status" aria-live="polite"></p>
     </fieldset>
 
     <div class="group" id="cine-fields" hidden>

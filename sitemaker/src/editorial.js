@@ -16,6 +16,8 @@ import { esc, safeImage, liveHead, liveFormAttrs, liveFormFields, liveScript, li
 import { THEMES } from "./themes.js";
 import { cineSlots, cineUnit, offeredPrices, estQtyHtml, EST_TOTAL_JS, baTags } from "./cinematic.js";
 import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
+import { ltBrand, ltOffer, ltChecksHtml, ltRating, ltCta, ltForm, ltTag, ltTrust, ltIncluded, ltFeatured, ltFaq, ltAreas, ltBand, ltFooter, ltIcon, LT_PHONE, LT_CSS } from "./lifetime.js";
+import { promiseFor } from "./promise.js";
 import { pickerItems, pickerHtml, pickerHead, PICKER_CSS, PICKER_JS } from "./picker.js";
 import { credTop, credBadges, credLine, credProofLis, credPlatformLis } from "./credibility.js";
 import { kitVariant, variantCards, variantNote, variantPrice, PICK_NOUN } from "./variants.js";
@@ -399,7 +401,7 @@ ${EST_TOTAL_JS}
 ${ACTIONS_JS}
 ${PICKER_JS}
 /* the floating call button shows after the hero buttons scroll away */
-var cta=document.getElementById("ed-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
+var cta=document.getElementById("hero-cta");function past(){root.classList.toggle("past",cta.getBoundingClientRect().bottom<0)}addEventListener("scroll",past,{passive:true});past();
 /* and hides while the form or the estimator is on screen */
 if("IntersectionObserver" in window){var seen={};var io0=new IntersectionObserver(function(es){es.forEach(function(e){seen[e.target.id]=e.isIntersecting});root.classList.toggle("nocall",Object.keys(seen).some(function(k){return seen[k]}))});["price","contact","work","styles","services","trust"].forEach(function(id){var el=document.getElementById(id);if(el)io0.observe(el)})}
 if(!("IntersectionObserver" in window)||reduce)return;
@@ -413,6 +415,45 @@ els.forEach(function(el){if(!el.classList.contains("in"))io.observe(el)});
 
 // Letters-only text typed by the owner, trimmed and capped.
 const edText = (v, max) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+
+// Round 4: the shared Lifetime blocks in the Editorial look (Bodoni heads, pills, cream paper), and the hero collage.
+const ED_LT_CSS = `
+:root{--lt-head:var(--ed-serif);--lt-body:var(--ed-sans);--lt-hw:600;--lt-ink:var(--ed-ink);--lt-muted:var(--ed-muted);--lt-paper:var(--ed-cream);--lt-tint:var(--ed-cream2);--lt-card:var(--ed-paper);--lt-line:var(--ed-line);--lt-dark:var(--ed-dark);--lt-accent:var(--ed-btn,var(--ed-accent));--lt-accent-ink:var(--ed-btn-ink,#fff);--lt-hi:color-mix(in srgb,var(--ed-hi,#e9a15b) 65%,#fff);--lt-em:var(--ed-accent);--lt-r:20px;--lt-btn-r:999px;--lt-max:var(--ed-max,1240px);--lt-check-ink:#fff;--lt-pad-d:112px}
+.lt-h2 em,.lt-band h2 em{font-style:italic;font-weight:400}
+.lt-band h2 em{color:var(--lt-hi)}
+.lt-offer{background:var(--ed-ink)}
+.ed-hero .lt-checks svg{background:var(--ed-accent);color:#fff}
+.ed-hero .ed-btn.lt-primary{background:var(--ed-btn,var(--ed-accent));color:var(--ed-btn-ink,#fff);min-height:62px;font-size:18px;padding:0 30px}
+.ed-heroform .ed-btn{background:var(--ed-btn,var(--ed-accent));color:var(--ed-btn-ink,#fff)}
+.ed-hero .lt-orcall a{color:var(--ed-ink)}
+.ed-hero .lt-rate{color:var(--ed-ink)}
+.ed-heroform{background:var(--ed-paper);border:1px solid var(--ed-line);box-shadow:0 30px 60px -28px rgba(20,17,15,.45)}
+.ed-heroform h2{font-weight:600}
+.ed-nav .ed-tel{background:var(--ed-accent);color:#fff;gap:8px}
+.ed-row-tag{flex:none;align-self:center;font:600 11px/1 var(--ed-sans);letter-spacing:.12em;text-transform:uppercase;padding:6px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(236,229,220,.45);color:rgba(236,229,220,.85)}
+.ed-hero h1{font-size:clamp(40px,5.4vw,72px)!important;line-height:.95!important;font-weight:700!important}
+.ed-sub{display:block!important}
+.ed-mbar-a.go{flex:1 1 0!important}.ed-mbar-a{min-height:52px!important;font-size:16px!important}
+@media (max-width:1023px){
+  .ed-hero-grid{display:flex!important;flex-direction:column;gap:0!important}
+  .ed-hero-text,.ed-hero-side{display:contents}
+  .ed-hero .ed-eyebrow{order:1}.ed-hero h1{order:2}.ed-hero .lt-cta{order:3;margin-top:20px}.ed-hero .lt-rate{order:4}.ed-hero .ed-trust3{order:5}
+  .ed-hero .ed-sil{order:6;margin-top:22px;aspect-ratio:4/3!important}
+  .ed-hero .ed-sub{order:7;margin-top:22px}.ed-hero .ed-checks{order:8}.ed-heroform{order:9;margin-top:24px}
+  .ed .lt-foot .lt-wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-width:759px){.ed-hero h1{font-size:40px!important}.ed-hero .ed-sil{aspect-ratio:16/11!important}}
+@media (min-width:1024px){
+  .ed-hero{padding-block:36px 56px}
+  .ed-hero-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:48px!important;align-items:start}
+  .ed-hero-text{padding-top:20px}
+  .ed-hero .lt-primary{display:none}
+  .ed-hero .lt-cta{margin-top:18px}
+  .ed-hero-side{position:relative;padding-top:150px}
+  .ed-hero .ed-sil{position:absolute;left:0;top:0;width:72%;aspect-ratio:9/10}
+  .ed-heroform{position:relative;margin-left:22%;z-index:2}
+}
+`;
 
 export function generateEditorial(form, d, deps) {
   const { CINE_KIT, placeholderArt } = deps;
@@ -535,11 +576,17 @@ export function generateEditorial(form, d, deps) {
 
   // Hero. The form's Hero picture box wins over any library or drawn picture.
   const heroBox = safeImage(form && form.heroImage);
+  const promise = promiseFor(d.tradeKey, kit && kit.variantKey);
+  // Round 4 (Lifetime spec + Kai Stone): who + where + promise, sub line, 3 checks, one 62px button (phones) with
+  // "or call", the star row; on desktop the quote form sits in the hero over the silhouette (a collage: roof peeks above).
+  const jobNames0 = [...pickerItems(CINE_KIT[d.tradeKey], kit, allCards, d.tradeKey).filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
   const hero = `<section class="ed-hero" data-ed="hero" aria-label="Intro"><div class="ed-wrap ed-hero-grid">
-  <div><p class="ed-eyebrow">${eyebrow}</p><h1>${kit.slotPrefix && story.length ? edAccent(story[story.length - 1].headline, story[story.length - 1].accent) : e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
+  <div class="ed-hero-text"><p class="ed-eyebrow">${eyebrow}</p><h1>${kit.slotPrefix && story.length ? edAccent(story[story.length - 1].headline, story[story.length - 1].accent) : e.headline ? edAccent(e.headline, e.accent) : esc(t.headline)}</h1>
     <p class="ed-sub">${esc(t.sub)} ${name} serves ${areaPhrase}.</p>
-    <div class="ed-cta" id="ed-cta"><a class="ed-btn" href="${prices ? "#price" : "#contact"}">${askLabel}</a>${d.phone ? `<a class="ed-btn ghost" href="${callHref}" aria-label="${callText}">${phoneShow}</a>` : ""}</div>${credTop(d).length ? `<p class="ed-trust3">${esc(credTop(d).join(" · "))}</p>` : ""}</div>
-  <div class="ed-sil${heroBox || safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${heroBox ? `<img src="${esc(heroBox)}" data-slot="hero-box" data-real="1" alt="" fetchpriority="high">` : pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
+    ${ltChecksHtml(d, "lt-checks ed-checks")}
+    ${ltCta(d, "ed-btn")}${ltRating(d)}${ltTrust(d).length ? `<p class="ed-trust3">${esc(ltTrust(d).join(" · "))}</p>` : ""}</div>
+  <div class="ed-hero-side"><div class="ed-sil${heroBox || safeImage(images[heroId]) ? "" : " ph"}" data-shape="${shapeName}" style="--ed-clip:${fam}">${heroBox ? `<img src="${esc(heroBox)}" data-slot="hero-box" data-real="1" alt="" fetchpriority="high">` : pic(heroId, 'fetchpriority="high"', { labelY: 560, hero: true })}</div>
+    ${ltForm(d, jobNames0, { btn: "ed-btn", cls: "ed-heroform" })}</div>
 </div></section>`;
 
   // Trust strip: only facts the owner ticked or typed
@@ -610,7 +657,7 @@ export function generateEditorial(form, d, deps) {
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we <em>do</em></h2></div>
-  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}<span class="ed-cap" id="ed-pic-cap"${rowCap[0] ? "" : " hidden"}>${esc(rowCap[0])}</span></div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" data-cap="${esc(rowCap[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span></span><span class="ed-row-body">${esc(desc)}</span><span class="ed-row-pic" aria-hidden="true">${pic(svcPics[i])}${rowCap[i] ? `<span class="ed-cap">${esc(rowCap[i])}</span>` : ""}</span></button>`).join("")}</div></div>
+  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}<span class="ed-cap" id="ed-pic-cap"${rowCap[0] ? "" : " hidden"}>${esc(rowCap[0])}</span></div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" data-cap="${esc(rowCap[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span><span class="ed-row-tag">${esc(ltTag(n, d))}</span></span><span class="ed-row-body">${esc(desc)}</span><span class="ed-row-pic" aria-hidden="true">${pic(svcPics[i])}${rowCap[i] ? `<span class="ed-cap">${esc(rowCap[i])}</span>` : ""}</span></button>`).join("")}</div></div>
   <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
 </div></section>`;
 
@@ -659,24 +706,15 @@ export function generateEditorial(form, d, deps) {
   ${d.rv.items.length ? rvwList(d.rv, esc, "ed-") : ""}
   ${d.rv.link ? `<p class="ed-rvw-more ed-rv"><a class="ed-btn" href="${esc(d.rv.link)}" target="_blank" rel="noopener noreferrer">See all reviews</a></p>` : ""}
 </div></section>`;
-  const jobNames = [...vpItems.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
-  const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
-  const contact = `<section class="ed-sec ed-final" id="contact"><div class="ed-wrap ed-grid">
-  <div class="ed-rv"><h2>${d.freeEstimates ? "Get your free <em>estimate</em>" : "Ask for a <em>price</em>"}</h2>
-    ${credLine(d) ? `<p class="ed-cred-line">${esc(credLine(d))}</p>` : ""}
-    <p class="ed-note">${d.phone ? "Call now, or send the form and we will call you back." : "Send the form and we will get back to you."}</p>
-    ${d.phone ? `<a class="ed-phone" href="${callHref}">${phoneShow}</a>` : ""}</div>
-  <form id="ask" class="ed-form ed-rv"${liveFormAttrs(d)} novalidate>
-    <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
-    <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
-    <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
-    <label for="f-msg">Tell us about the job<textarea id="f-msg" name="message"></textarea></label>
-    ${liveFormFields(d)}<button class="ed-btn" type="submit">Send request</button>
-    <p class="ed-form-note" id="f-note" aria-live="polite">We will call you back.</p>
-  </form>
-</div></section>`;
+  const fb = story.length > 1 ? story[0].id : "", fa = story.length ? story[story.length - 1].id : "";
+  const featured = !d.live && fb && safeImage(images[fb]) && safeImage(images[fa]) ? ltFeatured(d, { before: images[fb], after: images[fa], cls: "lt-tint", title: `${(allCards.find((x) => x.key === kit.variantKey) || {}).label || tradeName}${area ? `, ${d.city}` : ""}`, steps: story.slice(1).map((x) => x.headline) }) : "";
+  const included = ltIncluded(d, { cls: "lt-tint" });
+  const faq = ltFaq(d);
+  const areas = ltAreas(d, { cls: "lt-tint" });
+  const band = ltBand(d);
+  const footer = ltFooter(form, d);
 
-  const links = [(!d.live || work) && ["#work", "Work"], ["#services", "Services"], prices && ["#price", "Price"], ["#contact", "Contact"]].filter(Boolean)
+  const links = [(!d.live || work) && ["#work", "Work"], ["#services", "Services"], prices && ["#price", "Price"], ["#reviews", "Reviews"], ["#faq", "Questions"]].filter(Boolean).slice(0, 5)
     .map(([h, l]) => `<a href="${h}">${l}</a>`).join("");
 
   return `<!doctype html>
@@ -694,6 +732,8 @@ ${liveHead(d, form, `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${e
 :root{--ed-accent:color-mix(in srgb,${th.accent} ${edAccentPct(th.accent)}%,#2a1204);--ed-hi:${th.hi}${d.themePicked ? `;--ed-btn:${th.accent};--ed-btn-ink:${th.accentInk}` : ""}}
 ${ED_CSS}
 ${lookExtra.css || ""}
+${LT_CSS}
+${ED_LT_CSS}
 ${PICKER_CSS}
 ${PROOF_MORE_CSS}
 .ed-vp{--vp-ink:var(--ed-ink);--vp-bg:var(--ed-cream);--vp-muted:var(--ed-muted);--vp-accent:var(--ed-btn,var(--ed-ink));--vp-accent-ink:var(--ed-btn-ink,var(--ed-cream));--vp-em:var(--ed-accent);--vp-chip-bg:var(--ed-paper);--vp-chip-ink:var(--ed-ink);--vp-chip-line:var(--ed-line);--vp-on-bg:var(--ed-ink);--vp-on-ink:var(--ed-cream);--vp-head:var(--ed-serif);--vp-sans:var(--ed-sans);--vp-stage-bg:var(--ed-cream2);--vp-max:var(--ed-max,1240px);--vp-r:var(--ed-card);--vp-focus:var(--ed-accent)}
@@ -702,27 +742,31 @@ ${PROOF_MORE_CSS}
 </style>
 </head>
 <body class="ed">
+${ltOffer(d, promise)}
 <header class="ed-nav" data-ed="nav"><div class="ed-wrap">
-  <a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg><span class="ed-logo-t">${name}</span></a>${d.live ? "" : '<span class="ed-pill">Sample site</span>'}
+  ${ltBrand(form, d, `<a class="ed-logo" href="#top"><svg class="ed-mark" viewBox="0 0 28 20" width="28" height="20" aria-hidden="true"><path d="M2 18 14 4l12 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M8.5 18 14 11.5 19.5 18" fill="none" stroke="var(--ed-accent)" stroke-width="2.4" stroke-linejoin="round"/></svg><span class="ed-logo-t">${name}</span></a>`)}${d.live ? "" : '<span class="ed-pill">Sample site</span>'}
   <nav class="ed-links" aria-label="Sections">${links}</nav>
-  ${d.phone ? `<a class="ed-tel" href="${callHref}">${phoneShow}</a>` : ""}<a class="ed-btn sm" href="#contact">${askLabel}</a>
+  ${d.phone ? `<a class="ed-btn sm ed-tel" href="${callHref}">${ltIcon(LT_PHONE, 17)}<span>${phoneShow}</span></a>` : ""}<a class="ed-btn sm" href="#contact">${askLabel}</a>
   <a class="ed-call" href="${callHref}" aria-label="${callText}">${edIcon(d.phone ? ED_PHONE : '<path d="M5 12h14M13 6l6 6-6 6"/>', 20)}</a>
 </div></header>
 <main id="top">
 ${hero}
 ${proofBar}
-${trust}
 ${beat}
 ${work}
 ${pickSec}
 ${svc}
 ${est}
+${featured}
 ${process}
 ${reviews}
-${contact}
+${included}
+${faq}
+${areas}
+${band}
 </main>
 ${mobileBarHtml(d, esc, "ed-mbar", askLabel)}
-<footer class="ed-foot"><div class="ed-wrap"><div><b>${name}</b><p>${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${credLine(d) ? `<p>${esc(credLine(d))}</p>` : ""}</div><p>&copy; ${esc(d.year)} ${name} &middot; ${d.live ? liveFootLink(d) : "Sample site"}</p></div></footer>
+${footer}
 <script>
 ${liveScript(ED_JS, d)}
 </script>

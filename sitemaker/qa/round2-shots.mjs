@@ -32,7 +32,7 @@ const PRICES = {
 const form = (look, trade, variant) => ({
   company: NAMES[trade] || "Sample Co", trade, city: "Tulsa, OK", phone: "(918) 555-0142", look, cinematic: look === "cinematic", year: 2026,
   emergency: false, freeEstimates: true, insured: true, clean: true,
-  rating: "4.9", reviews: "127",
+  rating: "4.9", reviews: "127", areas: "Broken Arrow, Jenks, Bixby, Owasso, Sand Springs",
   cred: { founded: "2011", googleUrl: "https://g.page/r/example", bbb: { rating: "A+", accredited: true }, license: "ROC 334512", bonded: true, coverage: "$1M", warranty: "10-year workmanship warranty", jobs: "1200", family: true, certs: trade === "roofing" ? ["GAF Master Elite"] : [] },
   cine: { variant, images: images(trade), prices: PRICES[trade] },
 });

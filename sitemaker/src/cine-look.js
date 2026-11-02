@@ -17,7 +17,7 @@ import { THEMES } from "./themes.js";
 import { CINE_KIT } from "./cine-kit.js";
 
 export const CINE_FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap";
+  "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,500..700&family=Manrope:wght@400;500;600;700;800&display=swap";
 
 // Each classic theme mapped onto the cream look. `accent` fills the small
 // button (text on it is `accentInk`), `accentText` is the italic word and
@@ -75,7 +75,7 @@ export function cineLook(themeKey, tradeKey, opts = {}) {
   const css = `
 :root{--c-paper:${v.paper};--c-paper-2:${v.paper2};--c-ink:${v.ink};--c-muted:${v.muted};--c-line:${v.line};
 --c-night:${v.night};--c-accent:${v.accent};--c-accent-ink:${v.accentInk};--c-accent-text:${v.accentText};--c-accent-hi:${v.accentHi};
---f-display:${grotesk ? '"Manrope","Segoe UI",system-ui,sans-serif' : '"Instrument Serif","Iowan Old Style","Palatino Linotype",Georgia,serif'};
+--f-display:${grotesk ? '"Manrope","Segoe UI",system-ui,sans-serif' : '"Fraunces","Iowan Old Style","Palatino Linotype",Georgia,serif'};
 --f-body:"Manrope","Segoe UI",system-ui,-apple-system,sans-serif;
 --ease:cubic-bezier(.2,.7,.1,1);--ease-out:cubic-bezier(.16,1,.3,1);--t-fade:900ms;--t-ui:260ms;
 --gap:clamp(20px,4vw,40px);--pad-y:clamp(80px,13vw,168px);--wrap:1180px;--radius:18px}
@@ -183,8 +183,8 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 :root{--serif:var(--f-display);--sans:var(--f-body);--cream:var(--c-paper);--cream2:var(--c-paper-2);--ink:var(--c-ink);--muted:var(--c-muted);
 --dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);--accent-text:var(--c-accent-text);--dark2:color-mix(in srgb,var(--c-night) 90%,#ffffff);color-scheme:light}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
-h1,h2{font-weight:${grotesk ? "800" : "400"};letter-spacing:${grotesk ? "-.035em" : "-.012em"}}
-${grotesk ? `h1 em,h2 em,.line em,.sec h2 em,.est-num em{font-family:"Instrument Serif",Georgia,serif;font-style:italic;font-weight:400;letter-spacing:-.01em;padding-right:.04em}` : ""}
+h1,h2{font-weight:${grotesk ? "800" : "500"};letter-spacing:${grotesk ? "-.035em" : "-.02em"}}
+${grotesk ? `h1 em,h2 em,.line em,.sec h2 em,.est-num em{font-style:normal}.line .h{font-weight:800}` : ""}
 h1 em,h2 em,.line em,.sec h2 em{color:var(--c-accent-text)${marker ? ";background:linear-gradient(transparent 58%,var(--c-accent) 58%,var(--c-accent) 90%,transparent 90%);padding:0 .06em" : ""}}
 html body :is(.story,.dark-sec,.final,.panel,.est-out,.top) em{color:var(--c-accent-hi);background:none;padding:0}
 .est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
@@ -192,7 +192,7 @@ box-shadow:0 30px 60px -30px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08)}
 .big-phone{white-space:nowrap;max-width:100%}
 @media (max-width:600px){.big-phone{white-space:normal;overflow-wrap:anywhere}}
 .final .grid>*{min-width:0}
-.est-num{font-family:var(--f-display);font-weight:${grotesk ? "800" : "400"};font-size:clamp(2.6rem,7vw,4.5rem);line-height:1;letter-spacing:-.02em}
+.est-num{font-family:var(--f-display);font-weight:${grotesk ? "800" : "500"};font-size:clamp(2.6rem,7vw,4.5rem);line-height:1;letter-spacing:-.02em}
 `;
   return { css, fontsHref: CINE_FONTS_HREF, vars: v };
 }

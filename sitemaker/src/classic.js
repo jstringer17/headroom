@@ -14,6 +14,7 @@ import { mobileBarHtml, ACTIONS_JS, PROOF_MORE_CSS } from "./actions.js";
 import { variantCards, kitVariant } from "./variants.js";
 import { promiseFor } from "./promise.js";
 import { offeredPrices, cineUnit, baTags } from "./cinematic.js";
+import { ltTrust, ltBase, ltBrand, ltOffer, ltChecksHtml, ltRating, ltCta, ltForm, ltTag, ltIncluded, ltFeatured, ltSteps, ltFaq, ltAreas, ltBand, ltFooter, LT_CSS } from "./lifetime.js";
 
 const clIcon = (p, s = 20) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const CL_PHONE = '<path d="M5 3.5h3.5l1.5 4.5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 4.5 1.5V19a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 3 5.7 2 2 0 0 1 5 3.5z"/>';
@@ -24,9 +25,9 @@ const clStars = (n, s = 22) => `<span class="cl-stars" role="img" aria-label="${
 // The accent word of a headline in the highlight color.
 const clAccent = (text, word) => { const i = word ? text.indexOf(word) : -1; return i < 0 ? esc(text) : `${esc(text.slice(0, i))}<em>${esc(word)}</em>${esc(text.slice(i + word.length))}`; };
 // A tag for a service card from its own words (no claims: what kind of job it is).
-const clTag = (n, d) => /emergenc|storm|24/i.test(n) ? (d.emergency ? "24/7" : "Urgent") : /repair|fix|patch|leak/i.test(n) ? "Repair" : /inspect|check|estimate/i.test(n) ? (d.freeEstimates ? "Free check" : "Inspection") : /clean|wash/i.test(n) ? "Cleaning" : /new|install|replace|build|pour/i.test(n) ? "New install" : /trim|prun|mow|lawn|yard/i.test(n) ? "Upkeep" : /remov|haul|stump/i.test(n) ? "Removal" : /paint|stain|seal/i.test(n) ? "Finish" : /tow|jump|lockout|tire|fuel/i.test(n) ? "Roadside" : /gutter|gate|door|window|drain|pipe|wir|panel|duct/i.test(n) ? "Repair or new" : "Service";
+const clTag = (n, d) => ltTag(n, d);
 // Headline size that keeps the H1 to 3 lines or fewer (Archivo 800 is ~0.56em per character).
-const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.min(46, Math.floor((2.55 * 335) / (n * 0.62)))}px;--h1d:${Math.min(66, Math.floor((2.5 * 600) / (n * 0.6)))}px`; };
+const clH1 = (text) => { const n = Math.max(text.length, 12); return `--h1m:${Math.max(30, Math.min(40, Math.floor((3 * 335) / (n * 0.7))))}px;--h1d:${Math.max(56, Math.min(76, Math.floor((3 * 600) / (n * 0.62))))}px`; };
 
 // form, d = normalize(form) (+ live), o = { phArt, CINE }
 export function generateClassic(form, d, o) {
@@ -59,38 +60,13 @@ export function generateClassic(form, d, o) {
     : `<svg class="${cls} strokes" viewBox="0 0 1200 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><path d="${t.line}"/></svg>`;
 
   // 1. Offer bar: only what the owner ticked or typed.
-  const offerParts = [];
-  if (d.freeEstimates) offerParts.push(promise ? esc(promise.offer.split(".")[0]) : "Free estimates");
-  if (d.emergency) offerParts.push("Open 24/7 for emergencies");
-  const sep = '<span aria-hidden="true"> · </span>';
-  const offerCall = d.phone ? `<span class="cl-offer-call">${offerParts.length ? sep : ""}Call <a href="${callHref}">${phoneShow}</a></span>` : "";
-  const offerBar = offerParts.length || offerCall ? `<div class="cl-offer"><p${offerParts.length ? ' class="has-offer"' : ""}>${offerParts.join(sep)}${offerCall}</p></div>` : "";
+  const offerBar = ltOffer(d, promise);
 
-  // 2. Hero checks: license, certification, warranty, else the ticks.
-  const c = d.cred, checks = [];
-  // (the license sits in the trust line just above, so the checks start with the next strongest facts)
-  if (!c.license && !d.insured && d.years) checks.push(`${d.years} year${d.years === 1 ? "" : "s"} in business`);
-  if (c.certs && c.certs[0]) checks.push(`${esc(c.certs[0])} certified`);
-  if (c.warranty) checks.push(esc(/warrant/i.test(c.warranty) ? c.warranty : `${c.warranty} warranty`));
-  if (checks.length < 3 && d.freeEstimates) checks.push("Free estimates, no obligation");
-  if (checks.length < 3 && d.emergency) checks.push("Open 24/7 for emergencies");
-  if (checks.length < 3) checks.push(`Serving ${areaPhrase}`);
-  const top = credTop(d);
+  // 2. Hero checks: license, certification, warranty, else the ticks (src/lifetime.js).
+  const top = ltTrust(d);
   const items = kitFull ? pickerItems(kitFull, kit, allCards, d.tradeKey) : [];
   const jobNames = [...items.filter((x) => x.key !== "ba").map((x) => x.label), ...d.services.map(([n]) => n)].filter((n, i, a) => a.indexOf(n) === i);
-  const options = jobNames.map((n) => `<option>${esc(n)}</option>`).join("") + "<option>Something else</option>";
-  const formCard = `<div class="cl-formcard" id="contact">
-      <h2>${d.freeEstimates ? "Get a free estimate" : "Ask for a price"}</h2>
-      <p class="cl-formsub">${d.freeEstimates ? "No obligation. We call you back." : "Tell us the job and we call you back."}</p>
-      <form id="ask"${liveFormAttrs(d)} novalidate>
-        <label for="f-name">Your name<input type="text" id="f-name" name="name" autocomplete="name" enterkeyhint="next"></label>
-        <label for="f-phone">Phone<input type="tel" id="f-phone" name="phone" autocomplete="tel" inputmode="tel" enterkeyhint="next"></label>
-        <label for="f-job">What do you need?<select id="f-job" name="job">${options}</select></label>
-        <label for="f-msg">About the job <span class="cl-opt">(optional)</span><textarea id="f-msg" name="message" rows="2"></textarea></label>
-        ${liveFormFields(d)}<button class="btn btn-accent cl-submit" type="submit">${d.freeEstimates ? "Get my free estimate" : "Send my request"}</button>
-        <p class="form-note" id="f-note" aria-live="polite">${d.phone ? `Or call <a href="${callHref}">${phoneShow}</a>.` : "We will call you back."}</p>
-      </form>
-    </div>`;
+  const formCard = ltForm(d, jobNames, { btn: "btn btn-accent", cls: "cl-formcard" });
   const heroSec = `<section class="cl-hero${hero ? " has-photo" : ""}" aria-label="Intro" data-hero-end>
   ${hero ? `<img class="hero-img" src="${esc(hero)}" alt="" fetchpriority="high">` : shape("cl-art")}
   <div class="wrap cl-hero-grid">
@@ -98,8 +74,8 @@ export function generateClassic(form, d, o) {
       <p class="cl-pill">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>
       <h1 style="${clH1(h1Text)}">${promise ? clAccent(h1Text, promise.accent) : esc(h1Text)}</h1>
       <p class="hero-sub"><span class="cl-sub-txt">${esc(t.sub)} ${name} serves ${areaPhrase}.</span>${top.length ? ` <b class="hero-trust">${esc(top.join(" · "))}</b>` : ""}</p>
-      <ul class="cl-checks">${checks.slice(0, 3).map((x) => `<li>${clIcon(CL_CHECK, 18)}<span>${x}</span></li>`).join("")}</ul>
-      <div class="hero-cta" id="hero-cta">${callBtn("btn btn-accent")}<a class="btn btn-line cl-to-form" href="#ask">${askLabel}</a></div>
+      ${ltChecksHtml(d, "lt-checks cl-checks")}
+      ${ltCta(d, "btn btn-accent")}${ltRating(d)}
     </div>
     ${formCard}
   </div>
@@ -126,12 +102,7 @@ export function generateClassic(form, d, o) {
 
   // 6. Featured project: the picked variation's own first and last story frames, only when they are real pictures.
   const fb = story.length > 1 ? story[0].id : "", fa = finishedId;
-  const featured = !d.live && fb && safeImage(imgs[fb]) && safeImage(imgs[fa]) ? `<section class="sec" id="project"><div class="wrap cl-feat rv">
-  <div class="cl-feat-pics"><figure><img src="${esc(imgs[fb])}" alt="Before" loading="lazy" decoding="async"><figcaption>Before</figcaption></figure><figure><img src="${esc(imgs[fa])}" alt="After" loading="lazy" decoding="async"><figcaption>After</figcaption></figure></div>
-  <div class="cl-feat-text"><p class="cl-kicker">Sample project</p><h2>${esc((allCards.find((x) => x.key === (kit && kit.variantKey)) || {}).label || tradeName)}${area ? `, ${area}` : ""}</h2>
-    <dl>${story.slice(1).map((s, i) => `<div><dt>Step ${i + 1}</dt><dd>${esc(s.headline)}</dd></div>`).join("")}</dl>
-    <p class="cl-note">A sample to show the kind of work. Your own jobs go here when the site goes live.</p></div>
-</div></section>` : "";
+  const featured = !d.live && fb && safeImage(imgs[fb]) && safeImage(imgs[fa]) ? ltFeatured(d, { before: imgs[fb], after: imgs[fa], cls: "lt-tint", title: `${(allCards.find((x) => x.key === (kit && kit.variantKey)) || {}).label || tradeName}${area ? `, ${d.city}` : ""}`, steps: story.slice(1).map((s) => s.headline) }) : "";
 
   // 7. Owner card beside the reviews.
   const fine = credLine(d);
@@ -153,46 +124,13 @@ export function generateClassic(form, d, o) {
   </div>
 </div></section>`;
 
-  // 8. How it works, 9. FAQ
-  const steps = [
-    ["Call or send the form", d.phone ? `Call ${phoneShow}, or send the form at the top of this page.` : "Send the form at the top of this page."],
-    [d.freeEstimates ? "Get your free estimate" : "Get a clear price", "We look at the job and tell you the price before any work starts."],
-    ["The work gets done", "We do the job you agreed to and keep you posted."],
-  ];
-  const how = `<section class="sec tint" id="how"><div class="wrap">
-  <div class="cl-head rv"><p class="cl-kicker">How it works</p><h2>Three steps, no surprises</h2></div>
-  <ol class="cl-steps">${steps.map(([h, p], i) => `<li class="rv"><span aria-hidden="true">${i + 1}</span><h3>${esc(h)}</h3><p>${p}</p></li>`).join("")}</ol>
-</div></section>`;
-  const svcList = d.services.map((s) => s[0].toLowerCase());
-  const svcSentence = svcList.length > 1 ? `${svcList.slice(0, -1).join(", ")}, and ${svcList[svcList.length - 1]}` : svcList[0];
-  const faqs = [
-    ["How much will it cost?", d.freeEstimates ? "Every job is different. We look at yours and give you a free estimate before any work starts." : "Every job is different. Call us and we will tell you the price before any work starts."],
-    ["What areas do you serve?", `${area || "Our town"} and nearby towns. Not sure about your street? Call and ask.`],
-    ["Do you take emergency calls?", d.emergency ? `Yes. We are open 24/7 for emergencies.${d.phone ? ` Call ${phoneShow}.` : ""}` : "Call us and ask about emergency service."],
-    [`What ${tradeName.toLowerCase()} work do you do?`, `${svcSentence.charAt(0).toUpperCase() + svcSentence.slice(1)}. If your job is not on the list, just ask.`],
-    ["How do I get started?", `${d.phone ? `Call ${phoneShow}` : "Call us"} or send the form at the top of the page. Have the address and a short note about the job ready.`],
-  ];
-  const faq = `<section class="sec" id="faq"><div class="wrap cl-faq-grid">
-  <div class="cl-head rv"><p class="cl-kicker">Questions</p><h2>Straight answers before you call</h2></div>
-  <div class="faq">${faqs.map(([q, a]) => `<details class="rv"><summary><span>${esc(q)}</span>${clIcon(CL_PLUS, 22)}</summary><p>${a}</p></details>`).join("")}</div>
-</div></section>`;
-
-  // 10. Final call band, 11. footer
-  const band = `<section class="cl-band-sec" aria-label="Call us"><div class="wrap"><div class="cl-band rv">
-  <h2>${d.freeEstimates ? "Get your free estimate today" : "Get a clear price today"}</h2>
-  <p>${area ? `Homes and businesses in ${area} and nearby towns.` : "Homes and businesses near you."} ${d.emergency ? "Open 24/7 for emergencies." : ""}</p>
-  ${d.phone ? `<a class="big-phone" href="${callHref}">${clIcon(CL_PHONE, 30)}<span>${phoneShow}</span></a>` : ""}
-  <a class="btn btn-line" href="#ask">${askLabel}</a>
-</div></div></section>`;
-  const footer = `<footer><div class="wrap">
-  <div><p class="foot-name">${name}</p><p class="foot-tag">${esc(tradeName)}${area ? ` in ${area}` : ""}</p>${fine ? `<p class="foot-cred">${esc(fine)}</p>` : ""}</div>
-  <div class="foot-cols">
-    <div><h3>Services</h3><ul>${d.services.slice(0, 6).map(([n]) => `<li><a href="#services">${esc(n)}</a></li>`).join("")}</ul></div>
-    <div><h3>Contact</h3><ul>${d.phone ? `<li><a href="${callHref}">${phoneShow}</a></li>` : ""}<li>${area || "Your town"} and nearby towns</li><li>${d.emergency ? "Open 24 hours" : "Ask about emergency service"}</li></ul></div>
-    <div><h3>Company</h3><ul>${d.years ? `<li>${d.years} year${d.years === 1 ? "" : "s"} in business</li>` : ""}${d.insured ? "<li>Licensed and insured</li>" : ""}<li><a href="#reviews">Reviews</a></li><li><a href="#faq">Questions</a></li></ul></div>
-  </div>
-  <div class="foot-base"><span>&copy; ${esc(d.year)} ${name}</span><span>${d.live ? liveFootLink(d) : "Sample site"}</span></div>
-</div></footer>`;
+  // 8. What's included, how it works, FAQ, service areas, final call band, footer (src/lifetime.js)
+  const included = ltIncluded(d, { cls: "lt-tint" });
+  const how = ltSteps(d);
+  const faq = ltFaq(d);
+  const areas = ltAreas(d, { cls: "lt-tint" });
+  const band = ltBand(d);
+  const footer = ltFooter(form, d);
 
   const title = `${name}${area ? ` | ${esc(tradeName)} in ${area}` : ` | ${esc(tradeName)}`}`;
   const descr = `${name} is a ${esc(t.noun)} serving ${areaPhrase}. ${esc(t.sub)}`;
@@ -206,32 +144,39 @@ export function generateClassic(form, d, o) {
 <meta name="theme-color" content="${th.dark}">
 ${liveHead(d, form, title, descr)}<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
 <style>
 :root{--dark:${th.dark};--dark2:${th.dark2};--accent:${th.accent};--accent-ink:${th.accentInk};--hi:${th.hi};--light:${th.light};--ink:${th.ink};--muted:${th.muted};--line:${th.line};--paper:#ffffff;--on-dark:#fff;--on-dark-2:rgba(255,255,255,.8);--rule-dark:rgba(255,255,255,.2);--head:"Archivo","Arial",sans-serif;--body:"Hanken Grotesk","Segoe UI",Roboto,Helvetica,Arial,sans-serif;--ease:cubic-bezier(.16,1,.3,1);--max:1240px;--r:14px;color-scheme:light}
 ${CL_CSS}
+${LT_CSS}
 ${PICKER_CSS}
 ${PROOF_MORE_CSS}
+:root{--lt-head:var(--head);--lt-body:var(--body);--lt-hw:800;--lt-ink:var(--ink);--lt-muted:var(--muted);--lt-paper:var(--paper);--lt-tint:var(--light);--lt-card:#fff;--lt-line:var(--line);--lt-dark:var(--dark);--lt-accent:var(--accent);--lt-accent-ink:var(--accent-ink);--lt-hi:var(--hi);--lt-em:var(--dark);--lt-r:var(--r);--lt-btn-r:10px;--lt-max:var(--max)}
+.lt-h2,.lt-inc h3,.lt-steps h3,.lt-faq summary{color:var(--dark)}
+.lt-h2 em{font-style:normal;box-shadow:inset 0 -.2em 0 var(--accent)}
+.lt-band h2 em{font-style:normal;box-shadow:none}
 </style>
 </head>
 <body>
 ${offerBar}
 <header class="top"><div class="wrap">
-  <a class="brand-name" href="#top">${name}</a>
+  ${ltBrand(form, d, `<a class="brand-name" href="#top">${name}</a>`)}
   <nav class="nav" aria-label="Sections"><a href="#services">Services</a>${picker ? `<a href="#styles">${items.some((x) => x.before) ? "Before and after" : "Styles"}</a>` : ""}<a href="#reviews">Reviews</a><a href="#faq">Questions</a></nav>
-  ${callBtn("btn btn-accent cl-top-btn")}
+  ${callBtn("btn btn-accent cl-top-btn")}<a class="btn btn-dark cl-top-btn cl-top-est" href="#ask">${d.freeEstimates ? "Free estimate" : "Get a price"}</a>
   <a class="top-call" href="${callHref}" aria-label="${callText}">${clIcon(callIco, 22)}</a>
 </div></header>
 <main id="top">
 ${heroSec}
 ${proof}
 ${photoBand}
-${services}
 ${picker}
+${services}
 ${featured}
 ${reviews}
+${included}
 ${how}
 ${faq}
+${areas}
 ${band}
 </main>
 ${footer}
@@ -282,7 +227,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-photo-band img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
 .cl-photo-band figcaption{position:absolute;left:12px;bottom:12px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
 @media (max-width:1023px){.cl-photo-band{display:block}}
-@media (max-width:639px){.has-offer .cl-offer-call{display:none}.cl-sub-txt{display:none}.hero-sub b{margin-top:0}.cl-hero-text .cl-to-form{display:none}}
+@media (max-width:639px){.cl-sub-txt{display:none}.hero-sub b{margin-top:0}}
 .cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}
@@ -305,28 +250,16 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-pill{background:rgba(0,0,0,.45)!important;display:inline-flex;align-items:center;gap:8px;font:700 13px/1 var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--hi);background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);padding:8px 12px;border-radius:999px}
 .cl-pill::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--hi)}
 .cl-hero-text{display:flex;flex-direction:column;align-items:flex-start}
-.cl-hero h1{margin-top:16px;font-weight:800;font-size:var(--h1m);line-height:1.04}
+.cl-hero h1{margin-top:16px;font-weight:900;font-size:var(--h1m);line-height:1.02;letter-spacing:-.025em}
 .cl-hero h1 em{font-style:normal;color:var(--hi)}
 .hero-sub{margin-top:14px;color:var(--on-dark-2);font-size:17px;max-width:46ch}
 .hero-sub b{display:block;margin-top:8px;color:#fff;font-weight:600}
-.cl-checks{list-style:none;padding:0;margin-top:18px;display:grid;gap:8px}
-.cl-checks li{display:flex;gap:10px;align-items:flex-start;font-weight:600;font-size:16px}
-.cl-checks svg{flex:none;margin-top:3px;color:#0b0b0b;background:var(--hi);border-radius:50%;padding:3px;width:22px;height:22px}
-.hero-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px;align-self:stretch}
-@media (max-width:1023px){.cl-hero .hero-img{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:16/10;object-position:50% 55%;z-index:0}.cl-hero.has-photo::before{display:none}.cl-hero-text .hero-cta{order:1;margin-top:18px}.cl-hero-text .hero-sub{order:2;margin-top:20px}.cl-hero-text .cl-checks{order:3}}
-.hero-cta .btn{flex:1 1 220px}
-.cl-formcard{background:#fff;color:var(--ink);border-radius:var(--r);padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
-.cl-formcard h2{font-size:26px;font-weight:800}
-.cl-formsub{margin-top:6px;color:var(--muted);font-size:15px}
-#ask{display:grid;gap:12px;margin-top:16px}
-#ask label{display:grid;gap:6px;font-size:15px;font-weight:600}
-.cl-opt{font-weight:500;color:var(--muted)}
-#ask input,#ask select,#ask textarea{width:100%;font:400 17px/1.4 var(--body);color:var(--ink);background:#fff;border:1.5px solid #9aa1ab;border-radius:10px;padding:13px 14px;min-height:50px}
-#ask textarea{min-height:76px;resize:vertical}
-#ask input:focus,#ask select:focus,#ask textarea:focus{outline:none;border-color:var(--dark);box-shadow:0 0 0 3px var(--accent)}
-.cl-submit{width:100%;margin-top:4px}
-.form-note{font-size:15px;color:var(--muted)}
-.form-note a{color:var(--ink);font-weight:700;display:inline-flex;align-items:center;min-height:44px}
+.cl-hero .lt-orcall a{color:var(--hi)}
+.cl-hero .lt-rate{color:#fff}
+/* one slow settle on the hero photo (transform only; none with reduced motion) */
+@media (prefers-reduced-motion:no-preference){.cl-hero .hero-img{animation:cl-settle 14s cubic-bezier(.16,1,.3,1) both;transform-origin:60% 40%}}
+@keyframes cl-settle{from{transform:scale(1.09)}to{transform:scale(1)}}
+@media (max-width:1023px){.cl-hero .hero-img{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:16/10;object-position:50% 55%;z-index:0}.cl-hero.has-photo::before{display:none}.cl-hero-text .lt-cta{order:1;margin-top:18px}.cl-hero-text .lt-rate{order:1}.cl-hero-text .hero-sub{order:2;margin-top:20px}.cl-hero-text .cl-checks{order:3}}
 /* proof strip */
 .cl-proof{background:#fff;border-bottom:1px solid var(--line)}
 .cl-proof ul{list-style:none;padding:18px 0;display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
@@ -354,16 +287,6 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-vp h2{font-weight:800;color:var(--dark)}
 .cl-vp h2 em{font-style:normal;color:var(--dark);box-shadow:inset 0 -.2em 0 var(--accent)}
 .cl-vp .vp-name{font-weight:800;color:var(--dark)}
-/* featured project */
-.cl-feat{display:grid;gap:24px;background:var(--light);border-radius:var(--r);padding:16px}
-.cl-feat-pics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.cl-feat-pics figure{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:4/5;background:#ddd}
-.cl-feat-pics img{width:100%;height:100%;object-fit:cover;display:block}
-.cl-feat-pics figcaption{position:absolute;left:10px;top:10px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
-.cl-feat-text dl{display:grid;gap:10px;margin-top:16px}
-.cl-feat-text dl div{display:grid;grid-template-columns:80px 1fr;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
-.cl-feat-text dt{font-weight:800;color:var(--dark)}
-.cl-note{margin-top:14px;font-size:14px;color:var(--muted)}
 /* owner + reviews */
 .cl-rev-grid{display:grid;gap:28px}
 @media (max-width:1023px){.cl-revs{order:-1}}
@@ -390,43 +313,10 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .rvw-q{margin:10px 0 0;font-size:18px;line-height:1.5;color:var(--ink);overflow-wrap:anywhere}
 .rvw-by{margin-top:8px;font-weight:700;color:var(--muted);overflow-wrap:anywhere}
 .rvw-all{justify-self:start}
-/* steps, faq */
-.cl-steps{list-style:none;padding:0;display:grid;gap:14px;counter-reset:s}
-.cl-steps li{display:grid;grid-template-columns:48px 1fr;gap:4px 16px;background:#fff;border-radius:var(--r);padding:20px;border:1px solid var(--line)}
-.cl-steps span{grid-row:1/3;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--dark);color:var(--hi);font:800 20px/1 var(--head)}
-.cl-steps h3{font-size:20px;font-weight:800;color:var(--dark)}
-.cl-steps p{color:var(--muted)}
-.cl-faq-grid{display:grid;gap:12px}
-.faq details{border-bottom:1px solid var(--line)}
-.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:64px;padding:12px 0;font:700 19px/1.3 var(--body);cursor:pointer;color:var(--dark)}
-.faq summary::-webkit-details-marker{display:none}
-.faq summary svg{flex:none;transition:transform .2s var(--ease)}
-.faq details[open] summary svg{transform:rotate(45deg)}
-.faq details p{padding:0 0 18px;color:var(--muted);max-width:60ch}
-/* call band */
-.cl-band-sec{padding:12px 0 64px}
-.cl-band{background:var(--dark);color:#fff;border-radius:calc(var(--r) + 6px);padding:40px 24px;text-align:center;display:grid;gap:14px;justify-items:center}
-.cl-band h2{font-size:clamp(30px,6vw,48px);font-weight:800}
-.cl-band p{color:var(--on-dark-2);max-width:46ch}
-.big-phone{display:inline-flex;align-items:center;gap:12px;min-height:64px;padding:0 28px;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:800 clamp(24px,6vw,34px)/1 var(--head);text-decoration:none;font-variant-numeric:tabular-nums}
-/* footer */
-footer{background:var(--dark);color:var(--on-dark-2);font-size:15px}
-footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
-.foot-name{font:800 22px/1.2 var(--head);color:#fff}
-.foot-tag{margin-top:4px}
-.foot-cred{margin-top:10px;max-width:52ch}
-.foot-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-.foot-cols h3{font:800 14px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;margin-bottom:8px}
-.foot-cols ul{list-style:none;padding:0;display:grid;gap:0}
-.foot-cols li{min-height:32px;display:flex;align-items:center}
-.foot-cols a{text-decoration:none;display:inline-flex;align-items:center;min-height:48px}
-@media (hover:hover){.foot-cols a:hover{color:#fff}}
-.foot-base{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;border-top:1px solid var(--rule-dark);padding-top:18px;grid-column:1/-1}
-.foot-base a{display:inline-flex;align-items:center;min-height:48px}
 /* phone action bar */
 .mbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;gap:8px;padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));background:var(--dark);box-shadow:0 -8px 24px rgba(0,0,0,.2);transform:translateY(110%);visibility:hidden;transition:transform .25s var(--ease),visibility 0s linear .25s}
-.mbar-a{flex:1 1 0;min-height:52px;display:grid;place-items:center;border-radius:10px;font:700 16px/1 var(--body);text-decoration:none;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
-.mbar-a.go{flex:1.4 1 0;background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.mbar-a{flex:1 1 0;min-height:52px;font-size:17px!important;display:grid;place-items:center;border-radius:10px;font:700 16px/1 var(--body);text-decoration:none;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.mbar-a.go{flex:1 1 0;background:var(--accent);color:var(--accent-ink);box-shadow:none}
 .mbar-a.call{background:#fff;color:#111;box-shadow:none}
 .mbar-a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .past .mbar{transform:none;visibility:visible;transition:transform .25s var(--ease),visibility 0s}
@@ -440,15 +330,13 @@ footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
   .cl-cards h3{font-size:17px}
   .cl-cards p{display:none}
   .cl-more{min-height:44px;font-size:15px}
-  #how,#project{display:none} /* phones: the FAQ answers "How do I get started?" and the picker already shows a before/after; the page stays short */
-  .cl-feat-pics figure{aspect-ratio:1/1}
+  #how{display:none} /* phones: the FAQ answers "How do I get started?"; the page stays short */
   .sec{padding-block:52px}
 }
 @media (max-width:1023px){#styles{padding-bottom:110px}}
 @media (min-width:640px){
   .cl-proof ul{grid-template-columns:repeat(4,1fr)}
   .cl-cards{grid-template-columns:1fr 1fr}
-  .cl-steps{grid-template-columns:repeat(3,1fr)}.cl-steps li{grid-template-columns:1fr}.cl-steps span{grid-row:auto}
 }
 @media (min-width:1024px){
   body{padding-bottom:0}
@@ -457,20 +345,13 @@ footer .wrap{display:grid;gap:28px;padding-block:48px 28px}
   .cl-top-btn{display:inline-flex}
   .cl-hero-grid{grid-template-columns:minmax(0,1.15fr) minmax(360px,.85fr);gap:56px;align-items:center;padding-block:72px 80px}
   .cl-hero h1{font-size:var(--h1d)}
-  .cl-to-form{display:none}
-  .hero-cta .btn{flex:0 0 auto}
-  .cl-formcard{padding:28px}
+  .cl-hero-text .lt-primary{display:none}
+  .cl-hero-text .lt-cta{margin-top:14px}
   .cl-proof ul{grid-template-columns:repeat(auto-fit,minmax(170px,1fr));padding:24px 0}
   .cl-proof li.cl-p5{display:grid}
   .cl-proof b{font-size:30px}
   .sec{padding-block:96px}
   .cl-cards{grid-template-columns:repeat(3,1fr);gap:18px}
-  .cl-feat{grid-template-columns:1.2fr 1fr;align-items:center;padding:24px;gap:40px}
-  .cl-feat-pics figure{aspect-ratio:4/3}
   .cl-rev-grid{grid-template-columns:minmax(300px,.8fr) 1.6fr;gap:40px;align-items:start}
-  .cl-faq-grid{grid-template-columns:.8fr 1.4fr;gap:48px}
-  .cl-band{padding:64px 40px}
-  footer .wrap{grid-template-columns:5fr 7fr;align-items:start}
-  .foot-cols{grid-template-columns:repeat(3,1fr)}
 }
 `;

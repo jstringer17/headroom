@@ -78,6 +78,7 @@ export function normalize(form) {
     years: (() => { const c = credOf(f, f.year); const yr = Number(f.year) || new Date().getFullYear(); return c.founded ? yr - c.founded : years > 0 && years < 200 ? years : null; })(),
     cred: credOf(f, f.year),
     services: trade.services.filter((s) => picked.includes(s[0])),
+    areas: (Array.isArray(f.areas) ? f.areas : String(f.areas || "").split(/[,;\n]/)).map((x) => String(x).replace(/\s+/g, " ").trim().slice(0, 30)).filter(Boolean).filter((x, i, a) => a.indexOf(x) === i).slice(0, 10), // towns the owner serves (typed)
     emergency: !!f.emergency,
     freeEstimates: f.freeEstimates === undefined ? trade.freeEstimates !== false : !!f.freeEstimates,
     insured: !!f.insured,

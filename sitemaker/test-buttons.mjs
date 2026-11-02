@@ -74,7 +74,7 @@ for (const look of ["cinematic", "editorial", "classic"]) for (const trade of ["
     }
     await page.waitForTimeout(100);
     const bar = await page.evaluate(() => { const b = document.querySelector(".mbar, .ed-mbar"); if (!b) return null; const r = b.getBoundingClientRect(), cs = getComputedStyle(b); return { cls: document.documentElement.className, links: [...b.querySelectorAll("a")].map((a) => ({ t: a.textContent.trim(), h: a.getAttribute("href") })), shown: cs.visibility !== "hidden" && r.top < innerHeight, bottom: Math.round(innerHeight - r.bottom) }; });
-    ok(bar && bar.links.some((l) => /^tel:\+19185550142/.test(l.h)) && bar.links.some((l) => /^sms:\+19185550142/.test(l.h)) && bar.links.some((l) => l.h === "#contact"), `${tag}: the phone action bar needs Call (tel:), Text (sms:) and Free estimate (#contact): ${JSON.stringify(bar && bar.links)}`);
+    ok(bar && bar.links.length === 2 && bar.links.some((l) => /^tel:\+19185550142/.test(l.h)) && bar.links.some((l) => l.h === "#contact"), `${tag}: the phone action bar needs 2 half buttons, Call (tel:) and Free estimate (#contact) (round 4, Lifetime spec): ${JSON.stringify(bar && bar.links)}`);
     ok(shownAt >= 2, `${tag}: the action bar shows at the bottom on only ${shownAt} scroll positions`);
     const lastPad = await page.evaluate(() => { const f = document.querySelector("footer"); const cs = getComputedStyle(document.body); return parseFloat(cs.paddingBottom) + (f ? parseFloat(getComputedStyle(f.firstElementChild || f).paddingBottom) : 0); });
     ok(lastPad >= 60, `${tag}: nothing keeps the last content clear of the action bar (padding ${lastPad})`);
