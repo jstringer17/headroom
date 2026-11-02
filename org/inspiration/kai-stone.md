@@ -44,4 +44,4 @@ Checked three: Dr Pressure (power washing), Eternity (pools), ABC Pressure Washi
 9. Show the process as 3 steps with days (call, build in a set number of days, launch call).
 10. Send a 2-minute video with the demo link before the call, and state site ownership/cancel terms in one sentence on the offer page.
 
-Raw files: /home/user/agency/data/kai/ (screenshots, raw-stonesystems.txt).
+Raw files: /home/user/agency/org/inspiration/kai-stone/ (screenshots, raw-stonesystems.txt).

@@ -1,0 +1,92 @@
+https://stonesystems.io {
+ "title": "Stone Systems - Website Design & Marketing Systems For Contractors!",
+ "h1": {
+  "t": "Website Design & Marketing Systems For Contractors",
+  "fs": "76.8px",
+  "fw": "900",
+  "ff": "__Sora_ac70e9, __Sora_Fallback",
+  "bg": "rgba(0, 0, 0, 0)",
+  "c": "rgb(255, 255, 255)"
+ },
+ "h2s": [
+  "Stone Systems in the Press"
+ ],
+ "btns": [
+  {
+   "t": "Book A Call",
+   "fs": "17px",
+   "fw": "600",
+   "ff": "__Sora_ac70e9, __Sora_Fallback",
+   "bg": "rgb(232, 167, 67)",
+   "c": "rgb(255, 255, 255)",
+   "r": {
+    "x": 1031.6875,
+    "y": 19.5,
+    "width": 165.640625,
+    "height": 60,
+    "top": 19.5,
+    "right": 1197.328125,
+    "bottom": 79.5,
+    "left": 1031.6875
+   }
+  },
+  {
+   "t": "Book A Call",
+   "fs": "20px",
+   "fw": "600",
+   "ff": "__Sora_ac70e9, __Sora_Fallback",
+   "bg": "rgb(232, 167, 67)",
+   "c": "rgb(255, 255, 255)",
+   "r": {
+    "x": 643.96875,
+    "y": 589.46875,
+    "width": 183.21875,
+    "height": 60,
+    "top": 589.46875,
+    "right": 827.1875,
+    "bottom": 649.46875,
+    "left": 643.96875
+   }
+  }
+ ],
+ "forms": 0,
+ "links": [
+  "https://www.youtube.com/@StoneSystemsGMB"
+ ]
+}
+https://stonesystems.io/our-work {
+ "title": "StoneSystems - Our Work",
+ "h1": {
+  "t": "Look at what we've done for other contractors",
+  "fs": "50px",
+  "fw": "900",
+  "ff": "__Sora_ac70e9, __Sora_Fallback",
+  "bg": "rgba(0, 0, 0, 0)",
+  "c": "rgb(31, 34, 54)"
+ },
+ "h2s": [],
+ "btns": [
+  {
+   "t": "Book A Call",
+   "fs": "17px",
+   "fw": "600",
+   "ff": "__Sora_ac70e9, __Sora_Fallback",
+   "bg": "rgb(232, 167, 67)",
+   "c": "rgb(255, 255, 255)",
+   "r": {
+    "x": 1031.6875,
+    "y": 19.5,
+    "width": 165.640625,
+    "height": 60,
+    "top": 19.5,
+    "right": 1197.328125,
+    "bottom": 79.5,
+    "left": 1031.6875
+   }
+  }
+ ],
+ "forms": 0,
+ "links": [
+  "https://www.youtube.com/@StoneSystemsGMB"
+ ]
+}
