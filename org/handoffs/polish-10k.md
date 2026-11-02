@@ -26,6 +26,10 @@ E. Keep scores: after A-D re-run the rubric; each look >= 4.3.
 F. MOBILE QUALITY (CEO: phone version is not as clean as desktop in transitions and photos). At 375x812 and 390x844, all 3 trades x 6 variations x Cinematic/Editorial: pictures must be art-directed for portrait (object-position per slot so the subject (roof/fence/driveway) stays in frame; generate portrait-friendly crops via CSS or a second webp per slot if needed, <=200 KB), no letterboxing, no blurry upscales, text never over the subject, headline sizes balanced; transitions must be as smooth as desktop (no jank, no flashes between story frames, no layout shift, pinned sections that work with iOS Safari address-bar resize: use svh/dvh, avoid 100vh traps, test with Playwright WebKit and Chromium mobile emulation + CPU throttle 4x); tap/scroll feel (no scroll-jacking that traps the thumb, momentum preserved). Provide before/after phone screenshots of every look in the Result.
 G. Process: you are the Opus builder for this job (replaces the previous Sonnet session). Use Skill 'impeccable' and 'ui-ux-pro-max' and the consultant report org/consultant-report.md. A separate Opus qa-reviewer will test your work; fix all findings; do not report done until your own Playwright tests for A-F pass and screenshots are looked at by you.
 
+
+## Round 3 (CEO, 2 Nov): every look >= 4.3, target 4.5, Classic included
+Inspo: org/inspiration/lifetime/NOTES.md + screenshots (Classic and proof/conversion patterns), Northpeak (craft). Fix all findings of the independent QA (org/inbox, chief adds them). Cleaner, not busier: fewer chips on phones, one promise hero (consultant fix 1), Classic rebuilt to the Lifetime pattern (offer bar, promise H1, proof strip, form in hero on desktop, service cards with tags, featured project, owner card + reviews, FAQ, final CTA band, full footer) with real library pictures. Re-score with an independent reviewer; target 4.5, floor 4.3, no line < 4.
+
 ## Result
 Skills: `impeccable` and `ui-ux-pro-max` are not installed in this session (Skill tool: "Unknown skill"), so the critique was done by hand from screenshots (375 and 1280, all three looks).
 
