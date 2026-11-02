@@ -417,7 +417,7 @@ var panels=tabs.map(function(t){return document.getElementById(t.getAttribute("a
 function pick(i,focus){
   tabs.forEach(function(t,j){var on=j===i;t.setAttribute("aria-selected",on?"true":"false");t.tabIndex=on?0:-1;panels[j].hidden=!on});
   var sl=panels[i].querySelector(".ba");if(sl&&sl.__set)sl.__set(+sl.querySelector("[role=slider]").getAttribute("aria-valuenow"));
-  if(tabs[i].scrollIntoView&&!reduce)tabs[i].scrollIntoView({block:"nearest",inline:"nearest",behavior:"smooth"});
+  (function(t){var s=t.parentNode;if(s&&s.scrollWidth>s.clientWidth+2){var l=s.scrollLeft+t.getBoundingClientRect().left-s.getBoundingClientRect().left-24;if(s.scrollTo)s.scrollTo({left:Math.max(0,l),behavior:reduce?"auto":"smooth"});else s.scrollLeft=l}})(tabs[i]); /* only the chip row scrolls sideways, never the page */
   if(focus)tabs[i].focus();
 }
 if(tabs.length){
