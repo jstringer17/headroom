@@ -108,7 +108,7 @@ export function generateClassic(form, d, o) {
   const fine = credLine(d);
   const ownerFacts = [d.cred.founded ? `In business since ${d.cred.founded}` : d.years ? `${d.years} year${d.years === 1 ? "" : "s"} in business` : "", d.cred.family ? "Family owned" : "", d.cred.veteran ? "Veteran owned" : "", d.cred.license ? `License #${esc(d.cred.license)}` : "", d.insured ? (d.cred.bonded ? "Insured and bonded" : "Insured") : ""].filter(Boolean);
   // every other typed fact the proof strip had no room for (jobs, awards, more certifications, ...)
-  badges.slice(5).forEach((b) => { const f = esc(`${b.label}${b.sub ? ` ${b.sub.toLowerCase()}` : ""}`); if (!ownerFacts.some((x) => x.startsWith(esc(b.label)) || f.startsWith(x))) ownerFacts.push(f); });
+  badges.slice(5).forEach((b) => { if (b.label === "Bonded" && d.insured) return; const f = esc(`${b.label}${b.sub ? ` ${b.sub.toLowerCase()}` : ""}`); if (!ownerFacts.some((x) => x.startsWith(esc(b.label)) || f.startsWith(x))) ownerFacts.push(f); });
   let initials = esc(String(d.company).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase());
   if (["NO", "OK", "OR", "SO", "AT", "IN", "ON", "US", "IT", "IF", "GO", "UP", "AM", "AS", "BE", "DO", "HI", "ME", "MY", "WE"].includes(initials)) initials = initials[0];
   const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec" id="reviews"><div class="wrap cl-rev-grid">

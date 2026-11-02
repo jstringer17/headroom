@@ -449,9 +449,10 @@ const ED_LT_CSS = `
   .ed-hero-text{padding-top:20px}
   .ed-hero .lt-primary{display:none}
   .ed-hero .lt-cta{margin-top:18px}
-  .ed-hero-side{position:relative;padding-top:150px}
-  .ed-hero .ed-sil{position:absolute;left:0;top:0;width:72%;aspect-ratio:9/10}
-  .ed-heroform{position:relative;margin-left:22%;z-index:2}
+  .ed-hero-side{position:relative;padding-top:170px}
+  .ed-hero .ed-sil{position:absolute;left:0;top:0;width:56%;aspect-ratio:9/10}
+  .ed-heroform{position:relative;margin-left:40%;z-index:2;padding:22px}
+  .ed-heroform form{gap:10px;margin-top:12px}.ed-heroform textarea{min-height:56px}
 }
 `;
 

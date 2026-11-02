@@ -303,3 +303,58 @@ Head 7f068a2. Independent QA (Opus qa-reviewer, cold, 4 passes): Cinematic 4.43,
 Fresh clone of 7f068a2: `node sitemaker/test-all.mjs` 13/13 OK (features 245/245, live 866, variants 748, round2 594/0). WebKit/iOS Safari NOT verified (not installed here).
 Done since QA of 3e475f5: every item of that QA; one shared picker (src/picker.js) in all looks and trades; same-camera default pairs (kit.samePair); phone story: sharp picture on top (<=1.5x at 3x), one button, words below; no load CLS (pinned layout from <head>, headline waits for fonts <=900 ms); promise headline for all 19 trades (src/promise.js), Cinematic opens on it over the FINISHED picture; Classic rebuilt on the Lifetime pattern (src/classic.js); tests updated to the round-3 rules + new checks (promise H1 per trade, finished picture behind the promise, Classic phone height budget, header ellipsis, one ticked variation, hvac one before/after, Ask-about-this job).
 Next for 4.5 (reviewer): Cinematic: close the dark gap between picture and headline on 812 px phones; Editorial: one button on the phone first screen, bring the silhouette higher; Classic: fewer generic "Service" tags, some photo motion.
+
+### Independent QA of ad4a2f3 (Opus qa-reviewer, 2 Nov): FAIL. Cinematic 4.43 PASS, Editorial 4.13 FAIL, Classic 4.29 FAIL (floor 4.3, no line < 4 is met by all three)
+Method: fresh evidence at ad4a2f3, no source edits. `round2-shots.mjs --out=/tmp/qa8 --widths=375,390,1280` (162 shots, 0 page errors); full-page shots of all 9 pages at 375/1280 (/tmp/qa8full) and reduced motion (/tmp/qa8rm); Cinematic desktop scroll frames (/tmp/qa8x/ci1280s.jpg); `story-frames.mjs /tmp/qa8story` (18 variations, 89 frames; sheets /tmp/qa8x/story-roof.jpg, /tmp/qa8x/story-f0.jpg); DOM measures (/tmp/qa8x/roof.json, fp.json); edge pages hvac/towing/no phone/bare/live x 3 looks (/tmp/qa8edge, /tmp/qa8x/edge.json): no undefined/NaN, no sideways scroll; only page error is Turnstile 400020 from the fake test sitekey in live mode. Logo upload checked by generating with `logo` (header + footer img in all looks). sitemaker/test-all.mjs not run (runs elsewhere). **WebKit not installed: iOS Safari NOT verified.**
+
+**SPEC checklist** (D = DONE, P = PARTLY, N = NOT DONE; evidence under /tmp/qa8 unless a path is given)
+| Item | Classic | Cinematic | Editorial |
+|---|---|---|---|
+| Offer top bar | D (*-roofing-shingle-1280-0top) | D | D |
+| Logo slot + wordmark fallback | D (lt-logo in header/footer) | D | D |
+| <=5 header links | D (4) | D (5) | D (5) |
+| Call + Free estimate 48px, phone solid pill | D (48/48, orange pill) | D (48/48) | D (48/48) |
+| H1 size/face | D Archivo 900 67-76 / 33-40 | P Fraunces 600 72/40; pressure is Manrope 800 sans | D Bodoni Moda 700 69/40 |
+| Sub + 3 checks | D | P desktop yes; phone checks sit after the story (y 3538) | D |
+| Form in hero desktop / phone button to form | D | D (card over frame 1, /tmp/qa8x/ci1280s.jpg) | D (card covers 47% of silhouette) |
+| Primary CTA >=60 + "or call" | D (62px) | D (62px) | D (62px) |
+| Star row under hero button | D (4.9 / 127 real) | D | D |
+| Badge row (owner-typed text) | D (proof strip) | D (strip after story) | D (pill strip) |
+| Phone bar 2 halves | D (172x52 x2) | D | D |
+| Credentials | D | D | D |
+| Services grid + tags | P (fencing 4/6 "Fence build"; pressure "Decks and fences" = "Fence build") | P (same pressure tag) | P (rows; same pressure tag on desktop) |
+| Featured project | D | D | D |
+| What's included | D | D | D |
+| FAQ | D | D | D |
+| Service areas (typed towns) | D (6 chips) | D | D |
+| Final CTA band | D | D | D |
+| Full footer | D | D | D |
+| Personality kept | D | D (story; RM stacks, /tmp/qa8x/ci-rm-375.jpg) | P (photo cards yes; desktop silhouette half hidden, /tmp/qa8x/ed-tops.jpg) |
+| Kai section order | P (picker before services; no map) | P | P |
+| Kai 4 fields + consent | P (sample 4 + consent line; live adds Email = 5) | P | P |
+Counts: Classic 19 D / 3 P / 0 N; Cinematic 17 D / 5 P / 0 N; Editorial 18 D / 4 P / 0 N.
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 4 | 5 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 4 | 4 | 4 |
+| 7 Phone feel | 5 | 4 | 5 |
+| 8 Editorial craft | - | 4 | - |
+| **Average** | **4.43 PASS** | **4.13 FAIL** | **4.29 FAIL** |
+Line 6 is 4 (not 5) in all looks only because of MAJOR 1 (a service claim the owner never made). Fix it and line 6 returns to 5: Cinematic 4.57, Classic 4.43, Editorial 4.25.
+
+**Round-3 "way to 4.5" items:** Cinematic phone frame gap FIXED (picture fades into headline on all 18 variations). Pressure font mix FIXED as all sans (consistent), but this conflicts with the SPEC serif. Editorial phone first screen FIXED (one button, silhouette visible). Classic photo motion FIXED (14s settle zoom, reduced-motion gated). Fencing "SERVICE" tags PARTLY ("Fence build" on 4/6). White-card run PARTLY (services, included, steps still card runs).
+
+**BLOCKER:** none.
+**MAJOR 1:** pressure washing "Decks and fences" is tagged "Fence build" in all three looks (src/lifetime.js:116, ltTag): the site says a pressure washer builds fences. Fix: test the trade before the fence rule, e.g. return "Cleaning" first when `d.trade.key === "pressure"` (or `/wash|clean/` in the trade label), and only use fence tags for the fencing trade; give fencing material tags (Wood / Vinyl / Chain link / Metal) instead of 4 x "Fence build".
+**MINOR 2:** Editorial desktop: the form card covers ~47% of the hero silhouette (apex and roof gone), line 8 drops to 4. Fix: shrink the card to ~380px and push it fully right of the silhouette, or move the silhouette left/up so >75% and the apex stay visible.
+**MINOR 3:** Cinematic pressure H1 is Manrope sans; SPEC says Cinematic keeps a heavier serif. Fix: Fraunces for the pressure display face too, or record the exception in SPEC.
+**MINOR 4:** Credentials list repeats "Insured and bonded" and "Bonded" (Classic about card; 2 hits in classic-roofing-shingle.html). Fix: drop the separate "Bonded" row when the insured row already says bonded.
+**MINOR 5:** Live mode adds an Email field (5 visible fields; Kai: 4). Fix: drop Email, or replace the optional message with it.
+**MINOR 6:** Cinematic phone: the 3 checks are not in the hero (after the story); with reduced motion the phone first screen shows the H1 but no primary button (button after the stacked frames). Fix: put the CTA under the first stacked frame in reduced motion.
+**MINOR 7:** Classic white-card runs (services, included, steps); towing bottom bar says "Free estimate" (consider "Get help").
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at ad4a2f3.

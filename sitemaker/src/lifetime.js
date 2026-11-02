@@ -102,6 +102,10 @@ export function ltForm(d, jobNames, o = {}) {
 // A tag for a service card from its own words (what kind of job it is, no claims). Falls back to the trade's name.
 export function ltTag(n, d) {
   const tn = d.trade.label.replace(/ \(.*\)$/, "");
+  // trade first: a washing or cleaning job is always "Cleaning"; fencing jobs are tagged by material (QA ad4a2f3 MAJOR 1)
+  if (d.tradeKey === "pressure") return /commercial/i.test(n) ? "Commercial" : /house|siding/i.test(n) ? "Siding" : /deck|fence/i.test(n) ? "Wood" : /roof/i.test(n) ? "Roof" : /gutter/i.test(n) ? "Gutters" : /window/i.test(n) ? "Glass" : /drive|sidewalk|patio|pool/i.test(n) ? "Concrete" : "Cleaning";
+  if (d.tradeKey === "cleaning" && !/commercial|office|rental/i.test(n)) return /deep|after|move/i.test(n) ? "Deep clean" : /carpet|window/i.test(n) ? "Specialty" : "Cleaning";
+  if (d.tradeKey === "fencing") return /repair/i.test(n) ? "Repair" : /wood|cedar/i.test(n) ? "Wood" : /vinyl/i.test(n) ? "Vinyl" : /chain/i.test(n) ? "Chain link" : /alumin|iron|metal/i.test(n) ? "Metal" : /gate/i.test(n) ? "Gates" : /pool/i.test(n) ? "Safety" : /farm|ranch/i.test(n) ? "Rural" : "Fence build";
   return /emergenc|storm|24/i.test(n) ? (d.emergency ? "24/7" : "Urgent")
     : /repair|fix|patch|leak|broken|off-track|structural/i.test(n) ? "Repair"
     : /inspect|check|estimate|tune/i.test(n) ? (d.freeEstimates && /inspect|check/i.test(n) ? "Free check" : "Upkeep")
