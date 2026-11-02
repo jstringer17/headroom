@@ -20,6 +20,11 @@ CTA 54px; phone bar 3 buttons) and close the gaps. Cinematic and Editorial need 
 sections). Keep the tests green and extend test-round2 with SPEC checks (form visible in the first desktop screen in all looks,
 primary CTA >= 60px, phone bar 2 buttons, H1 sizes, <= 5 nav links).
 
+Kai Stone note LANDED (21:20): org/inspiration/kai-stone.md. Apply its "Apply to our sites" items together with SPEC.md:
+form in the hero to the right of the headline; phone number as a pill button in the header; star/badge row under the hero
+button; 60px primary button; heavy sans H1 (~76px/900 on his site; Classic only); section order testimonials > work > trades >
+3 steps > FAQ > closing CTA where it fits. Where SPEC and Kai Stone differ, the newer chief note wins (Kai Stone), ask the chief if unsure.
+
 ## Where it stands (read these, nothing else first)
 - Scores, independent Opus qa-reviewer, cold, at 7f068a2: Cinematic 4.43, Editorial 4.38, Classic 4.43; no line < 4; no blockers/majors. Its last section in org/handoffs/polish-10k.md ("Independent QA of 7f068a2") lists the way to 4.5.
 - Tests: fresh clone of 7f068a2, `node sitemaker/test-all.mjs` 13/13 OK (~35 min; run in background). WebKit is NOT installed (round2 prints SKIPPED). Never claim green without a fresh clone run.
