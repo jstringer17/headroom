@@ -62,8 +62,9 @@ export function generateClassic(form, d, o) {
   const offerParts = [];
   if (d.freeEstimates) offerParts.push(promise ? esc(promise.offer.split(".")[0]) : "Free estimates");
   if (d.emergency) offerParts.push("Open 24/7 for emergencies");
-  if (d.phone) offerParts.push(`Call <a href="${callHref}">${phoneShow}</a>`);
-  const offerBar = offerParts.length ? `<div class="cl-offer"><p>${offerParts.join('<span aria-hidden="true"> · </span>')}</p></div>` : "";
+  const sep = '<span aria-hidden="true"> · </span>';
+  const offerCall = d.phone ? `<span class="cl-offer-call">${offerParts.length ? sep : ""}Call <a href="${callHref}">${phoneShow}</a></span>` : "";
+  const offerBar = offerParts.length || offerCall ? `<div class="cl-offer"><p${offerParts.length ? ' class="has-offer"' : ""}>${offerParts.join(sep)}${offerCall}</p></div>` : "";
 
   // 2. Hero checks: license, certification, warranty, else the ticks.
   const c = d.cred, checks = [];
@@ -108,6 +109,9 @@ export function generateClassic(form, d, o) {
   const badges = credBadges(d);
   const proof = badges.length ? `<section class="cl-proof" id="proof" aria-label="Why people trust us"><div class="wrap"><ul>${badges.slice(0, 5).map((b, i) => `<li class="rv${i >= 4 ? " cl-p5" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">` : ""}<b>${esc(b.label)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}${b.url ? "</a>" : ""}</li>`).join("")}</ul></div></section>` : "";
 
+  // 3b. Phones: one full-width photo of finished work between the proof strip and the cards (real pictures only).
+  const bandItem = items.find((x) => safeImage(imgs[x.after]));
+  const photoBand = bandItem ? `<figure class="cl-photo-band"><img src="${esc(imgs[bandItem.after])}" alt="${esc(bandItem.label)}" loading="lazy" decoding="async"><figcaption>${esc(bandItem.label)}</figcaption></figure>` : "";
   // 4. Service cards with a small tag.
   const services = `<section class="sec" id="services"><div class="wrap">
   <div class="cl-head rv"><p class="cl-kicker">Services</p><h2>Every ${esc(tradeName.toLowerCase())} job, one crew${area ? ` in ${area}` : ""}</h2></div>
@@ -220,6 +224,7 @@ ${offerBar}
 <main id="top">
 ${heroSec}
 ${proof}
+${photoBand}
 ${services}
 ${picker}
 ${featured}
@@ -272,6 +277,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .btn-dark{background:var(--dark);color:#fff}
 /* offer bar + header */
 .cl-offer{background:var(--dark2);color:#fff;font:600 14px/1.4 var(--body);text-align:center;padding:9px 16px}
+.cl-photo-band{display:none;margin:0;position:relative}
+.cl-photo-band img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.cl-photo-band figcaption{position:absolute;left:12px;bottom:12px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
+@media (max-width:1023px){.cl-photo-band{display:block}}
+@media (max-width:639px){.has-offer .cl-offer-call{display:none}}
 .cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}

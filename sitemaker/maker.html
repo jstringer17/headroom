@@ -3672,7 +3672,8 @@ function pickerHtml(o) {
       <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label, it.key))}">Ask about this</a></div></div>
   </div>`;
   }).join("\n  ");
-  return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
+  const fp = { roofing: "50% 32%", fencing: "50% 55%", pressure: "50% 62%" }[o.tradeKey];
+  return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles"${fp ? ` style="--fp-m:${fp};--fp-d:${fp}"` : ""} aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
   ${head}
   <div class="vp-chips-wrap"><div class="vp-chips" role="tablist" aria-label="${vpEsc(noun[0].toUpperCase() + noun.slice(1))}">${chips}</div></div>
   ${panels}
@@ -3726,7 +3727,7 @@ const PICKER_CSS = `
 .vp-name{margin:0;font:500 clamp(28px,5vw,40px)/1.08 var(--vp-head,inherit);letter-spacing:-.01em}
 .vp-note{margin:0;color:var(--vp-muted);font-size:17px;line-height:1.5;max-width:42ch}
 .vp-price{margin:0;display:grid;gap:2px;font-size:16px;color:var(--vp-ink)}
-.vp-price b{font:600 22px/1.2 var(--vp-head,inherit)}
+.vp-price b{font:700 21px/1.2 var(--vp-sans,inherit);letter-spacing:-.01em}
 .vp-price>span:last-child{font-size:14px;color:var(--vp-muted)}
 .vp-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
 .vp-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border:0;border-radius:var(--vp-btn-r,999px);font:700 16px/1 var(--vp-sans,inherit);text-decoration:none;cursor:pointer;transition:transform .16s ease,box-shadow .2s ease,background-color .2s ease,color .2s ease}
@@ -4128,6 +4129,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
   .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
   .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
+  .cine-motion .story-cta .ask-link,.cine-motion .story-cta .story-trust{display:none}
   .cine-motion .prog-count{top:12px}
 }
 .panel img[data-real],.ba img[data-real]{object-position:72% 45%}
@@ -4848,7 +4850,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible+s
 .ed-cta{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;margin-top:20px}
 .ed-sil{position:relative;aspect-ratio:4/3;background:var(--ed-dark);overflow:hidden;clip-path:var(--ed-clip,polygon(0% 100%,0% 42%,50% 2%,100% 42%,100% 100%))}
 .ed-sil img,.ed-beat img,.ed-card img,.ed-pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 6%;display:block}
-.ed-sil img[data-real],.ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real],.ed-how-pic img[data-real]{object-position:72% 45%}
+.ed-sil img[data-real]{object-position:60% 38%}
+.ed-card img[data-real],.ed-pic img[data-real],.ed-row-pic img[data-real],.ed-process-pic img[data-real],.ed-how-pic img[data-real]{object-position:72% 45%}
 .ed-beat img[data-real]{object-position:85% 50%}
 .ed-cap{position:absolute;left:12px;bottom:12px;z-index:2;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.6);color:#fff;font:600 11px/1 var(--ed-sans);letter-spacing:.1em;text-transform:uppercase}
 .ed-cap[hidden]{display:none}
@@ -5577,8 +5580,9 @@ function generateClassic(form, d, o) {
   const offerParts = [];
   if (d.freeEstimates) offerParts.push(promise ? esc(promise.offer.split(".")[0]) : "Free estimates");
   if (d.emergency) offerParts.push("Open 24/7 for emergencies");
-  if (d.phone) offerParts.push(`Call <a href="${callHref}">${phoneShow}</a>`);
-  const offerBar = offerParts.length ? `<div class="cl-offer"><p>${offerParts.join('<span aria-hidden="true"> · </span>')}</p></div>` : "";
+  const sep = '<span aria-hidden="true"> · </span>';
+  const offerCall = d.phone ? `<span class="cl-offer-call">${offerParts.length ? sep : ""}Call <a href="${callHref}">${phoneShow}</a></span>` : "";
+  const offerBar = offerParts.length || offerCall ? `<div class="cl-offer"><p${offerParts.length ? ' class="has-offer"' : ""}>${offerParts.join(sep)}${offerCall}</p></div>` : "";
 
   // 2. Hero checks: license, certification, warranty, else the ticks.
   const c = d.cred, checks = [];
@@ -5623,6 +5627,9 @@ function generateClassic(form, d, o) {
   const badges = credBadges(d);
   const proof = badges.length ? `<section class="cl-proof" id="proof" aria-label="Why people trust us"><div class="wrap"><ul>${badges.slice(0, 5).map((b, i) => `<li class="rv${i >= 4 ? " cl-p5" : ""}">${b.url ? `<a href="${esc(b.url)}" target="_blank" rel="noopener noreferrer">` : ""}<b>${esc(b.label)}</b>${b.sub ? `<span>${esc(b.sub)}</span>` : ""}${b.url ? "</a>" : ""}</li>`).join("")}</ul></div></section>` : "";
 
+  // 3b. Phones: one full-width photo of finished work between the proof strip and the cards (real pictures only).
+  const bandItem = items.find((x) => safeImage(imgs[x.after]));
+  const photoBand = bandItem ? `<figure class="cl-photo-band"><img src="${esc(imgs[bandItem.after])}" alt="${esc(bandItem.label)}" loading="lazy" decoding="async"><figcaption>${esc(bandItem.label)}</figcaption></figure>` : "";
   // 4. Service cards with a small tag.
   const services = `<section class="sec" id="services"><div class="wrap">
   <div class="cl-head rv"><p class="cl-kicker">Services</p><h2>Every ${esc(tradeName.toLowerCase())} job, one crew${area ? ` in ${area}` : ""}</h2></div>
@@ -5735,6 +5742,7 @@ ${offerBar}
 <main id="top">
 ${heroSec}
 ${proof}
+${photoBand}
 ${services}
 ${picker}
 ${featured}
@@ -5787,6 +5795,11 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .btn-dark{background:var(--dark);color:#fff}
 /* offer bar + header */
 .cl-offer{background:var(--dark2);color:#fff;font:600 14px/1.4 var(--body);text-align:center;padding:9px 16px}
+.cl-photo-band{display:none;margin:0;position:relative}
+.cl-photo-band img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover}
+.cl-photo-band figcaption{position:absolute;left:12px;bottom:12px;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.6);padding:7px 10px;border-radius:6px}
+@media (max-width:1023px){.cl-photo-band{display:block}}
+@media (max-width:639px){.has-offer .cl-offer-call{display:none}}
 .cl-offer a{color:var(--hi);font-weight:700;display:inline-flex;align-items:center;min-height:48px;margin-block:-9px}
 .top{position:sticky;top:0;z-index:30;background:#fff;box-shadow:0 1px 0 var(--line)}
 .top .wrap{display:flex;align-items:center;gap:24px;min-height:68px}

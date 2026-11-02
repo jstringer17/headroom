@@ -184,6 +184,7 @@ a:focus-visible,button:focus-visible,summary:focus-visible,.dial:focus-visible{o
   .cine-motion .frame::after{background:linear-gradient(0deg,var(--dark) 0%,rgba(0,0,0,0) 26%)}
   .cine-motion .step .line{bottom:calc(var(--cta-h,200px) + 30px)}
   .cine-motion .line .h{font-size:clamp(46px,12.4vw,54px);text-shadow:none}
+  .cine-motion .story-cta .ask-link,.cine-motion .story-cta .story-trust{display:none}
   .cine-motion .prog-count{top:12px}
 }
 .panel img[data-real],.ba img[data-real]{object-position:72% 45%}

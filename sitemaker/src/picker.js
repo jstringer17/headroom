@@ -95,7 +95,8 @@ export function pickerHtml(o) {
       <div class="vp-btns">${it.before ? `<button type="button" class="vp-btn vp-ghost vp-cmp" aria-pressed="false" aria-controls="vp-p-${i}">${VP_ARROWS}<span>Compare before and after</span></button>` : ""}<a class="vp-btn vp-solid" href="#contact" data-job="${vpEsc(jobFor(it.label, it.key))}">Ask about this</a></div></div>
   </div>`;
   }).join("\n  ");
-  return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles" aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
+  const fp = { roofing: "50% 32%", fencing: "50% 55%", pressure: "50% 62%" }[o.tradeKey];
+  return `<section class="vp${solo ? " vp-solo" : ""} ${o.cls || ""}" id="styles"${fp ? ` style="--fp-m:${fp};--fp-d:${fp}"` : ""} aria-labelledby="vp-h" data-vp="1"><div class="vp-wrap">
   ${head}
   <div class="vp-chips-wrap"><div class="vp-chips" role="tablist" aria-label="${vpEsc(noun[0].toUpperCase() + noun.slice(1))}">${chips}</div></div>
   ${panels}
@@ -149,7 +150,7 @@ export const PICKER_CSS = `
 .vp-name{margin:0;font:500 clamp(28px,5vw,40px)/1.08 var(--vp-head,inherit);letter-spacing:-.01em}
 .vp-note{margin:0;color:var(--vp-muted);font-size:17px;line-height:1.5;max-width:42ch}
 .vp-price{margin:0;display:grid;gap:2px;font-size:16px;color:var(--vp-ink)}
-.vp-price b{font:600 22px/1.2 var(--vp-head,inherit)}
+.vp-price b{font:700 21px/1.2 var(--vp-sans,inherit);letter-spacing:-.01em}
 .vp-price>span:last-child{font-size:14px;color:var(--vp-muted)}
 .vp-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
 .vp-btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 22px;border:0;border-radius:var(--vp-btn-r,999px);font:700 16px/1 var(--vp-sans,inherit);text-decoration:none;cursor:pointer;transition:transform .16s ease,box-shadow .2s ease,background-color .2s ease,color .2s ease}
