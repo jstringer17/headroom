@@ -732,7 +732,7 @@ export function generateCinematic(form, d, deps) {
   // 5. Cream sections: services, reviews, call and contact form
   const services = `<section class="sec" id="services"><div class="wrap">
   <div class="sec-head rv"><span class="kicker">Services</span><h2>What we <em>do</em>.</h2><p class="lede">Here is what ${name} does${area ? ` in ${area}` : ""}. Do not see your job? Just ask.</p></div>
-  <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv"><span class="svc-tag">${esc(ltTag(n, d))}</span><h3>${esc(n)}</h3><p>${esc(desc)}</p><a class="svc-more" href="#ask" data-job="${esc(n)}">${d.freeEstimates ? "Free estimate" : "Ask about this"} ${svgIcon('<path d="M5 12h14M13 6l6 6-6 6"/>', 18)}</a></li>`).join("")}</ul>
+  <ul class="svcs">${d.services.map(([n, desc]) => `<li class="rv">${ltTag(n, d) ? `<span class="svc-tag">${esc(ltTag(n, d))}</span>` : ""}<h3>${esc(n)}</h3><p>${esc(desc)}</p><a class="svc-more" href="#ask" data-job="${esc(n)}">${d.freeEstimates ? "Free estimate" : "Ask about this"} ${svgIcon('<path d="M5 12h14M13 6l6 6-6 6"/>', 18)}</a></li>`).join("")}</ul>
 </div></section>`;
   const starRow = (fill, size) => Array.from({ length: 5 }, (_, i) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" style="left:${i * (size + 4)}px" fill="${fill}" aria-hidden="true"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4-4.7-4.4 6.4-.8z"/></svg>`).join("");
   const reviews = d.live && !d.rv.items.length && !d.rating && !d.rv.link ? "" : `<section class="sec dark-sec rvw-beat" id="reviews"><div class="wrap">

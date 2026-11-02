@@ -100,7 +100,8 @@ export function ltForm(d, jobNames, o = {}) {
 }
 
 // A tag for a service card from its own words (what kind of job it is, no claims). Falls back to the trade's name.
-export function ltTag(n, d) {
+export function ltTag(n, d) { const t = ltTag0(n, d); return t && !String(n).toLowerCase().includes(t.toLowerCase()) ? t : ""; }
+function ltTag0(n, d) {
   const tn = d.trade.label.replace(/ \(.*\)$/, "");
   // trade first: a washing or cleaning job is always "Cleaning"; fencing jobs are tagged by material (QA ad4a2f3 MAJOR 1)
   if (d.tradeKey === "pressure") return /commercial/i.test(n) ? "Commercial" : /house|siding/i.test(n) ? "Siding" : /deck|fence/i.test(n) ? "Wood" : /roof/i.test(n) ? "Roof" : /gutter/i.test(n) ? "Gutters" : /window/i.test(n) ? "Glass" : /drive|sidewalk|patio|pool/i.test(n) ? "Concrete" : "Cleaning";

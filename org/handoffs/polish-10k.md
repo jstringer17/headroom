@@ -358,3 +358,40 @@ Line 6 is 4 (not 5) in all looks only because of MAJOR 1 (a service claim the ow
 **MINOR 6:** Cinematic phone: the 3 checks are not in the hero (after the story); with reduced motion the phone first screen shows the H1 but no primary button (button after the stacked frames). Fix: put the CTA under the first stacked frame in reduced motion.
 **MINOR 7:** Classic white-card runs (services, included, steps); towing bottom bar says "Free estimate" (consider "Get help").
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at ad4a2f3.
+
+### Independent QA of 61ffc58 (Opus qa-reviewer, 2 Nov): PASS for all three. Cinematic 4.57, Editorial 4.38, Classic 4.43 (floor 4.3, no line < 4). 4.5 target reached by Cinematic only.
+Method: fresh evidence at 61ffc58, scored again from scratch. `round2-shots.mjs --out=/tmp/qa9 --widths=375,390,1280` (162 shots, exit 0); `story-frames.mjs /tmp/qa9story` (18 variations); DOM measures /tmp/qa9m.json; 30 edge pages (hvac/towing/no phone/bare/live x 3 looks x 2 widths, /tmp/qa9edge): no undefined/NaN, no sideways scroll, no page errors except Turnstile 400020 from the fake test key. Sheets: /tmp/qa9x-ed.jpg, /tmp/qa9x-cip.jpg, /tmp/qa9x-st.jpg, /tmp/qa9x-top375.jpg. test-all not run by me. **WebKit not installed: iOS Safari NOT verified.**
+
+**Builder claims:**
+- MAJOR 1 FIXED: no "Fence build" in any pressure page. Pressure tags are Siding / Concrete / Wood / Roof / Gutters / Commercial; fencing tags are Wood / Vinyl / Chain link / Metal / Gates / Repair, in all three looks (Editorial `ed-row-tag` the same).
+- MINOR 2 FIXED: the Editorial 1280 card covers 15% of the silhouette's box (was 47%), and the apex and roof show in all 3 trades (/tmp/qa9x-ed.jpg).
+- MINOR 3 FIXED: the Cinematic H1 is Fraunces for every trade (pressure and hvac 700, others 600).
+- MINOR 4 FIXED: the Classic owner card has "Insured and bonded" only.
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 4 | 5 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 4 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 5 | 4 | 5 |
+| 8 Editorial craft | - | 5 | - |
+| **Average** | **4.57 PASS** | **4.38 PASS** | **4.43 PASS** |
+
+**SPEC counts (same 22 items as at ad4a2f3):**
+- Classic 20 D / 2 P / 0 N: P = Kai section order, live 5 fields.
+- Cinematic 19 D / 3 P / 0 N: P = phone checks after the story, Kai section order, live 5 fields.
+- Editorial 20 D / 2 P / 0 N: P = Kai section order, live 5 fields.
+- Rows now DONE: service tags (all three looks), Cinematic H1, Editorial personality.
+
+**BLOCKER:** none. **MAJOR:** none.
+**MINOR (open)**
+- 5. Live mode shows 5 fields (Email added; Kai says 4). Fix: drop the Email field from `liveFormFields` (src/generate.js:174), or replace the optional message with it.
+- 6. Cinematic phone: the checks come after the story. With reduced motion the first screen has no primary button. Fix: under reduced motion, render `.lt-cta` right after the first stacked frame.
+- 7. Classic white-card runs (services, included, steps). Towing's bottom bar says "Free estimate". Fix: use the trade's ask label, e.g. "Get help".
+- 8 (new). Some tags repeat the card name: "Chain link" on Chain link, "Gates" on Gates, "Repair" on Fence repair. Fix: in `ltTag`, return "" when the tag is already in the name, and do not render an empty tag.
+- 9 (new). The Cinematic pressure and hvac accent word is upright: the grotesk rule `h1 em,h2 em,... {font-style:normal}` is still in src/cine-look.js:187. That gives Cinematic line 3 a 4. Fix: drop that rule now that the display face is Fraunces, so the accent is the italic serif like the other trades.
+- 10 (new). The Editorial 1280 silhouette is now about 320 px wide and the card reaches y 854 of 860, so the hero reads card-first. Line 1 stays at 4. Fix: about 64% silhouette width with the card from 44%, keeping coverage under 25%, or trim the card padding so it ends about 40 px above the fold.
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 61ffc58.

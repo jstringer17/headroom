@@ -92,7 +92,7 @@ export function generateClassic(form, d, o) {
   // 4. Service cards with a small tag.
   const services = `<section class="sec" id="services"><div class="wrap">
   <div class="cl-head rv"><p class="cl-kicker">Services</p><h2>Every ${esc(tradeName.toLowerCase())} job, one crew${area ? ` in ${area}` : ""}</h2></div>
-  <ul class="cl-cards">${d.services.map(([n, desc]) => `<li class="rv"><span class="cl-tag">${esc(clTag(n, d))}</span><h3>${esc(n)}</h3><p>${esc(desc)}</p><a class="cl-more" href="#ask" data-job="${esc(n)}">${d.freeEstimates ? "Free estimate" : "Ask about this"} ${clIcon(CL_ARROW, 18)}</a></li>`).join("")}</ul>
+  <ul class="cl-cards">${d.services.map(([n, desc]) => `<li class="rv">${clTag(n, d) ? `<span class="cl-tag">${esc(clTag(n, d))}</span>` : ""}<h3>${esc(n)}</h3><p>${esc(desc)}</p><a class="cl-more" href="#ask" data-job="${esc(n)}">${d.freeEstimates ? "Free estimate" : "Ask about this"} ${clIcon(CL_ARROW, 18)}</a></li>`).join("")}</ul>
 </div></section>`;
 
   // 5. The one picker (pictures and the page's only before/after slider).
@@ -277,8 +277,8 @@ a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,s
 .cl-kicker::before{content:"";width:28px;height:4px;border-radius:2px;background:var(--accent)}
 .cl-head h2,.cl-revs h2,.cl-feat-text h2{font-size:clamp(30px,6vw,46px);font-weight:800;color:var(--dark)}
 .cl-cards{list-style:none;padding:0;display:grid;gap:14px}
-.cl-cards li{display:grid;gap:8px;align-content:start;background:#fff;border:1px solid var(--line);border-top:4px solid var(--dark);border-radius:var(--r);padding:20px}
-.cl-tag{justify-self:start;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dark);background:var(--light);padding:7px 10px;border-radius:6px}
+.cl-cards li{display:grid;gap:8px;align-content:start;background:var(--light);border:1px solid var(--line);border-top:4px solid var(--dark);border-radius:var(--r);padding:20px}
+.cl-tag{justify-self:start;font:800 12px/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--dark);background:#fff;padding:7px 10px;border-radius:6px}
 .cl-cards h3{font-size:21px;font-weight:800;color:var(--dark)}
 .cl-cards p{color:var(--muted);font-size:16px}
 .cl-more{display:inline-flex;align-items:center;gap:6px;min-height:48px;font-weight:700;color:var(--dark);text-decoration:none}

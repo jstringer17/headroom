@@ -449,10 +449,10 @@ const ED_LT_CSS = `
   .ed-hero-text{padding-top:20px}
   .ed-hero .lt-primary{display:none}
   .ed-hero .lt-cta{margin-top:18px}
-  .ed-hero-side{position:relative;padding-top:170px}
-  .ed-hero .ed-sil{position:absolute;left:0;top:0;width:56%;aspect-ratio:9/10}
-  .ed-heroform{position:relative;margin-left:40%;z-index:2;padding:22px}
-  .ed-heroform form{gap:10px;margin-top:12px}.ed-heroform textarea{min-height:56px}
+  .ed-hero-side{position:relative;padding-top:150px}
+  .ed-hero .ed-sil{position:absolute;left:0;top:0;width:64%;aspect-ratio:9/10}
+  .ed-heroform{position:relative;margin-left:44%;z-index:2;padding:20px}
+  .ed-heroform form{gap:8px;margin-top:10px}.ed-heroform textarea{min-height:48px}.ed-heroform .lt-formsub{display:none}.ed-heroform .lt-note{font-size:13px}
 }
 `;
 
@@ -658,7 +658,7 @@ export function generateEditorial(form, d, deps) {
   const svcPics = rows.map((_, i) => svcIds[i]);
   const svc = `<section class="ed-sec ed-dark" id="services"><div class="ed-wrap">
   <div class="ed-head ed-rv"><p class="ed-eyebrow">Services</p><h2>What we <em>do</em></h2></div>
-  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}<span class="ed-cap" id="ed-pic-cap"${rowCap[0] ? "" : " hidden"}>${esc(rowCap[0])}</span></div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" data-cap="${esc(rowCap[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span><span class="ed-row-tag">${esc(ltTag(n, d))}</span></span><span class="ed-row-body">${esc(desc)}</span><span class="ed-row-pic" aria-hidden="true">${pic(svcPics[i])}${rowCap[i] ? `<span class="ed-cap">${esc(rowCap[i])}</span>` : ""}</span></button>`).join("")}</div></div>
+  <div class="ed-svc"><div class="ed-pic" aria-hidden="true">${pic(svcPics[0], 'data-ed="row-img"')}<span class="ed-cap" id="ed-pic-cap"${rowCap[0] ? "" : " hidden"}>${esc(rowCap[0])}</span></div><div class="ed-rows" role="list">${rows.map(([n, desc], i) => `<button class="ed-row" data-ed="row" data-pic="${esc(svcPics[i])}" data-cap="${esc(rowCap[i])}" type="button" role="listitem" aria-expanded="${i === 0}"><span class="ed-row-top"><span class="ed-row-n">${edPad(i + 1)}</span><span class="ed-row-name">${esc(n)}</span>${ltTag(n, d) ? `<span class="ed-row-tag">${esc(ltTag(n, d))}</span>` : ""}</span><span class="ed-row-body">${esc(desc)}</span><span class="ed-row-pic" aria-hidden="true">${pic(svcPics[i])}${rowCap[i] ? `<span class="ed-cap">${esc(rowCap[i])}</span>` : ""}</span></button>`).join("")}</div></div>
   <template id="ed-pool">${[...new Set(svcPics.slice(1))].map((id) => pic(id)).join("")}</template>
 </div></section>`;
 

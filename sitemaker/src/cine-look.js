@@ -184,7 +184,7 @@ font:500 .95rem/1.2 var(--f-body);cursor:pointer;transition:border-color var(--t
 --dark:var(--c-night);--accent:var(--c-accent);--accent-ink:var(--c-accent-ink);--hi:var(--c-accent-hi);--accent-text:var(--c-accent-text);--dark2:color-mix(in srgb,var(--c-night) 90%,#ffffff);color-scheme:light}
 body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 h1,h2{font-weight:${grotesk ? "700" : "500"};letter-spacing:-.02em}
-${grotesk ? `h1 em,h2 em,.line em,.sec h2 em,.est-num em{font-style:normal}.line .h{font-weight:700}` : ""}
+${grotesk ? `.line .h{font-weight:700}` : ""}
 h1 em,h2 em,.line em,.sec h2 em{color:var(--c-accent-text)${marker ? ";background:linear-gradient(transparent 58%,var(--c-accent) 58%,var(--c-accent) 90%,transparent 90%);padding:0 .06em" : ""}}
 html body :is(.story,.dark-sec,.final,.panel,.est-out,.top) em{color:var(--c-accent-hi);background:none;padding:0}
 .est-out{background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02)),var(--c-night);border:1px solid rgba(255,255,255,.09);
