@@ -51,7 +51,7 @@ await page.waitForTimeout(300);
 await page.click("#share-owner");
 ok(await page.isVisible("#share-setup"), "first share asks for backend address and key");
 ok(seen.length === 0, "nothing sent before the key is typed");
-ok((await page.inputValue("#share-url")) === "https://headroom-sites.headroom-sites-agency.workers.dev", "backend address defaults to the hosted backend");
+ok((await page.inputValue("#share-url")) === "https://headroom-sites.sundayagency.workers.dev", "backend address defaults to the hosted backend");
 await page.fill("#share-url", "http://insecure.test");
 await page.fill("#share-key", KEY);
 await page.click("#share-save");

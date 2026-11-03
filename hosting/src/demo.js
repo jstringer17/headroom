@@ -113,7 +113,7 @@ export function demoForm(form, token, host, env) {
 }
 
 export function bannerHtml(company, env) {
-  const agency = esc(env.AGENCY_NAME || env.AGENCY_DOMAIN || "our team");
+  const agency = esc(env.AGENCY_NAME || "Sunday Agency");
   const phone = String(env.AGENCY_PHONE || "").trim();
   const d = phone.replace(/\D/g, "");
   const tel = d.length === 10 ? `+1${d}` : d.length === 11 && d[0] === "1" ? `+${d}` : d ? `+${d}` : "";

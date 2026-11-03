@@ -163,6 +163,12 @@ describe("owner preview: the sample page", () => {
     expect((await call(link)).status).toBe(410); // extend does not undo a revoke
   });
 
+  it("banner names Sunday Agency when AGENCY_NAME is not set", async () => {
+    delete env.AGENCY_NAME;
+    const html = await (await call(await made())).text();
+    expect(html.includes("by Sunday Agency.")).toBe(true);
+  });
+
   it("link-preview bots do not count as views", async () => {
     const link = await made();
     await call(link, { headers: { "user-agent": "Slackbot-LinkExpanding 1.0" } });
