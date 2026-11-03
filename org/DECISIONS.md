@@ -9,4 +9,4 @@
 | 2026-11-02 | Alerts: email at launch, text (Twilio 10DLC, 1-3 weeks approval) turned on when approved | CEO answered | CEO |
 | 2026-11-02 | Chief of staff writes plain terms + privacy pages; a lawyer should glance before first paying customer | CEO ok | CEO |
 | 2026-11-02 | Price: chief suggested $99/mo + $199 setup (waivable); CEO has not confirmed yet | open | chief |
-
+| 2026-11-03 | Maker is shared from Cloudflare: https://sample-site-maker.headroom-sites-agency.workers.dev (free static Worker); public Claude link job cancelled | Claude public share blocked SVGs; hosting is free and works for the partner | CEO |
