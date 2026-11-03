@@ -2,6 +2,17 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-03 owner preview (session_013FPdmwTwsMrzb1gHMwjoKy): DONE, ready for you to deploy and test live
+- Head a456109 (code). Fresh clone of 53df1c6: hosting 105/105, sitemaker test-all 14/14 (new step test-share). Fresh clone of a456109 (only Sunday Agency host/name strings changed): hosting 106/106, test-share PASS. WebKit not installed: iOS Safari not run.
+- Defaults per your messages: Sunday Agency name in banner; maker origin https://maker.sundayagency.workers.dev; backend/DEMO_HOST headroom-sites.sundayagency.workers.dev.
+- Maker: "Share with the owner" next to Download. Backend address defaults to https://headroom-sites.sundayagency.workers.dev; agency key typed once, kept in localStorage only. Shows link + Copy + QR + expiry.
+- Backend: hosting/src/demo.js. POST /api/demo (X-Agency-Key, constant-time; CORS = MAKER_ORIGINS; 30/h/IP; 12 MB body; pictures to R2, library by name) -> https://<DEMO_HOST>/d/<128-bit hex>, 14 days.
+  /d/<token>: live render + banner "Sample website made for <Company> by <AGENCY_NAME, default Sunday Agency>. Like it? Call/text <AGENCY_PHONE>", noindex meta + X-Robots-Tag, no schema.org rating; form -> AGENCY_EMAIL "[demo]" (events table, kind demo_lead); expired/revoked -> "This sample has expired".
+- Desk: "Sample links" (company, created, views, expires) with Open, Copy, Extend 7 days, Revoke, Turn into a real site (downloads form.json + copies the new-site.mjs command).
+- Independent QA (Opus): criteria 1-3 PASS, no blocker/major. Fixed 4 minors (orphan R2 files, extend undid revoke, preview bots counted as views, no agency email). Left: body read before size check without content-length; pasted https picture links kept as given; @graph rating not walked (live mode has none).
+- To go live (GO-LIVE.md A4): run schema.sql again (demo_links); secret AGENCY_KEY; vars AGENCY_PHONE, AGENCY_EMAIL (AGENCY_NAME already Sunday Agency); MAKER_ORIGINS already = the maker host; redeploy the maker (it has the new button); DEMO_HOST = headroom-sites.sundayagency.workers.dev (wrangler.toml has workers_dev = false: turn it on); add that host to Turnstile; deploy Worker + maker.
+- Risk: DEMO_HOST takes over that whole host (only sample links are served there). Not tested live.
+
 ## 2026-11-03 polish round 4 (session_013FPdmxro5Sn2RKVFK4oLko): DONE, target met
 - Head 8984f0e (site code; records after it). Lifetime SPEC + Kai Stone applied to all 3 looks via sitemaker/src/lifetime.js.
 - Independent Opus QA (cold, 5 passes): Cinematic 4.71, Editorial 4.50, Classic 4.57; no line < 4; no blockers/majors.
