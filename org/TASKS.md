@@ -10,4 +10,4 @@
 | T8 | Other 16 trades (pictures + variations) | chief | waiting on CEO go (HVAC first) | same as top 3 | - |
 | T9 | CEO decisions: DONE except price + setup fee (suggested $99 + $199) | CEO | waiting on CEO | decided in DECISIONS.md | - |
 | T10 | Open question: which picture is "that" in 'Don't make that the first animation but use it for one of the slides' | CEO | waiting on CEO | answered | - |
-| T11 | Polish the generated sites to the $10k bar (org/handoffs/polish-10k.md) | Opus builder (rounds 2-3) | review: floor met at 7f068a2 by independent QA (Cinematic 4.43, Editorial 4.38, Classic 4.43, no line < 4); 4.5 target not met; WebKit not run | all 9 fixes pass test-polish; each look >= 4.3 on the QA rubric | qa-reviewer |
+| T11 | Polish the generated sites to the $10k bar (org/handoffs/polish-10k.md) | Opus builder (rounds 2-4, session_013FPdmxro5Sn2RKVFK4oLko) | done: round 4 at 8984f0e: Lifetime SPEC + Kai Stone in all looks; independent QA Cinematic 4.71, Editorial 4.50, Classic 4.57, no line < 4; fresh-clone test-all 13/13 | all 9 fixes pass test-polish; each look >= 4.3 on the QA rubric | qa-reviewer |

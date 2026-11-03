@@ -2,6 +2,18 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-03 polish round 4 (session_013FPdmxro5Sn2RKVFK4oLko): DONE, target met
+- Head 8984f0e (site code; records after it). Lifetime SPEC + Kai Stone applied to all 3 looks via sitemaker/src/lifetime.js.
+- Independent Opus QA (cold, 5 passes): Cinematic 4.71, Editorial 4.50, Classic 4.57; no line < 4; no blockers/majors.
+- SPEC per item: Classic 20 DONE / 2 PARTLY, Cinematic 19/3, Editorial 20/2, 0 NOT DONE (table in polish-10k.md).
+- Fresh clone of 8984f0e: test-all 13/13 OK (features 245/0, round2 738/0 incl. new R4 SPEC checks). WebKit/iOS Safari NOT verified.
+- New: form in hero on desktop (all looks), 62px CTA + "or call", star row, 2-button phone bar, offer bar, logo upload, towns field,
+  what's included / featured project / FAQ / service areas / call band / full footer; heavier H1 (Classic 900; Fraunces/Bodoni <=72/40).
+- PARTLY (by choice): Kai section order (picker before services, no map); live form keeps Email (hosting accepts email-only leads).
+- Left (minor): Cinematic phone checks sit after the story, reduced-motion phone first screen has no button; towing bar says "Free estimate".
+- Lowest lines (4): photos/motion in all; tools in Editorial/Classic. Next round, if wanted: those.
+- No follow-up handoff written; BATON row set to done.
+
 ## 2026-11-02 polish round 4 (session_013FPdmvdFwEUwCe9wgNc5SW): handoff written, NOT started
 - This session is near its context limit, so per your rule I wrote org/handoffs/polish-round4.md and stopped.
 - Start a fresh Opus session with "Run org/handoffs/polish-round4.md". State: 7f068a2 site code, scores 4.43/4.38/4.43, fresh-clone 13/13.
