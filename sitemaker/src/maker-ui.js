@@ -418,14 +418,15 @@
   // Share with the owner: a temporary sample link made by the hosted backend (hosting/src/demo.js, POST /api/demo).
   // The backend address and agency key are typed once and kept in this browser (localStorage), never in the page.
   const SHARE_KEY = "sitemaker-share-v1";
+  const SHARE_DEFAULT_URL = "https://headroom-sites.headroom-sites-agency.workers.dev"; // the hosted backend (test host for now)
   const shareCfg = () => { try { return JSON.parse(localStorage.getItem(SHARE_KEY) || "null") || {}; } catch (_) { return {}; } };
   function shareSay(msg, bad) { const s = $("share-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); }
   function shareSetup(msg, bad) {
     const c = shareCfg();
     $("share-box").hidden = false; $("share-setup").hidden = false; $("share-result").hidden = true;
-    $("share-url").value = c.url || ""; $("share-key").value = "";
+    $("share-url").value = c.url || SHARE_DEFAULT_URL; $("share-key").value = "";
     shareSay(msg || "", bad);
-    $(c.url ? "share-key" : "share-url").focus();
+    $("share-key").focus();
   }
   // The form as the backend wants it: library pictures by name (cine.libSlots), uploaded pictures as data.
   function shareForm() {

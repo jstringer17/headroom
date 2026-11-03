@@ -31,7 +31,7 @@ ADDON_CENTS_REPORT = ""
 MONTHLY_REPORT = "0"                   # "1" = e-mail the monthly lead report to owners who have the report add-on (off by default)
 ADMIN_LOOK = ""                        # owner-admin: "on" lets owners change the site look (default off)
 # Owner preview (demo.js, GO-LIVE A4). Secret AGENCY_KEY is typed once in the maker.
-DEMO_HOST = ""                         # empty = demo.<AGENCY_DOMAIN>
+DEMO_HOST = "headroom-sites.headroom-sites-agency.workers.dev"  # test host (chief); later demo.<AGENCY_DOMAIN>; empty = demo.<AGENCY_DOMAIN>
 AGENCY_NAME = ""                       # banner: "Sample website made for <Company> by <AGENCY_NAME>"
 AGENCY_PHONE = ""                      # banner: "Like it? Call/text <AGENCY_PHONE>"
 AGENCY_EMAIL = ""                      # demo leads go here (empty = first of DESK_EMAILS)

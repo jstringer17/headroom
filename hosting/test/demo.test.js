@@ -159,6 +159,19 @@ describe("owner preview: the sample page", () => {
     const link = await made();
     expect(await revokeDemo(env, tokenOf(link))).toBe(true);
     expect((await call(link)).status).toBe(410);
+    await extendDemo(env, tokenOf(link));
+    expect((await call(link)).status).toBe(410); // extend does not undo a revoke
+  });
+
+  it("link-preview bots do not count as views", async () => {
+    const link = await made();
+    await call(link, { headers: { "user-agent": "Slackbot-LinkExpanding 1.0" } });
+    expect((await getDemo(env, tokenOf(link))).views).toBe(0);
+  });
+
+  it("no agency email -> refuses to make links (leads would go nowhere)", async () => {
+    delete env.AGENCY_EMAIL;
+    expect((await create()).status).toBe(503);
   });
 
   it("unknown or malformed token -> 404", async () => {

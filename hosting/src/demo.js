@@ -172,6 +172,7 @@ async function createDemo(request, env, now) {
   try { body = JSON.parse(raw); } catch { return json(400, { ok: false, error: "Could not read the form." }, c.headers); }
   const form0 = body && typeof body === "object" && body.form && typeof body.form === "object" && !Array.isArray(body.form) ? body.form : null;
   if (!form0) return json(400, { ok: false, error: "No form sent." }, c.headers);
+  if (!agencyEmail(env)) return json(503, { ok: false, error: "Set AGENCY_EMAIL first (where sample leads go)." }, c.headers);
   const company = String(form0.company || "").trim().slice(0, 120);
   if (!company) return json(400, { ok: false, error: "Type the company name first." }, c.headers);
   if (!/\d{7,}/.test(String(form0.phone || "").replace(/\D/g, ""))) return json(400, { ok: false, error: "Type the company phone first." }, c.headers);
@@ -180,7 +181,8 @@ async function createDemo(request, env, now) {
   const token = newToken();
   const form = await pullPictures(env, form0, token, host);
   const formJson = JSON.stringify(form);
-  if (formJson.length > MAX_FORM_JSON) return json(413, { ok: false, error: "The form is too big." }, c.headers);
+  const drop = async () => { for (const k of (await env.R2.list({ prefix: `demo/${token}/` })).objects || []) await env.R2.delete(k.key); };
+  if (formJson.length > MAX_FORM_JSON) { await drop(); return json(413, { ok: false, error: "The form is too big." }, c.headers); }
   let html, problems;
   try {
     html = renderDemo(form, token, host, env);
@@ -188,6 +190,7 @@ async function createDemo(request, env, now) {
     if (!html.includes(`action="/d/${token}/lead"`)) problems.push("form does not send to the demo lead url");
   } catch (e) { problems = [`render failed: ${e && e.message}`]; }
   if (problems.length) {
+    await drop();
     await logEvent(env, null, "demo_blocked", { problems });
     return json(422, { ok: false, error: `Could not make the sample: ${problems.join("; ")}` }, c.headers);
   }
@@ -245,7 +248,8 @@ export async function demoApp(request, env, ctx, { now = Date.now() } = {}) {
   const obj = await env.R2.get(demoKey(token));
   if (!obj) return expiredPage(env);
   if (request.method === "HEAD") return new Response(null, pageHeaders(200));
-  await env.DB.prepare("UPDATE demo_links SET views = views + 1, last_view = ? WHERE token = ?").bind(iso(now), token).run();
+  // Link previews (iMessage, Slack, WhatsApp...) are not the owner looking.
+  if (!/bot|preview|facebookexternalhit|slack|whatsapp|telegram|discord|skype|curl/i.test(request.headers.get("user-agent") || "")) await env.DB.prepare("UPDATE demo_links SET views = views + 1, last_view = ? WHERE token = ?").bind(iso(now), token).run();
   return new Response(obj.body, pageHeaders(200));
 }
 
@@ -261,7 +265,7 @@ export async function extendDemo(env, token, now = Date.now()) {
   if (!row) return null;
   const from = Math.max(now, Date.parse(row.expires_at) || now);
   const expires = iso(from + EXTEND_DAYS * DAY);
-  await env.DB.prepare("UPDATE demo_links SET expires_at = ?, revoked = 0 WHERE token = ?").bind(expires, token).run();
+  await env.DB.prepare("UPDATE demo_links SET expires_at = ? WHERE token = ?").bind(expires, token).run();
   return expires;
 }
 

@@ -109,7 +109,7 @@ function loadDemos(){api('/api/demos').then(function(j){var tb=document.getEleme
  var a=h('div',{'class':'acts'});
  a.appendChild(h('a',{'class':'btn',href:x.link,target:'_blank',rel:'noopener',text:'Open'}));
  a.appendChild(h('button',{'class':'btn',text:'Copy link',onclick:function(){if(navigator.clipboard)navigator.clipboard.writeText(x.link);toast('Link copied');}}));
- a.appendChild(h('button',{'class':'btn',text:'Extend 7 days',onclick:function(){api('/api/demos/'+x.token+'/extend',true).then(function(){toast('Extended');loadDemos();}).catch(function(e){toast(e.message);});}}));
+ if(!x.revoked)a.appendChild(h('button',{'class':'btn',text:'Extend 7 days',onclick:function(){api('/api/demos/'+x.token+'/extend',true).then(function(){toast('Extended');loadDemos();}).catch(function(e){toast(e.message);});}}));
  if(!x.revoked)a.appendChild(h('button',{'class':'btn danger',text:'Revoke',onclick:function(){if(!confirm('Revoke the sample link for '+x.company+'? The link stops working.'))return;api('/api/demos/'+x.token+'/revoke',true).then(function(){toast('Revoked');loadDemos();}).catch(function(e){toast(e.message);});}}));
  a.appendChild(h('button',{'class':'btn',text:'Turn into a real site',onclick:function(){newSite(x);}}));
  td('',[a],'first');tb.appendChild(tr);});}).catch(function(e){toast(e.message);});}
