@@ -126,9 +126,9 @@ export function generateClassic(form, d, o) {
 
   // 8. What's included, how it works, FAQ, service areas, final call band, footer (src/lifetime.js)
   const included = ltIncluded(d, { cls: "cl-inc-open" });
-  const how = ltSteps(d, { cls: "lt-tint" });
-  const faq = ltFaq(d);
-  const areas = ltAreas(d, { cls: "lt-tint" });
+  const how = ltSteps(d);
+  const faq = ltFaq(d, { cls: "lt-tint" });
+  const areas = ltAreas(d);
   const band = ltBand(d);
   const footer = ltFooter(form, d);
 
@@ -173,9 +173,9 @@ ${proof}
 ${photoBand}
 ${picker}
 ${services}
-${featured}
 ${reviews}
 ${included}
+${featured}
 ${how}
 ${faq}
 ${areas}

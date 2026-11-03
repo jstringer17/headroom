@@ -429,3 +429,37 @@ Method: fresh evidence at 9e7dbb8, scored again from scratch. `round2-shots.mjs 
 - 7. Classic included and steps are still white-card runs; towing's bar says "Free estimate". This is what keeps Classic line 4 at 4. Fix: give the included section a tinted band like services, and use the trade's ask label on the bar.
 - Kept by choice (not counted against the scores): the live Email field (5 fields; Kai says 4).
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 9e7dbb8.
+
+### Independent QA of 3752b2b (Opus qa-reviewer, 3 Nov): PASS for all three. Cinematic 4.71, Editorial 4.50, Classic 4.43 (floor 4.3, no line < 4). Classic is still under the 4.5 target.
+Method: fresh evidence at 3752b2b, scored again from scratch. `round2-shots.mjs --out=/tmp/qa11 --widths=375,390,1280` (162 shots, exit 0); section close-ups /tmp/qa11x/s.jpg; Classic pressure phone full page /tmp/qa11x/cl375.jpg. 48 page/width checks (9 main pages + 15 edge pages under /tmp/qa11edge, at 375 and 1280; results in /tmp/qa11m.json): no undefined/NaN, no sideways scroll, no page errors except Turnstile 400020 from the fake test key. test-all not run by me. **WebKit not installed: iOS Safari NOT verified.**
+
+**Builder claims:**
+- MINOR 11 FIXED: all 6 fencing cards are tagged in all three looks (Privacy, Low upkeep, Pets and yards, Curb appeal, Access, Fix). Card heights are equal per row: Classic 191 px x6 and Cinematic 202 px x6 at 1280; at 375 they differ only by text length.
+- MINOR 7 PARTLY: Classic "What's included" is a ruled open list on white and the steps sit on a tinted band, so there is no white-card run left. Towing's bar label is unchanged.
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 5 | 5 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 5 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 5 | 4 | 5 |
+| 8 Editorial craft | - | 5 | - |
+| **Average** | **4.71 PASS** | **4.50 PASS** | **4.43 PASS** |
+Classic line 4 stays at 4: the white/tint alternation is now clean, but services, included, steps, FAQ and areas are five text sections in a row with no photo beat.
+
+**SPEC counts:**
+- Classic 20 D / 2 P / 0 N; Cinematic 19 D / 3 P / 0 N; Editorial 20 D / 2 P / 0 N.
+- The services-tags row is DONE again in all three looks.
+- PARTLY rows: Kai section order and the live Email field (kept by choice) in all three, plus Cinematic's phone checks after the story.
+
+**BLOCKER:** none. **MAJOR:** none.
+**MINOR (open)**
+- 6. Cinematic phone: the checks come after the story, and with reduced motion the first screen has no primary button (kept by choice). Fix: under reduced motion, render `.lt-cta` after the first stacked frame.
+- 7. Towing's phone bar says "Free estimate". Fix: use the trade's ask label (e.g. "Get help").
+- 12 (way to 4.5 for Classic). Add a photo beat in the text run. Fix: move the featured project (`#project`) to between `#included` and `#faq`, or add one full-width sample photo band there. That should lift Classic line 4 to 5 (Classic 4.57).
+- Cosmetic: roofing has 1 untagged card of 6 (Roof repair) and pressure has 2 (Roof cleaning, Commercial washing). Cards stay equal height, so it is acceptable.
+- Kept by choice (not counted against the scores): the live Email field.
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 3752b2b.
