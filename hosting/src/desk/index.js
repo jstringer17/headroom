@@ -1,5 +1,6 @@
 // CEO Customer Desk at desk.<AGENCY_DOMAIN>. Every request must carry a valid Cloudflare Access JWT.
 import { verifyAccess } from './access.js';
+import { listDemos, extendDemo, revokeDemo, demoFormForNewSite } from '../demo.js';
 import { loadCustomers } from './data.js';
 import { PAGE } from './page.js';
 import { checkoutLink, portalLink } from '../billing/index.js';
@@ -18,6 +19,21 @@ export async function deskApp(request, env) {
 
   if (request.method === 'GET' && p === '/') return respond(PAGE, 200, 'text/html; charset=utf-8');
   if (request.method === 'GET' && p === '/api/customers') return respond(await loadCustomers(env, d.now()));
+
+  // Owner preview links (demo.js): list, extend 7 days, revoke, form for a real site (new-site.mjs).
+  const dm = p.match(/^\/api\/demos(?:\/([0-9a-f]{32})\/(extend|revoke|form))?$/);
+  if (dm) {
+    const [, token, what] = dm;
+    if (!token && request.method === 'GET') return respond({ demos: await listDemos(env) });
+    if (token && what === 'form' && request.method === 'GET') {
+      const f = await demoFormForNewSite(env, token);
+      return f ? respond(f) : respond({ error: 'unknown sample link' }, 404);
+    }
+    if (!token || request.method !== 'POST') return respond({ error: 'method not allowed' }, 405);
+    if (request.headers.get('x-desk') !== '1') return respond({ error: 'missing x-desk header' }, 403);
+    if (what === 'extend') { const e = await extendDemo(env, token, d.now()); return e ? respond({ ok: true, expiresAt: e }) : respond({ error: 'unknown sample link' }, 404); }
+    if (what === 'revoke') return (await revokeDemo(env, token)) ? respond({ ok: true }) : respond({ error: 'unknown sample link' }, 404);
+  }
 
   const m = p.match(/^\/api\/sites\/([^/]+)\/(checkout|portal|pause|resume|login-link|addon)(?:\/([a-z]+))?$/);
   if (!m) return respond({ error: 'not found' }, 404);

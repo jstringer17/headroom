@@ -415,6 +415,65 @@
     } catch (_) { fallback(); }
   });
 
+  // Share with the owner: a temporary sample link made by the hosted backend (hosting/src/demo.js, POST /api/demo).
+  // The backend address and agency key are typed once and kept in this browser (localStorage), never in the page.
+  const SHARE_KEY = "sitemaker-share-v1";
+  const shareCfg = () => { try { return JSON.parse(localStorage.getItem(SHARE_KEY) || "null") || {}; } catch (_) { return {}; } };
+  function shareSay(msg, bad) { const s = $("share-status"); s.textContent = msg; s.className = "status" + (bad ? " bad" : ""); }
+  function shareSetup(msg, bad) {
+    const c = shareCfg();
+    $("share-box").hidden = false; $("share-setup").hidden = false; $("share-result").hidden = true;
+    $("share-url").value = c.url || ""; $("share-key").value = "";
+    shareSay(msg || "", bad);
+    $(c.url ? "share-key" : "share-url").focus();
+  }
+  // The form as the backend wants it: library pictures by name (cine.libSlots), uploaded pictures as data.
+  function shareForm() {
+    const key = tradeSel.value, f = { ...readForm(), clean: true };
+    if (f.cine) {
+      const own = cineImages[key] || {}, lib = libFor(key);
+      f.cine = { ...f.cine, images: Object.assign({}, own), libSlots: Object.keys(lib).filter((id) => !own[id]) };
+    }
+    return f;
+  }
+  async function shareNow() {
+    const c = shareCfg();
+    if (!c.url || !c.key) return shareSetup("");
+    await ensureLib(tradeSel.value);
+    $("share-box").hidden = false; $("share-setup").hidden = true; $("share-result").hidden = true;
+    shareSay("Making the link...");
+    let r, j = {};
+    try {
+      r = await fetch(c.url.replace(/\/+$/, "") + "/api/demo", { method: "POST", headers: { "content-type": "application/json", "x-agency-key": c.key }, body: JSON.stringify({ form: shareForm() }) });
+      j = await r.json().catch(() => ({}));
+    } catch (_) {
+      return shareSay("Could not reach the backend. Check the address, and that this page (" + location.origin + ") is in MAKER_ORIGINS.", true);
+    }
+    if (r.status === 401) return shareSetup("Wrong agency key. Type it again.", true);
+    if (!r.ok || !j.ok || !/^https:\/\//.test(j.link || "")) return shareSay(j.error || "The backend said no (" + r.status + ").", true);
+    $("share-result").hidden = false;
+    $("share-link").value = j.link;
+    const qr = $("share-qr");
+    if (/^<svg[\s>]/.test(j.qrSvg || "")) { qr.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(j.qrSvg); qr.hidden = false; } else qr.hidden = true;
+    $("share-exp").textContent = j.expiresAt ? "Works until " + new Date(j.expiresAt).toLocaleDateString() + ". The owner sees a small banner with your number." : "";
+    shareSay("Link ready. Send it to the owner.");
+  }
+  $("share-owner").addEventListener("click", () => { if (needName()) return; shareNow(); });
+  $("share-save").addEventListener("click", () => {
+    const url = $("share-url").value.trim(), key = $("share-key").value.trim();
+    if (!/^https:\/\/[^\s/]+/.test(url)) return shareSay("The backend address starts with https://", true);
+    if (!key) return shareSay("Type the agency key.", true);
+    try { localStorage.setItem(SHARE_KEY, JSON.stringify({ url, key })); } catch (_) { return shareSay("This browser cannot keep the key. Try another browser.", true); }
+    if (needName()) return;
+    shareNow();
+  });
+  $("share-settings").addEventListener("click", () => shareSetup(""));
+  $("share-copy").addEventListener("click", () => {
+    const v = $("share-link").value;
+    const fail = () => { $("share-link").focus(); $("share-link").select(); shareSay("Copy did not work here. The link is selected, copy it yourself."); };
+    try { navigator.clipboard.writeText(v).then(() => shareSay("Link copied."), fail); } catch (_) { fail(); }
+  });
+
   $("lead-fill").addEventListener("click", () => {
     const got = parseLead($("lead-paste").value);
     const st = $("lead-status");

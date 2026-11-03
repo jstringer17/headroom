@@ -75,3 +75,19 @@ CREATE TABLE IF NOT EXISTS hits (
   at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS hits_key ON hits(key, at);
+
+-- Owner preview (demo.js): temporary sample-site links for sales demos. token = 128-bit random hex (the link /d/<token>).
+-- form_json = the maker form with uploaded pictures moved to R2 demo/<token>/; the rendered page is R2 demo/<token>/index.html.
+CREATE TABLE IF NOT EXISTS demo_links (
+  token TEXT PRIMARY KEY,
+  company TEXT,
+  trade TEXT,
+  form_json TEXT NOT NULL DEFAULT '{}',
+  site_id TEXT,                       -- set if it was turned into a real site
+  created_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,           -- default created_at + 14 days; desk can extend by 7
+  views INTEGER NOT NULL DEFAULT 0,
+  last_view TEXT,
+  revoked INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS demo_links_created ON demo_links(created_at);

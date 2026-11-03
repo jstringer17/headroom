@@ -175,3 +175,22 @@ test('screenshots at 375px and 1280px, no sideways scroll', async (t) => {
     }
   } finally { await browser.close(); }
 });
+
+test('owner preview links on the desk: list, extend, revoke, form for a real site; POST needs x-desk', async () => {
+  const { env } = deskEnv();
+  const token = 'ab'.repeat(16);
+  await env.DB.prepare("INSERT INTO demo_links (token, company, trade, form_json, created_at, expires_at, views, revoked) VALUES (?, 'Acme', 'roofing', '{\"company\":\"Acme\"}', ?, ?, 3, 0)")
+    .bind(token, new Date(NOW).toISOString(), new Date(NOW + 2 * DAY).toISOString()).run();
+  const list = await (await deskApp(await req('/api/demos'), env)).json();
+  assert.equal(list.demos.length, 1);
+  assert.equal(list.demos[0].company, 'Acme');
+  assert.equal(list.demos[0].views, 3);
+  assert.equal((await deskApp(await req(`/api/demos/${token}/extend`, { method: 'POST' }), env)).status, 403);
+  const ext = await (await deskApp(await req(`/api/demos/${token}/extend`, { method: 'POST', headers: { 'x-desk': '1' } }), env)).json();
+  assert.equal(ext.expiresAt, new Date(NOW + 9 * DAY).toISOString());
+  const f = await (await deskApp(await req(`/api/demos/${token}/form`), env)).json();
+  assert.equal(f.form.company, 'Acme');
+  assert.equal((await deskApp(await req(`/api/demos/${token}/revoke`, { method: 'POST', headers: { 'x-desk': '1' } }), env)).status, 200);
+  assert.equal((await env.DB.prepare('SELECT revoked FROM demo_links').first()).revoked, 1);
+  assert.equal((await deskApp(await req('/api/demos', { token: '' }), env)).status, 403);
+});

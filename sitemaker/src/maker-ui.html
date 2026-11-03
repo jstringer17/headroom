@@ -88,6 +88,9 @@ details.lead[open]{display:grid;gap:10px}
 .price-row>b{font-size:14px}
 .price-cell{display:grid;grid-template-columns:minmax(0,1fr) 84px 84px;gap:6px;align-items:center;font-size:14px}
 .price-cell input{min-height:40px;padding:6px 8px;font-size:15px}
+.share-box{padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:12px}
+.share-setup,.share-result{display:grid;gap:10px}
+#share-qr{background:#fff;border-radius:6px;padding:6px}
 .code-box textarea{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;min-height:120px}
 @media (min-width:960px){
   .app{grid-template-columns:minmax(340px,420px) minmax(0,1fr);align-items:start}
@@ -290,9 +293,25 @@ details.lead[open]{display:grid;gap:10px}
       <div class="actions">
         <button class="btn btn-main" type="button" id="download">Download site</button>
         <button class="btn" type="button" id="copy">Copy code</button>
+        <button class="btn" type="button" id="share-owner">Share with the owner</button>
       </div>
     </div>
     <p class="status" id="status" aria-live="polite"></p>
+    <div class="code-box share-box" id="share-box" hidden>
+      <div class="share-setup" id="share-setup" hidden>
+        <p class="hint">One time on this computer: the backend address and the agency key. They stay in this browser only.</p>
+        <label class="field" for="share-url"><span>Backend address</span><input type="text" inputmode="url" id="share-url" placeholder="https://demo.youragency.com" autocomplete="off"></label>
+        <label class="field" for="share-key"><span>Agency key</span><input type="password" id="share-key" autocomplete="off"></label>
+        <div class="actions"><button class="btn btn-main" type="button" id="share-save">Save and share</button></div>
+      </div>
+      <div class="share-result" id="share-result" hidden>
+        <label class="field" for="share-link"><span>Link for the owner</span><input type="text" id="share-link" readonly></label>
+        <div class="actions"><button class="btn btn-main" type="button" id="share-copy">Copy link</button><button class="btn" type="button" id="share-settings">Change key</button></div>
+        <img id="share-qr" alt="QR code for the link" width="200" height="200" hidden>
+        <p class="hint" id="share-exp"></p>
+      </div>
+      <p class="status" id="share-status" aria-live="polite"></p>
+    </div>
     <div class="code-box" id="code-box" hidden>
       <p class="hint">Copy did not work here. Select all the text below and copy it, then save it as a .html file.</p>
       <textarea id="code" aria-label="Site code" readonly></textarea>

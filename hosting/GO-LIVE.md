@@ -75,6 +75,15 @@ We use `hooks.<agency>`, which has no Access app, so Stripe can reach it. Do not
 - [ ] Stripe > Customers > the customer > Cancel subscription (immediately): the site shows "This site is not active" within about 5 seconds.
 - [ ] Desk "Send login link": the owner e-mail arrives and the link opens the editor.
 
+## A4. Owner preview: temporary sample links (owner-preview). Do after A (and A2 for the desk list)
+The maker's "Share with the owner" button makes a link like `https://demo.<agency>/d/<token>` that shows the sample site to a business owner for 14 days (desk can extend 7 days, revoke, or turn it into a real site). Leads from it go to the agency, tagged demo. Pages are noindex.
+1. **Demo host**: Workers & Pages > headroom-sites > Settings > Domains & Routes > Add Custom Domain `demo.<agency domain>` (or set `DEMO_HOST` in wrangler.toml to another host attached to this Worker). Turnstile widget: add the same hostname.
+2. **Vars** in `hosting/wrangler.toml`: `AGENCY_PHONE` (shown in the banner "Like it? Call/text ..."), `AGENCY_NAME` (banner "by ..."), `AGENCY_EMAIL` (where demo leads go; empty = first of `DESK_EMAILS`), `MAKER_ORIGINS` (comma list of pages allowed to call it: today `https://sample-site-maker.headroom-sites-agency.workers.dev`; add `null` only to use a maker opened as a file).
+3. **Secret**: `npx wrangler secret put AGENCY_KEY` (random 32+ characters, e.g. `openssl rand -hex 24`). Give it to the agency people who use the maker; they type it once in the maker (kept in that browser only). Change it = everyone types the new one.
+4. **Database**: run schema.sql again (adds the `demo_links` table; safe to repeat): `npx wrangler d1 execute headroom --remote --file schema.sql`. Then `npx wrangler deploy` and redeploy the maker page.
+5. **Check**: in the maker, type a company + phone, press Share with the owner, enter `https://demo.<agency>` and the key. The link + QR show; open it on a phone: banner on top, form sends (lead email arrives at AGENCY_EMAIL with "[demo]"). Desk > Sample links shows 1 view. View source: `noindex`.
+   If the maker says "Could not reach the backend", the maker's address is missing from MAKER_ORIGINS (the message shows it).
+
 ## B. Each new customer site
 
 1. **Make the row** from the maker form (the form JSON the maker exports):

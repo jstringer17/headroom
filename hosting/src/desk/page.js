@@ -52,6 +52,8 @@ a{color:var(--brand);text-decoration:none}
  <label><input type="checkbox" id="fUp"> Ready for upsell</label>
 </section>
 <div class="table-wrap"><table><thead><tr id="head"></tr></thead><tbody id="rows"></tbody></table><div class="empty" id="empty" hidden>No customers match.</div></div>
+<h2 style="font-size:15px;margin:24px 0 10px">Sample links for owners</h2>
+<div class="table-wrap"><table><thead><tr><th>Company</th><th>Created</th><th>Views</th><th>Expires</th><th>Actions</th></tr></thead><tbody id="demos"></tbody></table><div class="empty" id="demos-empty" hidden>No sample links yet. Make one with "Share with the owner" in the maker.</div></div>
 </main><div id="toast"></div>
 <script>
 var COLS=[['name','Customer'],['trade','Trade'],['domain','Domain'],['status','Status'],['plan','Plan'],['paidThrough','Paid through'],['mrrCents','MRR'],['leadsMonth','Leads (month / last)'],['reviews','Google reviews'],['lastPublish','Last publish'],['','Actions']];
@@ -99,6 +101,19 @@ function render(){
   tb.appendChild(tr);
  });
 }
+function demoState(x){if(x.revoked)return h('span',{'class':'badge st-off',text:'revoked'});if(Date.parse(x.expires_at)<Date.now())return h('span',{'class':'badge st-paused',text:'expired'});return h('span',{'class':'badge st-live',text:'open'});}
+function newSite(x){api('/api/demos/'+x.token+'/form').then(function(j){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(j.form,null,1)],{type:'application/json'}));a.download='form-'+x.token.slice(0,6)+'.json';document.body.appendChild(a);a.click();a.remove();var cmd='node hosting/scripts/new-site.mjs form-'+x.token.slice(0,6)+'.json --domain DOMAIN --owner-email EMAIL';if(navigator.clipboard)navigator.clipboard.writeText(cmd);toast('Form saved. Command copied: '+cmd);}).catch(function(e){toast(e.message);});}
+function loadDemos(){api('/api/demos').then(function(j){var tb=document.getElementById('demos');tb.textContent='';document.getElementById('demos-empty').hidden=j.demos.length>0;j.demos.forEach(function(x){var tr=h('tr');function td(l,kids,cls){tr.appendChild(h('td',{'data-l':l,'class':cls||''},kids));}
+ td('',[h('div',{'class':'name',text:x.company||'-'}),h('div',{'class':'sub',text:x.trade||''}),demoState(x)],'first');
+ td('Created',[day(x.created_at)]);td('Views',[String(x.views)+(x.last_view?' (last '+day(x.last_view)+')':'')]);td('Expires',[day(x.expires_at)]);
+ var a=h('div',{'class':'acts'});
+ a.appendChild(h('a',{'class':'btn',href:x.link,target:'_blank',rel:'noopener',text:'Open'}));
+ a.appendChild(h('button',{'class':'btn',text:'Copy link',onclick:function(){if(navigator.clipboard)navigator.clipboard.writeText(x.link);toast('Link copied');}}));
+ a.appendChild(h('button',{'class':'btn',text:'Extend 7 days',onclick:function(){api('/api/demos/'+x.token+'/extend',true).then(function(){toast('Extended');loadDemos();}).catch(function(e){toast(e.message);});}}));
+ if(!x.revoked)a.appendChild(h('button',{'class':'btn danger',text:'Revoke',onclick:function(){if(!confirm('Revoke the sample link for '+x.company+'? The link stops working.'))return;api('/api/demos/'+x.token+'/revoke',true).then(function(){toast('Revoked');loadDemos();}).catch(function(e){toast(e.message);});}}));
+ a.appendChild(h('button',{'class':'btn',text:'Turn into a real site',onclick:function(){newSite(x);}}));
+ td('',[a],'first');tb.appendChild(tr);});}).catch(function(e){toast(e.message);});}
+loadDemos();
 ['q','fStatus','fFail','fUp'].forEach(function(i){document.getElementById(i).addEventListener('input',function(){if(data)render();});});
 load();
 </script></body></html>`;

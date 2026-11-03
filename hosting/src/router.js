@@ -6,6 +6,7 @@ import { handleLead, sweepHits } from "./leads.js";
 import { robotsTxt, sitemapXml } from "./seo.js";
 import { serveMedia, serveLibrary } from "./media.js";
 import { notActivePage, notFoundPage, privacyPage } from "./notactive.js";
+import { demoApp, demoHost } from "./demo.js";
 
 const PAGE_HEADERS = {
   "content-type": "text/html; charset=utf-8",
@@ -48,6 +49,9 @@ export function createApp(mods = {}) {
     if (path === "/api/stripe") return stripeWebhook(request, env, ctx);
     if (path === "/api/ops/publish") return ops(request, env);
     if (agency && host === `desk.${agency}`) return deskApp(request, env, ctx);
+    // Owner preview (sample links for sales demos) lives only on the demo host.
+    const dh = demoHost(env);
+    if (dh && host === dh) return demoApp(request, env, ctx);
 
     const site = await getSiteByHost(env, host);
     if (!site) return notFoundPage(false);

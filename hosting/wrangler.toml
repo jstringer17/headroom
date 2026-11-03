@@ -30,6 +30,12 @@ ADDON_CENTS_ADS = ""
 ADDON_CENTS_REPORT = ""
 MONTHLY_REPORT = "0"                   # "1" = e-mail the monthly lead report to owners who have the report add-on (off by default)
 ADMIN_LOOK = ""                        # owner-admin: "on" lets owners change the site look (default off)
+# Owner preview (demo.js, GO-LIVE A4). Secret AGENCY_KEY is typed once in the maker.
+DEMO_HOST = ""                         # empty = demo.<AGENCY_DOMAIN>
+AGENCY_NAME = ""                       # banner: "Sample website made for <Company> by <AGENCY_NAME>"
+AGENCY_PHONE = ""                      # banner: "Like it? Call/text <AGENCY_PHONE>"
+AGENCY_EMAIL = ""                      # demo leads go here (empty = first of DESK_EMAILS)
+MAKER_ORIGINS = "https://sample-site-maker.headroom-sites-agency.workers.dev"  # pages allowed to call POST /api/demo
 
 [[d1_databases]]
 binding = "DB"
@@ -45,4 +51,4 @@ crons = ["17 9 * * *"]                 # daily: reviews refresh, billing sweep, 
 
 # Secrets (wrangler secret put NAME), never in git:
 # RESEND_API_KEY TWILIO_SID TWILIO_TOKEN TWILIO_FROM GOOGLE_PLACES_API_KEY
-# STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET TURNSTILE_SECRET SESSION_KEY OPS_KEY
+# STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET TURNSTILE_SECRET SESSION_KEY OPS_KEY AGENCY_KEY

@@ -89,7 +89,9 @@ function answer(isJson, status, ok, error) {
 
 const EMAIL_RE = /^[^\s@<>"',;]+@[^\s@<>"',;]+\.[A-Za-z]{2,}$/;
 
-export async function handleLead(request, env, site) {
+// opts.demo = token: an owner-preview sample (demo.js). The lead is stored as an event (no sites row), emailed to the AGENCY, tagged demo.
+export async function handleLead(request, env, site, opts = {}) {
+  const demo = opts.demo ? String(opts.demo) : "";
   if (request.method !== "POST") return json(405, { ok: false, error: "Use POST." });
   if (!site || site.status !== "live") return json(404, { ok: false, error: "This site is not active." });
   // Only this site's own pages may post here.
@@ -131,6 +133,14 @@ export async function handleLead(request, env, site) {
     return answer(isJson, 403, false, "Please try again, the spam check did not pass.");
   }
 
+  if (demo) {
+    const to = site.notify_email;
+    const m = leadEmail(site, lead);
+    const mail = { ...m, subject: `[demo] ${m.subject}`.slice(0, 150), text: `Lead from the SAMPLE site of ${site.form.company} (owner preview ${demo.slice(0, 6)}...), tagged demo.\n\n${m.text}` };
+    const e = to ? await sendEmail(env, { to, ...mail, replyTo: lead.email || undefined }) : { ok: false, error: "no agency email" };
+    await logEvent(env, null, "demo_lead", { tag: "demo", demo: demo.slice(0, 6), company: site.form.company, ...lead, emailed: !!e.ok });
+    return answer(isJson, 200, true);
+  }
   const id = await addLead(env, { site_id: site.id, ...lead, created_at: iso(now) });
   const to = site.notify_email || site.owner_email;
   const mail = leadEmail(site, lead);
