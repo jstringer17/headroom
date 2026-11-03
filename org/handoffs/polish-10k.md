@@ -395,3 +395,37 @@ Method: fresh evidence at 61ffc58, scored again from scratch. `round2-shots.mjs 
 - 9 (new). The Cinematic pressure and hvac accent word is upright: the grotesk rule `h1 em,h2 em,... {font-style:normal}` is still in src/cine-look.js:187. That gives Cinematic line 3 a 4. Fix: drop that rule now that the display face is Fraunces, so the accent is the italic serif like the other trades.
 - 10 (new). The Editorial 1280 silhouette is now about 320 px wide and the card reaches y 854 of 860, so the hero reads card-first. Line 1 stays at 4. Fix: about 64% silhouette width with the card from 44%, keeping coverage under 25%, or trim the card padding so it ends about 40 px above the fold.
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 61ffc58.
+
+### Independent QA of 9e7dbb8 (Opus qa-reviewer, 2 Nov): PASS for all three. Cinematic 4.71, Editorial 4.50, Classic 4.43 (floor 4.3, no line < 4). Classic is still under the 4.5 target.
+Method: fresh evidence at 9e7dbb8, scored again from scratch. `round2-shots.mjs --out=/tmp/qa10 --widths=375,390,1280` (162 shots, exit 0); `story-frames.mjs /tmp/qa10story pressure`; services close-ups /tmp/qa10x/svc.jpg; hero sheet /tmp/qa10x/hero.jpg. 48 page/width checks (9 main pages + 15 edge pages under /tmp/qa10edge, at 375 and 1280; results in /tmp/qa10m.json): no undefined/NaN, no sideways scroll, no page errors except Turnstile 400020 from the fake test key. test-all not run by me. **WebKit not installed: iOS Safari NOT verified.**
+
+**Builder claims:**
+- MINOR 8 FIXED as described: a tag already in the service name is dropped, and no empty tag elements are left. But see the new MINOR 11.
+- MINOR 9 FIXED: in Cinematic pressure the accent words (bright / wash / seconds / do) are Fraunces italic.
+- MINOR 10 FIXED: at 1280 the Editorial silhouette is 64% wide, the card covers 20% of it, the apex shows, and the card ends at y 788 of 860.
+- MINOR 7 PARTLY: Classic service cards are tinted tiles. The included and steps sections are still white-card runs, and towing's bar label is unchanged.
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 5 | 5 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 5 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 4 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 5 | 4 | 5 |
+| 8 Editorial craft | - | 5 | - |
+| **Average** | **4.71 PASS** | **4.50 PASS** | **4.43 PASS** |
+
+**SPEC counts:**
+- Classic 19 D / 3 P / 0 N; Cinematic 18 D / 4 P / 0 N; Editorial 19 D / 3 P / 0 N.
+- The services-tags row is back to PARTLY in all three looks: on fencing only 1 card of 6 has a tag (MINOR 11).
+- Other PARTLY rows as before: Kai section order and the live Email field (kept by choice) in all three, plus Cinematic's phone checks after the story.
+
+**BLOCKER:** none. **MAJOR:** none.
+**MINOR (open)**
+- 11 (new, a side effect of the MINOR 8 fix). Fencing service grids show 1 tag of 6 ("Metal" only); roofing shows 5 of 6 and pressure 4 of 6. The lone tag makes uneven cards: in Classic the Aluminum card is taller, and in Cinematic its title drops below the others (/tmp/qa10x/svc.jpg). Fix: in `ltTag`, give fencing a second, use-based axis when the material is already in the name: Privacy (wood/vinyl), Pets and yards (chain link), Pools (aluminum/iron), Access (gates), Fix (repair). Or, when fewer than half the cards of a trade get a tag, render no tags for that trade.
+- 6. Cinematic phone: the checks come after the story. With reduced motion the first screen has no primary button. Fix: under reduced motion, render `.lt-cta` after the first stacked frame.
+- 7. Classic included and steps are still white-card runs; towing's bar says "Free estimate". This is what keeps Classic line 4 at 4. Fix: give the included section a tinted band like services, and use the trade's ask label on the bar.
+- Kept by choice (not counted against the scores): the live Email field (5 fields; Kai says 4).
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 9e7dbb8.

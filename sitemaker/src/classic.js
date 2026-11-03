@@ -125,8 +125,8 @@ export function generateClassic(form, d, o) {
 </div></section>`;
 
   // 8. What's included, how it works, FAQ, service areas, final call band, footer (src/lifetime.js)
-  const included = ltIncluded(d, { cls: "lt-tint" });
-  const how = ltSteps(d);
+  const included = ltIncluded(d, { cls: "cl-inc-open" });
+  const how = ltSteps(d, { cls: "lt-tint" });
   const faq = ltFaq(d);
   const areas = ltAreas(d, { cls: "lt-tint" });
   const band = ltBand(d);
@@ -155,6 +155,8 @@ ${PROOF_MORE_CSS}
 .lt-h2,.lt-inc h3,.lt-steps h3,.lt-faq summary{color:var(--dark)}
 .lt-h2 em{font-style:normal;box-shadow:inset 0 -.2em 0 var(--accent)}
 .lt-band h2 em{font-style:normal;box-shadow:none}
+/* QA 9e7dbb8 MINOR 7: "What's included" as an open list on white (rules, no cards), so no white-card run */
+.cl-inc-open .lt-inc li{background:transparent;border:0;border-top:3px solid var(--dark);border-radius:0;padding:18px 0 4px}
 </style>
 </head>
 <body>
