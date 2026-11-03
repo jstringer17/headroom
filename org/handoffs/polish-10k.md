@@ -463,3 +463,34 @@ Classic line 4 stays at 4: the white/tint alternation is now clean, but services
 - Cosmetic: roofing has 1 untagged card of 6 (Roof repair) and pressure has 2 (Roof cleaning, Commercial washing). Cards stay equal height, so it is acceptable.
 - Kept by choice (not counted against the scores): the live Email field.
 **Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 3752b2b.
+
+### Independent QA of 8984f0e (Opus qa-reviewer, 3 Nov): PASS for all three, and all three meet the 4.5 target. Cinematic 4.71, Editorial 4.50, Classic 4.57 (floor 4.3, no line < 4)
+Method:
+- Only `sitemaker/src/classic.js` changed in the source since 3752b2b (`git diff --stat`; the other changes are test-shots and this file).
+- Fresh evidence: `round2-shots.mjs --out=/tmp/qa12 --widths=375,390,1280` (162 shots, exit 0). Classic full pages at 375/1280 for all 3 trades are in /tmp/qa12full (strips /tmp/qa12x-1280.jpg, /tmp/qa12x-375.jpg). Cinematic and Editorial phone top screens: /tmp/qa12x-tops.jpg, no regression.
+- DOM check of all 9 pages at 375/1280 (/tmp/qa12m.json): no undefined/NaN, no sideways scroll, no page errors.
+- Classic order confirmed for all trades and widths: picker > services > reviews > included > featured project > how > FAQ > areas > call band > footer. How it works is still hidden on phones by design.
+- Classic page heights: 6,624-6,732 px at 1280 and 8,524-8,628 px at 375.
+- test-all not run by me. **WebKit not installed: iOS Safari NOT verified.**
+
+| Line | Cinematic | Editorial | Classic |
+|---|---|---|---|
+| 1 First screen | 5 | 5 | 5 |
+| 2 Photos and motion | 4 | 4 | 4 |
+| 3 Type and accent | 5 | 5 | 4 |
+| 4 Rhythm | 4 | 4 | 5 |
+| 5 Tools | 5 | 4 | 4 |
+| 6 Trust and call | 5 | 5 | 5 |
+| 7 Phone feel | 5 | 4 | 5 |
+| 8 Editorial craft | - | 5 | - |
+| **Average** | **4.71 PASS** | **4.50 PASS** | **4.57 PASS** |
+- Cinematic and Editorial scores are carried over from 3752b2b: their code is unchanged and the top-screen check shows no regression.
+- Classic line 4 is a 5, but only just. The before/after photo now breaks the text run and the dark call band closes the page; the longest run without a photo is 3 sections, and the tinted and white sections alternate cleanly.
+
+**SPEC counts:** unchanged from 3752b2b (Classic 20 D / 2 P, Cinematic 19 D / 3 P, Editorial 20 D / 2 P, no NOT DONE). Kai section order stays PARTLY: services still come after the picker, and there is no map.
+**BLOCKER:** none. **MAJOR:** none.
+**MINOR (open):**
+- 6 (kept by choice). Cinematic: the checks come after the story on phones, and with reduced motion the first screen has no primary button.
+- 7. Towing's phone bar label says "Free estimate".
+- Live Email field kept by choice.
+**Not verified:** WebKit/iOS Safari, real devices, hosted admin, test-all at 8984f0e.
