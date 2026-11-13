@@ -1,0 +1,6 @@
+# Handoff: send lead alerts through the CEO's Gmail (free), Opus
+Why: Resend's free plan only sends from a domain we own (we have none; CEO wants $0). Send owner/agency lead alerts via Gmail SMTP from the Worker.
+1. hosting/src/notify.js: add a Gmail sender used when secrets GMAIL_USER + GMAIL_APP_PASSWORD exist (else keep Resend/log path). Use Cloudflare `connect()` (cloudflare:sockets) to smtp.gmail.com:465 with secureTransport 'on', AUTH LOGIN, MAIL FROM/RCPT TO/DATA, proper RFC 5322 headers (From: "Sunday Agency" <GMAIL_USER>, Reply-To: the lead's email if given, Subject, Date, Message-ID, MIME text/plain UTF-8 + simple HTML alternative), dot-stuffing, CRLF, header-injection safe (strip CR/LF from every header value), 15 s timeout, one retry, never log the password. Keep the same call signature so leads, demo leads, login links and billing emails all use it.
+2. Limits: Gmail ~500/day; count sends per day in D1 and fall back to log + desk warning at 450.
+3. Tests with a fake socket (conversation transcript asserted), header injection test, fallback test; npm test green from a fresh clone. GO-LIVE.md: steps for the app password and the two secrets.
+4. Report in org/inbox/chief.md with head sha; BATON row done; push. The chief deploys and tests live.
