@@ -69,7 +69,7 @@ async function sendGmail(env, { to, subject, text, html, replyTo }) {
   if (!rcpts.length) return { ok: false, error: "no valid recipient" };
   const day = utcDay();
   const sent = await countToday(env, day);
-  if (sent >= GMAIL_DAILY_CAP) {
+  if (sent + rcpts.length > GMAIL_DAILY_CAP) {
     console.log("[email not sent: Gmail daily cap]", JSON.stringify({ to: rcpts, subject: noCrLf(subject).slice(0, 200), sentToday: sent }));
     await bump(env, day, "capped", 1);
     return { ok: false, skipped: true, error: "gmail daily cap" };
@@ -237,7 +237,8 @@ async function smtpSend(connect, { user, pass, helo, rcpts, message, timeoutMs }
       await send("DATA"); await expect([354], "DATA");
       await writer.write(enc.encode(`${dotStuff(message.data)}.\r\n`));
       await expect([250], "message");
-      try { await send("QUIT"); await replies.next(); } catch { /* already sent; QUIT reply is optional */ }
+      // Message accepted: say QUIT but never wait on its reply, so a silent server cannot turn a delivered mail into a "timeout".
+      send("QUIT").catch(() => { /* already delivered */ });
     } finally {
       replies.release();
       try { writer.releaseLock(); } catch { /* closed */ }

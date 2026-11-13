@@ -212,6 +212,15 @@ test("timeout: a silent server gives up within the overall budget and closes the
   assert.ok(connect.conns.every((c) => c.closed));
 });
 
+test("silent server after the message is accepted: still ok, no retry, no duplicate send", async () => {
+  const connect = fakeConnect({ replies: { QUIT: null } });
+  const r = await sendEmail(gmailEnv(connect, { __smtpTimeoutMs: 300 }), { to: "o@site.test", subject: "x", text: "y" });
+  assert.equal(r.ok, true);
+  assert.equal(connect.conns.length, 1);
+  assert.equal(connect.conns[0].transcript.at(-1), "QUIT");
+  assert.equal(connect.conns[0].closed, true);
+});
+
 test("daily cap: at 450 it logs instead of sending and the desk shows a warning", async () => {
   const connect = fakeConnect();
   const env = gmailEnv(connect);
