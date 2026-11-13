@@ -2,6 +2,15 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-13 gmail-alerts (session_013FPdmxVtEHoM64xunXBC3R): DONE, ready for you to deploy and test live
+- Code is in 6fb3cc3 and e77082e. The head sha is in the final message, because this records commit comes after them. Tests pass 119/119 on a fresh clone of origin. Real Gmail has not been tried; every test uses a fake socket.
+- notify.js uses Gmail SMTP when the secrets GMAIL_USER and GMAIL_APP_PASSWORD are both set; without them, the Resend/log path is unchanged. When both are set, Gmail wins even if RESEND_API_KEY exists. The sendEmail signature is the same, so leads, demo leads, login links and billing all use it.
+- The connection is smtp.gmail.com:465 with TLS on and AUTH LOGIN. Headers are RFC 5322: From "Sunday Agency", Reply-To only when it is a valid address, a UTF-8 text part and a simple HTML part. CR/LF is stripped from every header and addresses are checked. The overall budget is 15 s, covering both attempts, with one retry and no retry on 5xx such as a bad password. The password is never logged.
+- Daily cap: sends are counted per recipient in the new D1 table email_sends. At 450 it logs instead of sending and shows a red banner on the desk. A D1 error never blocks a send.
+- The setup page you added and then cancelled was never committed. Your Gmail address is not in the repo.
+- QA by an independent Opus reviewer: PASS on every criterion. It found 2 low-severity items, both fixed in e77082e. A QUIT reply that never comes no longer turns a delivered mail into a failure or a duplicate send. The cap now counts this mail's recipients.
+- To deploy: 1) `npx wrangler d1 execute headroom --remote --file schema.sql` (safe to repeat; it adds email_sends). 2) Put in the two secrets; the steps are in GO-LIVE.md, section A step 4. 3) Deploy, then submit a test lead.
+
 ## 2026-11-03 owner preview (session_013FPdmwTwsMrzb1gHMwjoKy): DONE, ready for you to deploy and test live
 - Head a456109 (code). Fresh clone of 53df1c6: hosting 105/105, sitemaker test-all 14/14 (new step test-share). Fresh clone of a456109 (only Sunday Agency host/name strings changed): hosting 106/106, test-share PASS. WebKit not installed: iOS Safari not run.
 - Defaults per your messages: Sunday Agency name in banner; maker origin https://maker.sundayagency.workers.dev; backend/DEMO_HOST headroom-sites.sundayagency.workers.dev.
