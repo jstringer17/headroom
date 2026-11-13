@@ -12,4 +12,4 @@
 | 9 | Stripe live mode | CEO yes | after first yes from a customer |
 
 | 10 | Owner sharing (14-day sample link, banner, views, demo leads to agency) | chief | LIVE on test hosts 2026-11-13, tested end to end |
-| 11 | Gmail alerts: secrets GMAIL_USER/GMAIL_APP_PASSWORD set; REMIND CEO to rotate the app password (was pasted in chat) via setup link https://setup-9455ea.sundayagency.workers.dev/<token in chief scratchpad>, then delete setup-9455ea worker | chief | waiting on gmail-alerts deploy |
+| 11 | Gmail alerts: secrets GMAIL_USER/GMAIL_APP_PASSWORD set; REMIND CEO to rotate the app password (was pasted in chat) via setup link https://setup-9455ea.sundayagency.workers.dev/<token in chief scratchpad>, then delete setup-9455ea worker | chief | LIVE 2026-11-13: lead email sent from CEO Gmail as Sunday Agency, verified in inbox; rotation reminder still open |
