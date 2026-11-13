@@ -14,7 +14,15 @@ The chief of staff runs these steps, not a workstream session.
    npx wrangler r2 bucket create headroom-sites
    ```
    Turn on D1 Time Travel (on by default) and plan a weekly export to R2.
-4. **Email**: Resend account (free up to 3,000 a month). Add the agency domain; Cloudflare fills the DNS. `npx wrangler secret put RESEND_API_KEY`.
+4. **Email**, option 1, Gmail (free, no domain needed; used first when both secrets are set). Lead alerts, demo leads, login links and billing emails go out from the CEO's Gmail as `"Sunday Agency" <address>`, with Reply-To = the lead's email.
+   1. The Gmail account needs 2-Step Verification: myaccount.google.com > Security > 2-Step Verification > turn on.
+   2. myaccount.google.com/apppasswords (or Security > 2-Step Verification > App passwords). App name `Headroom alerts` > Create. Copy the 16-letter password (spaces do not matter). Google shows it once.
+   3. From `hosting/`: `npx wrangler secret put GMAIL_USER` (paste the Gmail address), then `npx wrangler secret put GMAIL_APP_PASSWORD` (paste the app password). Never put either in wrangler.toml or a file.
+   4. Re-run the schema (safe, adds table `email_sends`): `npx wrangler d1 execute headroom --remote --file schema.sql`. Then `npx wrangler deploy`.
+   5. Check: send a test lead; the email arrives from the Gmail address, and Reply goes to the lead. In Gmail > Sent you see a copy.
+   6. Limit: Gmail allows about 500 recipients a day. The Worker counts per UTC day and at 450 stops sending (logs only); the desk shows a red warning, leads are still saved, sending resumes at 00:00 UTC. If the app password is changed or revoked (also when the Google password changes), alerts fail with `gmail: AUTH password 535` in `events` kind `lead_email_failed`: make a new app password and repeat step 3.
+   7. To stop using Gmail: `npx wrangler secret delete GMAIL_APP_PASSWORD` (falls back to Resend if set, else log only).
+   Option 2, Resend account (free up to 3,000 a month). Add the agency domain; Cloudflare fills the DNS. `npx wrangler secret put RESEND_API_KEY`.
 5. **Spam check**: Cloudflare dashboard > Turnstile > Add widget, mode Managed, hostname = the agency domain for now (golive.mjs adds each customer domain). Site key goes in wrangler.toml `TURNSTILE_SITE_KEY`; `npx wrangler secret put TURNSTILE_SECRET`. Without the secret the form refuses every message (on purpose).
 6. **Other secrets**: `SESSION_KEY` (random 32+ characters), `OPS_KEY` (random 32+ characters, used by golive.mjs to publish). Billing and owner-admin secrets: see their handoffs (STRIPE_*, GOOGLE_PLACES_API_KEY, CF_ACCESS_*).
 7. **Text alerts** (only if the CEO wants them at launch): Twilio number + 10DLC sign-up (1-3 weeks). Secrets `TWILIO_SID`, `TWILIO_TOKEN`, `TWILIO_FROM`. With no keys, texts are skipped and logged; email still goes.
@@ -109,4 +117,4 @@ The maker's "Share with the owner" button makes a link like `https://demo.<agenc
 
 - A publish that fails a check (sample text, too big, no phone, no working form) is refused and the old page stays up. See `events` rows with kind `publish_blocked`.
 - Site off fast: set status `paused` (desk Pause button, or `UPDATE sites SET status='paused' WHERE id=?`). Visitors see "This site is not active". Nothing is deleted.
-- Lead emails not arriving: check `events` kind `lead_email_failed`, then the Resend dashboard. Leads are always stored in D1 first.
+- Lead emails not arriving: check `events` kind `lead_email_failed` (Gmail errors start with `gmail:`), the desk for the Gmail daily-limit warning, then the Resend dashboard or Gmail > Sent. Leads are always stored in D1 first.

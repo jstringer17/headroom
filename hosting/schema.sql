@@ -91,3 +91,11 @@ CREATE TABLE IF NOT EXISTS demo_links (
   revoked INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS demo_links_created ON demo_links(created_at);
+
+-- Gmail lead alerts (notify.js): recipients sent per UTC day (Gmail allows ~500/day; we stop at 450 and only log).
+-- capped = emails not sent that day because the cap was hit (the desk shows a warning). Safe to re-run.
+CREATE TABLE IF NOT EXISTS email_sends (
+  day TEXT PRIMARY KEY,               -- UTC date YYYY-MM-DD
+  sent INTEGER NOT NULL DEFAULT 0,
+  capped INTEGER NOT NULL DEFAULT 0
+);

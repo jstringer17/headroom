@@ -11,6 +11,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-ap
 header{display:flex;align-items:center;gap:12px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line)}
 header h1{font-size:17px;margin:0;font-weight:700}
 main{padding:20px 24px 60px;max-width:1500px;margin:0 auto}
+.warn{background:var(--hot-soft);color:var(--hot);border:1px solid var(--hot);border-radius:var(--radius);padding:12px 16px;margin:0 0 16px;font-weight:600}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
 .stat b{display:block;font-size:24px;font-weight:700}.stat span{color:var(--muted);font-size:12.5px}
@@ -44,6 +45,7 @@ a{color:var(--brand);text-decoration:none}
 </style></head><body>
 <header><h1>Customer Desk</h1><span class="sub" id="asof"></span></header>
 <main>
+<p class="warn" id="warn" role="alert" hidden></p>
 <section class="stats" id="stats"></section>
 <section class="filters">
  <input type="search" id="q" placeholder="Search name, trade, domain...">
@@ -68,6 +70,7 @@ function act(c,what,ask){if(ask&&!confirm(ask))return;api('/api/sites/'+encodeUR
 function load(){api('/api/customers').then(function(d){data=d;render();});}
 function render(){
  var t=data.totals;document.getElementById('asof').textContent=day(data.now);
+ var w=document.getElementById('warn'),wt=data.email&&data.email.warning;w.textContent=wt||'';w.hidden=!wt;
  var st=document.getElementById('stats');st.textContent='';
  [['Live sites',t.live],['MRR',money(t.mrrCents)],['Failed payments',t.failedPayments],['Leads this month',t.leadsMonth],['Ready for upsell',t.readyForUpsell]].forEach(function(s){st.appendChild(h('div',{'class':'stat'},[h('b',{text:String(s[1])}),h('span',{text:s[0]})]));});
  var hd=document.getElementById('head');hd.textContent='';

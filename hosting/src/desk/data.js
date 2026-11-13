@@ -1,5 +1,6 @@
 // Builds the Customer Desk rows and totals from D1. Pure reads.
 import { graceDays, ADDON_KINDS, DAY } from '../billing/deps.js';
+import { emailStatus } from '../notify.js';
 
 const FRESH_REVIEWS_DAYS = 14;
 const UPSELL_DAYS = 60, UPSELL_LEADS = 5;
@@ -56,6 +57,7 @@ export async function loadCustomers(env, now = Date.now()) {
       readyForUpsell: customers.filter((c) => c.readyForUpsell).length,
     },
     customers,
+    email: await emailStatus(env, now),
     addonKinds: Object.keys(ADDON_KINDS),
   };
 }
