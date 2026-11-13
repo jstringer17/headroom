@@ -10,3 +10,5 @@
 | 7 | Sales kit: demo script, DM/text/email templates, objection answers (org/consultant-report.md) + Lead Desk leads | chief | ready, refresh after 1 |
 | 8 | First demo sites for 5 real local leads (sample only, never published as theirs) | chief | after 1 |
 | 9 | Stripe live mode | CEO yes | after first yes from a customer |
+
+| 10 | Owner sharing (14-day sample link, banner, views, demo leads to agency) | chief | LIVE on test hosts 2026-11-13, tested end to end |
