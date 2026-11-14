@@ -197,7 +197,7 @@ export function liveScript(js, d) {
 }
 // Footer link and the free, cookie-free analytics beacon.
 export function liveFootLink(d) {
-  return d.live ? `<a href="${esc(d.live.privacyUrl)}">Privacy</a>` : "";
+  return d.live ? `<a href="${esc(d.live.privacyUrl)}">Privacy</a> · <a href="${esc(d.live.privacyUrl.replace(/privacy$/, "terms"))}">Terms</a>` : "";
 }
 export function liveBeacon(d) {
   return d.live && d.live.analyticsToken ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"${esc(d.live.analyticsToken)}"}'></script>\n` : "";

@@ -103,8 +103,27 @@ describe("two sites on two hosts", () => {
     const sm = await (await get("https://acme.test/sitemap.xml")).text();
     expect(sm).toContain("<loc>https://acme.test/</loc>");
     expect(await (await get("https://acme.test/privacy")).text()).toContain("Acme Roofing");
+    const terms = await (await get("https://acme.test/terms")).text();
+    expect(terms).toContain("Acme Roofing");
+    expect(terms).toContain("Plain-words draft; have a lawyer review before relying on it.");
+    expect(await (await get("https://acme.test/privacy")).text()).toContain("Plain-words draft; have a lawyer review before relying on it.");
     expect((await get("https://acme.test/wp-login.php")).status).toBe(404);
     expect(robotsTxt({ status: "paused", domain: "x.test" })).toContain("Disallow: /");
+  });
+});
+
+describe("agency legal pages", () => {
+  it("serves the plain-words Terms and Privacy on the agency host, with the real plan facts", async () => {
+    for (const host of ["agency.test", "www.agency.test"]) {
+      const t = await get(`https://${host}/terms`);
+      expect(t.status).toBe(200);
+      const tt = await t.text();
+      for (const w of ["$97", "$197", "$297", "14 days", "month to month", "$0", "Plain-words draft; have a lawyer review before relying on it."]) expect(tt.toLowerCase()).toContain(w.toLowerCase());
+    }
+    const p = await (await get("https://agency.test/privacy")).text();
+    expect(p).toContain("never sell");
+    expect(p).toContain("Plain-words draft; have a lawyer review before relying on it.");
+    expect((await get("https://agency.test/other")).status).toBe(404);
   });
 });
 
@@ -122,6 +141,7 @@ describe("publishSite", () => {
     expect(html).toContain('action="/api/lead"');
     expect(html).toContain('class="cf-turnstile"');
     expect(html).toContain('href="/privacy"');
+    expect(html).toContain('href="/terms"');
   });
 
   it("shows only reviews the owner chose, Google credit + rating only from Google data", async () => {

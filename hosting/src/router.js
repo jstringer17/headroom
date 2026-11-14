@@ -6,6 +6,7 @@ import { handleLead, sweepHits } from "./leads.js";
 import { robotsTxt, sitemapXml } from "./seo.js";
 import { serveMedia, serveLibrary } from "./media.js";
 import { notActivePage, notFoundPage, privacyPage } from "./notactive.js";
+import { agencyTermsPage, agencyPrivacyPage, siteTermsPage } from "./legal.js";
 import { demoApp, demoHost } from "./demo.js";
 
 const PAGE_HEADERS = {
@@ -53,6 +54,12 @@ export function createApp(mods = {}) {
     const dh = demoHost(env);
     if (dh && host === dh) return demoApp(request, env, ctx);
 
+    // The agency's own Terms and Privacy on its main host (apex or www).
+    if (agency && (host === agency || host === `www.${agency}`) && (request.method === "GET" || request.method === "HEAD")) {
+      if (path === "/terms") return agencyTermsPage(env);
+      if (path === "/privacy") return agencyPrivacyPage(env);
+    }
+
     const site = await getSiteByHost(env, host);
     if (!site) return notFoundPage(false);
 
@@ -75,6 +82,7 @@ export function createApp(mods = {}) {
       return new Response(obj ? obj.body : sitemapXml(site), { headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "public, max-age=3600" } });
     }
     if (path === "/privacy") return privacyPage(site);
+    if (path === "/terms") return siteTermsPage(site, env);
     if (path.startsWith("/media/")) return serveMedia(request, env, site);
     if (path.startsWith("/library/")) return serveLibrary(request, env);
     return notFoundPage(true);

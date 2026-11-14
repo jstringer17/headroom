@@ -232,7 +232,7 @@ export async function demoApp(request, env, ctx, { now = Date.now() } = {}) {
   }
   if (p === "/robots.txt") return new Response("User-agent: *\nDisallow: /\n", { headers: { "content-type": "text/plain; charset=utf-8", ...NOINDEX } });
   if (p.startsWith("/library/")) return serveLibrary(request, env);
-  const m = p.match(/^\/d\/([^/]+)(?:\/(lead|privacy|m\/([^/]+)))?\/?$/);
+  const m = p.match(/^\/d\/([^/]+)(?:\/(lead|privacy|terms|m\/([^/]+)))?\/?$/);
   if (!m) return friendly("Not found", "<h1>Page not found</h1>", 404);
   const [, token, sub, file] = m;
   const row = await getDemo(env, token);
@@ -243,7 +243,8 @@ export async function demoApp(request, env, ctx, { now = Date.now() } = {}) {
     return handleLead(request, env, site, { demo: token });
   }
   if (request.method !== "GET" && request.method !== "HEAD") return new Response("Method not allowed", { status: 405, headers: { allow: "GET, HEAD" } });
-  if (sub === "privacy") return friendly("Privacy", `<h1>Privacy</h1><p>This is a sample website. When you send its form, ${esc(env.AGENCY_NAME || "the team that made it")} gets your name, phone number, email (if you give it) and your message, so they can call you back. We do not sell your details.</p><p><a href="/d/${token}">Back to the sample</a></p>`, 200);
+  if (sub === "terms") return friendly("Terms", `<p><small>Plain-words draft; have a lawyer review before relying on it.</small></p><h1>Terms of use</h1><p>This is a sample website made for you to look at. It is free and is not a real business page. Prices and reviews on it are examples. ${esc(env.AGENCY_NAME || "The team that made it")} will give you a written plan and price before anything goes live.</p><p><a href="/d/${token}">Back to the sample</a></p>`, 200);
+  if (sub === "privacy") return friendly("Privacy", `<p><small>Plain-words draft; have a lawyer review before relying on it.</small></p><h1>Privacy</h1><p>This is a sample website. When you send its form, ${esc(env.AGENCY_NAME || "the team that made it")} gets your name, phone number, email (if you give it) and your message, so they can call you back. We do not sell your details.</p><p><a href="/d/${token}">Back to the sample</a></p>`, 200);
   if (file !== undefined) return serveDemoMedia(request, env, token, file);
   const obj = await env.R2.get(demoKey(token));
   if (!obj) return expiredPage(env);

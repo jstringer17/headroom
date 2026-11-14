@@ -19,10 +19,12 @@ export function notFoundPage(home = true) {
 // DRAFT text: the CEO must approve the real privacy wording before the first paying site (org/plan.md CEO-only questions).
 export function privacyPage(site) {
   const name = esc((site && site.form && site.form.company) || "This business");
-  return new Response(page(`Privacy | ${name}`, `<h1>Privacy</h1>
+  return new Response(page(`Privacy | ${name}`, `<p style="font-size:15px;background:#fff3cd;padding:8px 12px;border-radius:8px">Plain-words draft; have a lawyer review before relying on it.</p>
+<h1>Privacy</h1>
 <p>When you send the form on this site, ${name} gets your name, phone number, email (if you give it) and your message, so they can call you back about your job.</p>
 <p>We do not sell your details. We keep them only as long as needed to answer you and keep business records.</p>
 <p>The form is checked by Cloudflare Turnstile to stop spam. Visits are counted by Cloudflare Web Analytics, which uses no cookies.</p>
+<p>This site is run for ${name} by Sunday Agency, which stores the form details and emails them to ${name}. We never sell data. Reviews shown here come from Google.</p>
 <p>Want your details removed? Call or email ${name} and ask.</p>
-<p><a href="/">Back to the home page</a></p>`), { status: 200, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" } });
+<p><a href="/terms">Terms of use</a> · <a href="/">Back to the home page</a></p>`), { status: 200, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=3600" } });
 }
