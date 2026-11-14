@@ -53,3 +53,8 @@ The chief reads this file at every CEO message, acts, then moves handled entries
 - Details: org/handoffs/polish-10k.md (Result), TASKS.md T11, phone before/after sheets in org/art/round2/.
 
 ## Done
+
+## 2026-11-14 terms-saleskit (Sonnet): DONE
+- Code head 8bae951. A: hosting/src/legal.js; /terms + /privacy on agency host (apex/www), /terms on customer sites (+ draft note on /privacy), /d/<token>/terms on demos; footer now shows "Privacy · Terms". All pages carry "Plain-words draft; have a lawyer review before relying on it."
+- B: org/sales-kit.md (74 lines): demo script, 5 objections, text/DM/email/voicemail, day 0/2/5/10 follow-ups, upsell ladder, DNC/stop rules. Uses new $97/$197/$297, $0 setup (older $199/$99 in consultant-report is superseded).
+- Hosting npm test 120/120. Fresh-clone result: see final line below.

@@ -5,5 +5,5 @@
 | public-share.md | cancelled (CEO: host maker on Cloudflare) | - | - |
 | owner-preview.md | done | 2026-11-03 (session_013FPdmwTwsMrzb1gHMwjoKy) | a456109 |
 | gmail-alerts.md | done | 2026-11-13 (session_013FPdmxVtEHoM64xunXBC3R) | e77082e |
-| terms-saleskit.md | running | 2026-11-14 (chief) | - |
+| terms-saleskit.md | done | 2026-11-14 (chief) | 8bae951 |
 Rule for every builder: before you stop (done OR out of context), set your row to done, add a queued row for any follow-up handoff you wrote, commit and push. The check-in starts queued rows within the hour.
