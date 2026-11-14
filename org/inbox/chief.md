@@ -58,3 +58,4 @@ The chief reads this file at every CEO message, acts, then moves handled entries
 - Code head 8bae951. A: hosting/src/legal.js; /terms + /privacy on agency host (apex/www), /terms on customer sites (+ draft note on /privacy), /d/<token>/terms on demos; footer now shows "Privacy · Terms". All pages carry "Plain-words draft; have a lawyer review before relying on it."
 - B: org/sales-kit.md (74 lines): demo script, 5 objections, text/DM/email/voicemail, day 0/2/5/10 follow-ups, upsell ladder, DNC/stop rules. Uses new $97/$197/$297, $0 setup (older $199/$99 in consultant-report is superseded).
 - Hosting npm test 120/120. Fresh-clone result: see final line below.
+- Fresh clone of d32aa41: hosting npm ci + npm test 120/120. Sitemaker test-all: first steps OK (build, classic); full run (many minutes) not seen finishing, so footer change is not fully verified there.
