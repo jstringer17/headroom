@@ -322,3 +322,13 @@ test("picture URL must be this site's own upload on this site's host", async () 
     assert.ok(!applyEdits(base, { heroImage: bad }, { siteId: "site-a", hosts: ["summitroofing.test"] }).heroImage, bad);
   }
 });
+
+test('owner login confirm accepts the browser form post with Origin: null + same-origin (no-referrer pages)', async () => {
+  const { sameOriginForTest } = await import('../src/admin/index.js').catch(() => ({}));
+  if (!sameOriginForTest) return; // exported only for tests
+  const url = new URL('https://a.net/admin/login/confirm');
+  const mk = (h) => new Request(url, { method: 'POST', headers: h });
+  assert.equal(sameOriginForTest(mk({ origin: 'null', 'sec-fetch-site': 'same-origin' }), url), true);
+  assert.equal(sameOriginForTest(mk({ origin: 'null', 'sec-fetch-site': 'cross-site' }), url), false);
+  assert.equal(sameOriginForTest(mk({ origin: 'https://evil.com' }), url), false);
+});

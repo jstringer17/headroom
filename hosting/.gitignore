@@ -1,5 +1,7 @@
-node_modules/
-.wrangler/
 .dev.vars
-wrangler.test.toml
+.wrangler/
+node_modules/
+wrangler.acme.toml
 wrangler.desk.toml
+wrangler.hooks.toml
+wrangler.test.toml

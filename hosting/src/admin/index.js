@@ -42,8 +42,10 @@ const redirect = (to, headers = {}) => new Response(null, { status: 303, headers
 // Writes must come from this site's own pages.
 function sameOrigin(request, url) {
   const origin = request.headers.get("origin");
-  if (origin && origin !== url.origin) return false;
   const sfs = request.headers.get("sec-fetch-site");
+  // Our pages send Referrer-Policy: no-referrer, so browsers send "Origin: null" on their own form posts; trust it only when the browser also says same-origin.
+  if (origin === "null" && sfs === "same-origin") return true;
+  if (origin && origin !== url.origin) return false;
   if (sfs && sfs !== "same-origin" && sfs !== "none") return false;
   return true;
 }
@@ -259,3 +261,4 @@ function plainProblem(problems) {
   if (/phone/i.test(p)) return "Add your phone number first.";
   return "The page could not be published. Nothing was changed. Check your text and try again.";
 }
+export const sameOriginForTest = sameOrigin;
