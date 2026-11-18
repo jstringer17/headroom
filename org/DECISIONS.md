@@ -11,3 +11,4 @@
 | 2026-11-02 | Price: chief suggested $99/mo + $199 setup (waivable); CEO has not confirmed yet | open | chief |
 | 2026-11-03 | Maker is shared from Cloudflare: https://sample-site-maker.headroom-sites-agency.workers.dev (free static Worker); public Claude link job cancelled | Claude public share blocked SVGs; hosting is free and works for the partner | CEO |
 | 2026-11-03 | Agency name: Sunday Agency. Free hosts: maker https://maker.sundayagency.workers.dev, backend https://headroom-sites.sundayagency.workers.dev (old headroom-sites-agency hosts removed) | CEO named it; free workers.dev | CEO |
+| 2026-11-18 | Make sample links ONLY for leads who say they are interested; chief makes no more links ahead of time | CEO | CEO |
