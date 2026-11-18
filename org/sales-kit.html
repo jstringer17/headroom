@@ -148,6 +148,21 @@ const LEADS=[
   {co:"Rescue Roofing Co",nm:"Phuoc",trade:"roofing",town:"Daly City",ph:"(415) 850-5613",link:"https://headroom-sites.sundayagency.workers.dev/d/3e1c67320bc28ec4793abf7d40ac6b51"},
   {co:"Oates Roofing",nm:"Clinton",trade:"roofing",town:"Fremont",ph:"(510) 750-5645",link:"https://headroom-sites.sundayagency.workers.dev/d/c3ab5df8d667fd1a79da46eb750f6b66"},
   {co:"Legacy Roofing By Ken Garman",nm:"Ken",trade:"roofing",town:"Santa Rosa",ph:"(707) 566-8305",link:"https://headroom-sites.sundayagency.workers.dev/d/dd9243a91073ac3136f195570bed0dae"},
+  {co:"Tristan & Sons Roofing & Construction LLC",nm:"",trade:"roofing",town:"Pittsburg",ph:"(925) 856-5817",link:"https://headroom-sites.sundayagency.workers.dev/d/651e037cce6b1f3b542c52dfccd8951b"},
+  {co:"Henry Family Roof Repair",nm:"",trade:"roofing",town:"Oakland",ph:"(510) 544-8222",link:"https://headroom-sites.sundayagency.workers.dev/d/1e992df45f0ae9dfed94934a6d7f8fb3"},
+  {co:"Oakland Roof Contractor - Repair & Install P.R.O",nm:"",trade:"roofing",town:"Oakland",ph:"(510) 902-3376",link:"https://headroom-sites.sundayagency.workers.dev/d/700c595feb67a123fd5ca34b4f24bc1b"},
+  {co:"Abbey Roofing Co",nm:"",trade:"roofing",town:"San Mateo",ph:"(650) 338-0006",link:"https://headroom-sites.sundayagency.workers.dev/d/863974a022b97da5f94d499f51234486"},
+  {co:"Oakland Roofing Pro",nm:"",trade:"roofing",town:"Oakland",ph:"(510) 990-9890",link:"https://headroom-sites.sundayagency.workers.dev/d/8f37c60e3bc5f72cbc7529919589ab16"},
+  {co:"Franco Handy Services",nm:"",trade:"pressure",town:"Hayward",ph:"(510) 737-2264",link:"https://headroom-sites.sundayagency.workers.dev/d/888870838831224c1f9b0727793392b0"},
+  {co:"IronStormline Roofing Group",nm:"",trade:"roofing",town:"Benicia",ph:"(661) 590-8200",link:"https://headroom-sites.sundayagency.workers.dev/d/be60793f07690f6a1617bca51b87c150"},
+  {co:"Ramirez Building",nm:"",trade:"fencing",town:"Antioch",ph:"(510) 689-4883",link:"https://headroom-sites.sundayagency.workers.dev/d/11dd49107122a1142e431e205c1e3f97"},
+  {co:"Ben's Automatic Gates & Iron Fences",nm:"",trade:"fencing",town:"San Mateo",ph:"(650) 295-1460",link:"https://headroom-sites.sundayagency.workers.dev/d/47eea68594ff900697d256c4a58fb931"},
+  {co:"STEEL PRESSURE",nm:"",trade:"pressure",town:"Hercules",ph:"(707) 515-5296",link:"https://headroom-sites.sundayagency.workers.dev/d/5e6b9be0ab66f65c2e48301b80785530"},
+  {co:"Peak Roofing San Jose",nm:"",trade:"roofing",town:"San Jose",ph:"(669) 263-9274",link:"https://headroom-sites.sundayagency.workers.dev/d/ac869da74e499c4c60d3bd39bd0b1a78"},
+  {co:"Augustine Fence Company",nm:"",trade:"fencing",town:"San Pablo",ph:"(510) 829-1558",link:"https://headroom-sites.sundayagency.workers.dev/d/c74a95607609584c4936c13fbbe116c9"},
+  {co:"Roofers & Waterproofers",nm:"",trade:"roofing",town:"Livermore",ph:"(510) 510-3650",link:"https://headroom-sites.sundayagency.workers.dev/d/90fc2de7b180b803c0b226a72de8c179"},
+  {co:"ALL CLEAN/MAINTENANCE",nm:"",trade:"pressure",town:"Oakland",ph:"(510) 635-4369",link:"https://headroom-sites.sundayagency.workers.dev/d/59716643fa87d9523409d6f82e599d5d"},
+  {co:"VRC Roofing",nm:"",trade:"roofing",town:"Richmond",ph:"(415) 832-0160",link:"https://headroom-sites.sundayagency.workers.dev/d/2b3cd81eda4d2c4fc854e0d58b09df34"},
   {co:"",nm:"",trade:"",town:"",ph:"",link:""}
 ];
 const ME_PHONE="(925) 683-9993";
@@ -164,7 +179,7 @@ function fill(){
   $('#d2').textContent=`Short text: "${nm}, did you get a look at the ${co} sample? Happy to change pictures or colors."`;
   $('#d10').textContent=`Last note: "Last message from me. The free sample stays up a few more days: ${lk}. Reply any time." Then stop.`;
 }
-$('#who').addEventListener('change',()=>{const l=LEADS[+$('#who').value];$('#nm').value=l.nm;$('#lk').value=l.link;fill();});
+$('#who').addEventListener('change',()=>{const l=LEADS[+$('#who').value];$('#nm').value=l.nm||'';$('#lk').value=l.link;fill();});
 ['#nm','#me','#lk'].forEach(s=>$(s).addEventListener('input',fill));
 document.addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b)return;const el=document.getElementById(b.dataset.copy);const done=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1400)};
   try{navigator.clipboard.writeText(el.textContent).then(done,()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);});}catch{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);}});
