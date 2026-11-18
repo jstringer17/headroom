@@ -1,0 +1,172 @@
+<title>Sunday Sales Kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one phone-first column. A lead picker on top fills every template below, so the rep copies and sends without editing. */
+:root{
+  --bg:#F6F4EF; --surface:#FFFFFF; --ink:#1D1F24; --muted:#5E6470; --line:#DEDAD0;
+  --sun:#E07A1F; --sun-ink:#FFFFFF; --sun-soft:#FBE9D6; --stop:#B3362B; --stop-soft:#F7E1DE;
+  --display:"Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#15171B; --surface:#1E2127; --ink:#ECEDEF; --muted:#A3A9B4; --line:#2E323A;
+  --sun:#F2994A; --sun-ink:#1A1206; --sun-soft:#3A2814; --stop:#F08A80; --stop-soft:#3B1D1A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15171B; --surface:#1E2127; --ink:#ECEDEF; --muted:#A3A9B4; --line:#2E323A;
+  --sun:#F2994A; --sun-ink:#1A1206; --sun-soft:#3A2814; --stop:#F08A80; --stop-soft:#3B1D1A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:17px/1.55 var(--body)}
+.wrap{max-width:720px;margin:0 auto;padding-block:20px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+h1{font:800 34px/1.05 var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--sun)}
+h2{font:700 22px/1.2 var(--display);margin:0;text-wrap:balance}
+p{margin:0}
+.lead{color:var(--muted);max-width:60ch}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
+.picker{border-color:var(--sun);box-shadow:0 0 0 1px var(--sun) inset}
+label{display:grid;gap:4px;font-weight:700;font-size:14px;color:var(--muted)}
+select,input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:460px){.two{grid-template-columns:1fr}}
+.leadline{font-size:15px;color:var(--muted)}
+.leadline a{color:var(--sun);font-weight:700;word-break:break-all}
+.offer{display:flex;flex-wrap:wrap;gap:8px}
+.price{background:var(--sun-soft);border-radius:8px;padding:8px 12px;font-weight:700}
+.price small{display:block;font-weight:400;color:var(--muted);font-size:13px}
+ol,ul{margin:0;padding-left:22px;display:grid;gap:6px}
+.rules li::marker{color:var(--stop);font-weight:700}
+.stopnote{background:var(--stop-soft);color:var(--stop);border-radius:8px;padding:10px 12px;font-weight:700}
+.tpl{display:grid;gap:8px}
+.tpl h3{font:700 16px/1.2 var(--body);margin:0;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tpl pre{white-space:pre-wrap;word-break:break-word;margin:0;font:16px/1.5 var(--body);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:12px}
+button{font:700 15px var(--body);background:var(--sun);color:var(--sun-ink);border:0;border-radius:8px;padding:10px 14px;cursor:pointer;min-height:44px}
+button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.obj dt{font-weight:700}
+.obj dd{margin:0 0 10px;color:var(--muted)}
+.days{display:grid;gap:8px}
+.day{display:grid;grid-template-columns:72px 1fr;gap:10px}
+.day b{font-family:var(--display);color:var(--sun)}
+details summary{cursor:pointer;font:700 22px/1.2 var(--display)}
+details[open] summary{margin-bottom:12px}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Sunday <span>Sales Kit</span></h1>
+    <p class="lead">Pick who you are contacting. Every template below fills in their name, company and sample link, ready to copy.</p>
+  </header>
+
+  <section class="card picker" aria-label="Who you are contacting">
+    <label for="who">Lead
+      <select id="who"></select>
+    </label>
+    <div class="two">
+      <label for="nm">Their first name<input id="nm" autocomplete="off"></label>
+      <label for="me">Your name<input id="me" autocomplete="off" value="Josh"></label>
+    </div>
+    <label for="lk">Sample link<input id="lk" autocomplete="off" inputmode="url"></label>
+    <p class="leadline" id="leadline"></p>
+  </section>
+
+  <section class="card">
+    <h2>The offer</h2>
+    <div class="offer">
+      <div class="price">Starter $97/mo<small>$0 setup</small></div>
+      <div class="price">Growth $197/mo<small>more pages, more help</small></div>
+      <div class="price">Pro $297/mo<small>the most help</small></div>
+    </div>
+    <ul>
+      <li>The sample is free. They owe nothing to look.</li>
+      <li>Month to month. Cancel any month. No contract.</li>
+      <li>We hold the domain. If they leave, we move it to them.</li>
+      <li>Leads are emailed to them. Google reviews come from Google; we never make any up.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Rules before every call or text</h2>
+    <ol class="rules">
+      <li>Business numbers only.</li>
+      <li>Check Do-Not-Call first. If listed, don't.</li>
+      <li>"Stop" or "no thanks" means stop for good. Write it in the notes.</li>
+      <li>No fake deadlines, no fake reviews.</li>
+      <li>Always say: "It's a free sample. You owe nothing."</li>
+      <li>Call 8am to 8pm their time.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>Templates</h2>
+    <div class="tpl"><h3>Text <button type="button" data-copy="t-text">Copy</button></h3><pre id="t-text"></pre></div>
+    <div class="tpl"><h3>Facebook / Instagram DM <button type="button" data-copy="t-dm">Copy</button></h3><pre id="t-dm"></pre></div>
+    <div class="tpl"><h3>Email <button type="button" data-copy="t-email">Copy</button></h3><pre id="t-email"></pre></div>
+    <div class="tpl"><h3>Voicemail, 30 seconds <button type="button" data-copy="t-vm">Copy</button></h3><pre id="t-vm"></pre></div>
+  </section>
+
+  <section class="card">
+    <h2>Follow-up</h2>
+    <div class="days">
+      <div class="day"><b>Day 0</b><span>Text or DM the link. Voicemail if you called.</span></div>
+      <div class="day"><b>Day 2</b><span id="d2"></span></div>
+      <div class="day"><b>Day 5</b><span>Email the link and the plan. Call one time.</span></div>
+      <div class="day"><b>Day 10</b><span id="d10"></span></div>
+    </div>
+    <p class="stopnote">Any "stop" or "no" ends this right away.</p>
+  </section>
+
+  <details class="card">
+    <summary>10-minute demo</summary>
+    <ol>
+      <li>"I made you a free sample site. Can I text you the link?" Send it. They open it on their phone.</li>
+      <li>Thumb through it together: their name, their town, their number. Tap Call and their phone rings.</li>
+      <li>Slide the before/after. Tap "Ask about this" and the form picks the job.</li>
+      <li>Point to the stars: "Real Google reviews go here. We never make them up."</li>
+      <li>Ask: "What would you change? Pictures? Colors? Words?" Write it down.</li>
+      <li>The plan: "Starter is $97 a month, $0 setup, cancel any month."</li>
+      <li>Close: "Want it live this week? I need 10 job photos and 10 minutes." If no, say thanks and stop.</li>
+    </ol>
+  </details>
+
+  <details class="card">
+    <summary>5 objections</summary>
+    <dl class="obj">
+      <dt>"I get work from word of mouth."</dt><dd>Good. Those people Google you before they call. This makes sure they find you.</dd>
+      <dt>"I already have a site."</dt><dd>Open both on your phone. Which one would you call?</dd>
+      <dt>"$97 is a lot."</dt><dd>One extra job a year pays for it. No contract. Cancel any month.</dd>
+      <dt>"I'm too busy."</dt><dd>That's why I do it. I need 10 photos and 10 minutes.</dd>
+      <dt>"Facebook is enough."</dt><dd>Keep it. Google shows websites for "roofer near me", not Facebook posts.</dd>
+    </dl>
+  </details>
+</div>
+
+<script>
+const LEADS=[
+  {co:"Golden Gates",nm:"Keith",trade:"fencing",town:"Petaluma",ph:"(707) 778-2034",link:"https://headroom-sites.sundayagency.workers.dev/d/c391818b3cf0c5d59995d9f628ac425f"},
+  {co:"Newton Construction",nm:"Eric",trade:"fencing",town:"San Jose",ph:"(408) 391-6030",link:"https://headroom-sites.sundayagency.workers.dev/d/b72a894e701bbfb45f1b66ecd3109673"},
+  {co:"Rescue Roofing Co",nm:"Phuoc",trade:"roofing",town:"Daly City",ph:"(415) 850-5613",link:"https://headroom-sites.sundayagency.workers.dev/d/3e1c67320bc28ec4793abf7d40ac6b51"},
+  {co:"Oates Roofing",nm:"Clinton",trade:"roofing",town:"Fremont",ph:"(510) 750-5645",link:"https://headroom-sites.sundayagency.workers.dev/d/c3ab5df8d667fd1a79da46eb750f6b66"},
+  {co:"Legacy Roofing By Ken Garman",nm:"Ken",trade:"roofing",town:"Santa Rosa",ph:"(707) 566-8305",link:"https://headroom-sites.sundayagency.workers.dev/d/dd9243a91073ac3136f195570bed0dae"},
+  {co:"",nm:"",trade:"",town:"",ph:"",link:""}
+];
+const ME_PHONE="(925) 683-9993";
+const $=s=>document.querySelector(s);
+$('#who').innerHTML=LEADS.map((l,i)=>`<option value="${i}">${l.co?`${l.co} (${l.town})`:'Someone else (type below)'}</option>`).join('');
+function fill(){
+  const nm=$('#nm').value.trim()||'there', me=$('#me').value.trim()||'Josh', lk=$('#lk').value.trim()||'{link}';
+  const l=LEADS[+$('#who').value]; const co=l.co||'your company';
+  $('#leadline').innerHTML=l.co?`${l.co} · ${l.trade} · ${l.town} · <b>${l.ph}</b> · <a href="${l.link}" target="_blank" rel="noopener">Open their sample</a>`:'Type their name and paste a link made with "Share with the owner".';
+  $('#t-text').textContent=`Hi ${nm}, I made ${co} a free sample website. You owe nothing. Take a look: ${lk}\nReply STOP and I will not text again.`;
+  $('#t-dm').textContent=`Hi ${nm}, I like the work ${co} does. I made a free sample website for you to look at: ${lk}\nNo cost, no strings. If it is not for you, just say so and I will stop.`;
+  $('#t-email').textContent=`Subject: A free sample website for ${co}\n\nHi ${nm},\nI built ${co} a free sample website so you can see it before you decide anything: ${lk}\nIt has a big call button, before and after sliders, and a form that emails you the lead.\nIf you like it: Starter is $97 a month, $0 setup, month to month. Cancel any month.\nIf not, reply "no" and I will not write again.\n\n${me}, Sunday Agency, ${ME_PHONE}`;
+  $('#t-vm').textContent=`Hi ${nm}, this is ${me} with Sunday Agency. I made ${co} a free sample website. You owe nothing. I am texting you the link. If you want to talk, call me back at ${ME_PHONE}. If you do not want calls, just tell me and I will stop. Thanks.`;
+  $('#d2').textContent=`Short text: "${nm}, did you get a look at the ${co} sample? Happy to change pictures or colors."`;
+  $('#d10').textContent=`Last note: "Last message from me. The free sample stays up a few more days: ${lk}. Reply any time." Then stop.`;
+}
+$('#who').addEventListener('change',()=>{const l=LEADS[+$('#who').value];$('#nm').value=l.nm;$('#lk').value=l.link;fill();});
+['#nm','#me','#lk'].forEach(s=>$(s).addEventListener('input',fill));
+document.addEventListener('click',e=>{const b=e.target.closest('[data-copy]');if(!b)return;const el=document.getElementById(b.dataset.copy);const done=()=>{b.textContent='Copied';setTimeout(()=>b.textContent='Copy',1400)};
+  try{navigator.clipboard.writeText(el.textContent).then(done,()=>{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);});}catch{const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);}});
+$('#nm').value=LEADS[0].nm;$('#lk').value=LEADS[0].link;fill();
+</script>
