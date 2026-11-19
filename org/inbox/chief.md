@@ -2,6 +2,13 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-19 prompts-batch2 (session_013FPdmzxSU9VnLwatXXjyi4): DONE, prompts ready to generate
+- org/art/variants-prompts-2.md (copy-paste, numbered 1-195 in generation order, file name per picture) and org/art/variants-prompts-2.json (batch 1 schema keyed by trade, plus a `note` per set; the main kit set is the first entry per trade with key `main` and `main: true`).
+- Trades: electrical, remodeling, painting, landscaping, hvac. Each: main kit set (4 story + 3 styles + before + after = 9) + 5 variations x 6 = 39 pictures. Total 195 pictures, about 390 credits.
+- Variations: electrical panel/ev/lighting/rewire/generator; remodeling bath/shower/basement/open/addition; painting interior/cabinets/stain/brick/commercial; landscaping sod/xeric/pavers/lighting/wall; hvac ac/heatpump/minisplit/furnace/ducts.
+- Watch when wiring: electrical, painting and hvac had 3 story frames in cine-kit.js, so the 4th frame has a new slot id (electrical `lit`, painting `coat` between prep and fresh, hvac `evening`); hvac `warm` headline changed to "Warm, wall to wall." so `evening` takes "Comfort, all evening long." variants-wire.mjs must skip or map the `main` entries. Nothing wired into the maker.
+- No independent QA pass was run (prompt copy only); accent word in headline checked by script for all 75 story frames.
+
 ## 2026-11-13 gmail-alerts (session_013FPdmxVtEHoM64xunXBC3R): DONE, ready for you to deploy and test live
 - Code is in 6fb3cc3 and e77082e. The head sha is in the final message, because this records commit comes after them. Tests pass 119/119 on a fresh clone of origin. Real Gmail has not been tried; every test uses a fake socket.
 - notify.js uses Gmail SMTP when the secrets GMAIL_USER and GMAIL_APP_PASSWORD are both set; without them, the Resend/log path is unchanged. When both are set, Gmail wins even if RESEND_API_KEY exists. The sendEmail signature is the same, so leads, demo leads, login links and billing all use it.
