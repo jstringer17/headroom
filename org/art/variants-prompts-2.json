@@ -16,6 +16,33 @@
           "accent": "together"
         },
         {
+          "slot": "done",
+          "label": "Story 4 of 4: Your yard, finished.",
+          "mode": "edit-rails",
+          "optional": false,
+          "prompt": "Edit the rails picture (the fencing-rails picture above, same chain as stakes and posts). Keep the exact same camera position, lens, framing, light and sky: the patio corner in the foreground, the lawn and the line of posts; change only this: a finished cedar privacy fence with tight vertical boards and a flat level top runs along the whole string line from end to end, warm wood tone, every board in place. Continuous fence, no gaps, no missing panels, straight and level, the whole fence line in frame. Keep everything else identical. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks.",
+          "headline": "Your yard, finished.",
+          "accent": "finished"
+        },
+        {
+          "slot": "cedar",
+          "label": "Style: Cedar privacy",
+          "mode": "new",
+          "optional": false,
+          "prompt": "A wide green suburban backyard seen straight-on from the back patio, with a new cedar privacy fence running across the whole back of the lawn from the left edge of the frame to the right edge, warm wood, tight vertical boards, flat level top. Continuous fence, no gaps, no missing panels, straight and level, the whole fence line in frame. Matched pair with the vinyl style picture: same backyard, same camera. Locked-off camera at eye level, the subject sits in the right two-thirds of the frame with quiet open lawn and sky in the left third and lower left for a headline. Wide 16:9 photo, golden hour natural light, realistic, calm and premium. No people, no faces, no hands, no text, no letters, no numbers, no logos, no signs, no watermarks, no vehicles with writing.",
+          "name": "Cedar privacy",
+          "note": "Warm wood, tall boards, full privacy."
+        },
+        {
+          "slot": "vinyl",
+          "label": "Style: White vinyl",
+          "mode": "new",
+          "optional": false,
+          "prompt": "The same wide green suburban backyard seen straight-on from the back patio, same camera as the cedar style picture, with a new white vinyl privacy fence running across the whole back of the lawn from the left edge of the frame to the right edge, smooth white panels, flat level top. Continuous fence, no gaps, no missing panels, straight and level, the whole fence line in frame. Locked-off camera at eye level, the subject sits in the right two-thirds of the frame with quiet open lawn and sky in the left third and lower left for a headline. Wide 16:9 photo, golden hour natural light, realistic, calm and premium. No people, no faces, no hands, no text, no letters, no numbers, no logos, no signs, no watermarks, no vehicles with writing.",
+          "name": "White vinyl",
+          "note": "Clean white panels that need little upkeep."
+        },
+        {
           "slot": "rail",
           "label": "Style: Black aluminum",
           "mode": "new",
@@ -37,6 +64,20 @@
           "mode": "edit-before",
           "optional": false,
           "prompt": "Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: a new cedar gate in warm wood hangs straight and level in the same spot with new black hinges and a black latch, the fence boards on both sides fresh cedar. Keep everything else identical. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks."
+        }
+      ]
+    },
+    {
+      "key": "vinyl",
+      "label": "White vinyl privacy (after redo)",
+      "note": "Redo of the batch 1 vinyl after picture: the fence complete, no gaps.",
+      "items": [
+        {
+          "slot": "after",
+          "label": "After: White vinyl privacy",
+          "mode": "edit-before",
+          "optional": false,
+          "prompt": "Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: the fence is a complete new white vinyl privacy fence, straight and clean, every panel present and every post upright, with no cracks. Continuous fence, no gaps, no missing panels, straight and level, the whole fence line in frame. Keep everything else identical. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks."
         }
       ]
     }

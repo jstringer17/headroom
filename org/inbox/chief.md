@@ -2,6 +2,11 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-19 prompts-batch2 add-on 2: fencing-redo grows to 8 (CEO: cedar/vinyl angled oddly, missing fence piece)
+- Order list 1-8 in variants-prompts-2.md: rails (edit of posts), done (edit of rails: full continuous cedar fence along the whole string line), style cedar + style vinyl (matched pair, same backyard and camera, straight-on, fence edge to edge), style rail, gate before/after, and vinyl after redo (`fencing-vinyl-after.jpg`, Edit of the existing vinyl before).
+- The four fence-line prompts (done, cedar, vinyl, vinyl after) each say "Continuous fence, no gaps, no missing panels, straight and level, the whole fence line in frame."
+- JSON `fencing-redo`: `main` entry with rails, done, cedar, vinyl, rail, before, after; a `vinyl` entry with after. Total now 203 pictures, about 406 credits.
+
 ## 2026-11-19 prompts-batch2 add-on: fencing-redo (asked by session_01Cu4Qz6VVRtcxi4Hcn3ayhX)
 - Added a "Fencing redo (make these first)" section, numbered 1-4 in variants-prompts-2.md: `rails` (Edit of the existing posts picture, bare 2x4 rails and no boards), style `rail` (black aluminum, same backyard as the cedar and vinyl style shots), gate `before` (new) and `after` (edit of before). File names: fencing-rails/rail/before/after.jpg.
 - JSON: new top-level key `fencing-redo` holding one `main` entry with those 4 slots. Batch now 199 pictures, about 398 credits.
