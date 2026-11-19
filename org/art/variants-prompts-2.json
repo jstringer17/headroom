@@ -1,4 +1,46 @@
 {
+  "fencing-redo": [
+    {
+      "key": "main",
+      "label": "Fencing redo (main kit slots)",
+      "note": "Redo of four main kit fencing pictures: the rails story frame, the black aluminum style tab and the gate pair.",
+      "main": true,
+      "items": [
+        {
+          "slot": "rails",
+          "label": "Story 3 of 4: Rails tie it together.",
+          "mode": "edit-posts",
+          "optional": false,
+          "prompt": "Edit the posts picture (library/fencing/posts). Keep the exact same camera position, lens, framing, light and sky: the patio corner in the foreground, the lawn and the line of posts; change only this: bare horizontal wood 2x4 rails, two per bay, now run between the same posts along the whole line, with no fence boards yet. Keep everything else identical. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks.",
+          "headline": "Rails tie it together.",
+          "accent": "together"
+        },
+        {
+          "slot": "rail",
+          "label": "Style: Black aluminum",
+          "mode": "new",
+          "optional": false,
+          "prompt": "The same style of wide green suburban backyard as the cedar and vinyl style pictures, seen from the back patio, with a new black aluminum rail fence with slim vertical pickets running along the back of the lawn. Locked-off camera at eye level, the subject sits in the right two-thirds of the frame with quiet open lawn and sky in the left third and lower left for a headline. Wide 16:9 photo, golden hour natural light, realistic, calm and premium. No people, no faces, no hands, no text, no letters, no numbers, no logos, no signs, no watermarks, no vehicles with writing.",
+          "name": "Black aluminum",
+          "note": "Open, modern, keeps the view."
+        },
+        {
+          "slot": "before",
+          "label": "Before: Old gate, new gate.",
+          "mode": "new",
+          "optional": false,
+          "prompt": "An old cedar gate in a backyard wood privacy fence, seen front-on: gray weathered boards, the gate leaning and sagging, one board cracked and a rusty hinge. Straight-on view in even soft daylight, the subject centered and filling most of the frame. Wide 16:9 photo, realistic, calm and premium. No people, no faces, no hands, no text, no letters, no numbers, no logos, no signs, no watermarks, no vehicles with writing."
+        },
+        {
+          "slot": "after",
+          "label": "After: Old gate, new gate.",
+          "mode": "edit-before",
+          "optional": false,
+          "prompt": "Edit the before picture. Keep the exact same camera position, lens, framing and light; change only this: a new cedar gate in warm wood hangs straight and level in the same spot with new black hinges and a black latch, the fence boards on both sides fresh cedar. Keep everything else identical. No people, no faces, no hands, no text, no letters, no logos, no signs, no watermarks."
+        }
+      ]
+    }
+  ],
   "electrical": [
     {
       "key": "main",

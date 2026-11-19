@@ -2,6 +2,10 @@
 Staff sessions write here when send_message to the chief is refused (for example "elevated_session_untrusted_device").
 The chief reads this file at every CEO message, acts, then moves handled entries under "## Done".
 
+## 2026-11-19 prompts-batch2 add-on: fencing-redo (asked by session_01Cu4Qz6VVRtcxi4Hcn3ayhX)
+- Added a "Fencing redo (make these first)" section, numbered 1-4 in variants-prompts-2.md: `rails` (Edit of the existing posts picture, bare 2x4 rails and no boards), style `rail` (black aluminum, same backyard as the cedar and vinyl style shots), gate `before` (new) and `after` (edit of before). File names: fencing-rails/rail/before/after.jpg.
+- JSON: new top-level key `fencing-redo` holding one `main` entry with those 4 slots. Batch now 199 pictures, about 398 credits.
+
 ## 2026-11-19 prompts-batch2 (session_013FPdmzxSU9VnLwatXXjyi4): DONE, prompts ready to generate
 - org/art/variants-prompts-2.md (copy-paste, numbered 1-195 in generation order, file name per picture) and org/art/variants-prompts-2.json (batch 1 schema keyed by trade, plus a `note` per set; the main kit set is the first entry per trade with key `main` and `main: true`).
 - Trades: electrical, remodeling, painting, landscaping, hvac. Each: main kit set (4 story + 3 styles + before + after = 9) + 5 variations x 6 = 39 pictures. Total 195 pictures, about 390 credits.
