@@ -17,3 +17,6 @@ Problem found 2026-11-02: after the chief started a session on the CEO's Mac, th
 
 ## CEO rule (2026-11-18): the chief handles approvals routing
 Never make the CEO find the right chat. When another session needs the CEO's own typed approval, the chief first tries everything itself (API, relay); if the session still requires it, the chief gives ONE line to paste plus the exact chat title, once, and batches all approvals into that one ask.
+
+## CEO rule (2026-11-20): every reply, every chat
+Very short. 5th-grade words. Summary only. No over-explaining. Save tokens.
