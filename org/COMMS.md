@@ -23,3 +23,6 @@ Very short. 5th-grade words. Summary only. No over-explaining. Save tokens.
 
 ## Check-ins (2026-11-20, tested)
 Durable reminders into the chief session fail (ACCESS_DENIED, trusted-device lock). Routines in fresh sessions cannot push or see sessions. So: the chief re-arms its in-session CronCreate check-in (7,37 * * * *) EVERY time it wakes: on each 'worker process was restarted' notice and on each CEO message (CronList first; create if empty).
+
+## Reminders = GitHub (CEO rule 2026-11-20)
+Every task: the worker ends by pushing a commit to claude/inspiring-edison-6s7ude (report in org/inbox/chief.md). The chief runs a background watcher (git ls-remote every 60s until the branch head changes) for each running task, and tells the CEO the moment it lands. Re-arm the watcher on every restart notice or CEO message. The 30-min CronCreate check-in is only a backup.
