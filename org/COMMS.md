@@ -20,3 +20,6 @@ Never make the CEO find the right chat. When another session needs the CEO's own
 
 ## CEO rule (2026-11-20): every reply, every chat
 Very short. 5th-grade words. Summary only. No over-explaining. Save tokens.
+
+## Check-ins (2026-11-20, tested)
+Durable reminders into the chief session fail (ACCESS_DENIED, trusted-device lock). Routines in fresh sessions cannot push or see sessions. So: the chief re-arms its in-session CronCreate check-in (7,37 * * * *) EVERY time it wakes: on each 'worker process was restarted' notice and on each CEO message (CronList first; create if empty).
